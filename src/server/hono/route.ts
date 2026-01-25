@@ -18,6 +18,7 @@ import { FeatureFlagController } from "../core/feature-flag/presentation/Feature
 import { FileSystemController } from "../core/file-system/presentation/FileSystemController";
 import { GitController } from "../core/git/presentation/GitController";
 import { CommitRequestSchema, PushRequestSchema } from "../core/git/schema";
+import { OpenSpecController } from "../core/openspec/presentation/OpenSpecController";
 import {
   CcvOptionsService,
   type CliOptions,
@@ -74,6 +75,7 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
     const featureFlagController = yield* FeatureFlagController;
     const searchController = yield* SearchController;
     const tasksController = yield* TasksController;
+    const openSpecController = yield* OpenSpecController;
 
     // middleware
     const authMiddlewareService = yield* AuthMiddleware;
@@ -165,6 +167,36 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
         })
 
         // routes
+
+        // OpenSpec
+        .get("/api/projects/:projectId/openspec/changes", async (c) => {
+          const response = await effectToResponse(
+            c,
+            openSpecController
+              .getChangesRoute({
+                projectId: c.req.param("projectId"),
+              })
+              .pipe(Effect.provide(runtime)),
+          );
+          return response;
+        })
+
+        .get(
+          "/api/projects/:projectId/openspec/changes/:changeId",
+          async (c) => {
+            const response = await effectToResponse(
+              c,
+              openSpecController
+                .getChangeDetailsRoute({
+                  projectId: c.req.param("projectId"),
+                  changeId: c.req.param("changeId"),
+                })
+                .pipe(Effect.provide(runtime)),
+            );
+            return response;
+          },
+        )
+
         .get("/api/config", async (c) => {
           return c.json({
             config: c.get("userConfig"),

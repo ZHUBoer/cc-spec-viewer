@@ -635,9 +635,24 @@
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/scheduler/SchedulerJobDialog.tsx",
         359
+      ],
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        255
       ]
     ],
     "translation": "作成"
+  },
+  "common.creating": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        253
+      ]
+    ],
+    "translation": ""
   },
   "common.delete": {
     "placeholders": {},
@@ -2305,7 +2320,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        62
+        69
       ]
     ],
     "translation": "表示と動作の設定"
@@ -2419,7 +2434,7 @@
       ],
       [
         "src/components/GlobalSidebar.tsx",
-        70
+        77
       ]
     ],
     "translation": "設定を読み込み中..."
@@ -2573,7 +2588,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        85
+        92
       ]
     ],
     "translation": "通知"
@@ -2584,7 +2599,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        78
+        85
       ]
     ],
     "translation": "セッション表示"
@@ -2595,7 +2610,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        98
+        112
       ]
     ],
     "translation": "システム情報"
@@ -2687,7 +2702,7 @@
       ],
       [
         "src/components/GlobalSidebar.tsx",
-        54
+        61
       ]
     ],
     "translation": "表示と通知の設定"
@@ -2753,7 +2768,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        59
+        66
       ]
     ],
     "translation": "設定"
@@ -2813,6 +2828,17 @@
       ]
     ],
     "translation": "セッション一覧を表示"
+  },
+  "sidebar.tasks.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
+        68
+      ]
+    ],
+    "translation": ""
   },
   "system.info.tab.title": {
     "placeholders": {},
@@ -3041,6 +3067,154 @@
       ]
     ],
     "translation": "Claude Code Viewer"
+  },
+  "tasks.action.create_failed": {
+    "message": "Failed to create task",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        138
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.action.created": {
+    "message": "Task created",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        133
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.action.update_failed": {
+    "message": "Failed to update task",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        155
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.create.description": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        218
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.create.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        215
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.empty": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        267
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.form.description": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        238
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.form.placeholder.description": {
+    "message": "Optional details...",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        244
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.form.placeholder.title": {
+    "message": "e.g. Implement login",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        230
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.form.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        224
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.status.error": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        195
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.status.loading": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        187
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.tab.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        204
+      ]
+    ],
+    "translation": ""
   },
   "user.content.document.pdf": {
     "placeholders": {},

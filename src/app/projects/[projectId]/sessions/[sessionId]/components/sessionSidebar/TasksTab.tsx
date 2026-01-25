@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2, Clock, PlusIcon } from "lucide-react";
 import { type FC, useState } from "react";
@@ -100,6 +101,7 @@ const TaskItem: FC<{
 };
 
 export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
+  const { i18n } = useLingui();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
@@ -126,9 +128,18 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
       setIsCreateOpen(false);
       setSubject("");
       setDescription("");
-      toast.success("Task created");
+      setDescription("");
+      toast.success(
+        i18n._({ id: "tasks.action.created", message: "Task created" }),
+      );
     },
-    onError: () => toast.error("Failed to create task"),
+    onError: () =>
+      toast.error(
+        i18n._({
+          id: "tasks.action.create_failed",
+          message: "Failed to create task",
+        }),
+      ),
   });
 
   const updateMutation = useMutation({
@@ -139,7 +150,13 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
         queryKey: ["tasks", projectId, sessionId],
       });
     },
-    onError: () => toast.error("Failed to update task"),
+    onError: () =>
+      toast.error(
+        i18n._({
+          id: "tasks.action.update_failed",
+          message: "Failed to update task",
+        }),
+      ),
   });
 
   const handleToggleStatus = (task: Task) => {
@@ -166,18 +183,26 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
 
   if (isLoading) {
     return (
-      <div className="p-4 text-sm text-muted-foreground">Loading tasks...</div>
+      <div className="p-4 text-sm text-muted-foreground">
+        <Trans id="tasks.status.loading" />
+      </div>
     );
   }
 
   if (error) {
-    return <div className="p-4 text-sm text-red-500">Error loading tasks</div>;
+    return (
+      <div className="p-4 text-sm text-red-500">
+        <Trans id="tasks.status.error" />
+      </div>
+    );
   }
 
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b border-border flex items-center justify-between">
-        <h2 className="font-semibold text-sm">Tasks</h2>
+        <h2 className="font-semibold text-sm">
+          <Trans id="tasks.tab.title" />
+        </h2>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button size="icon" variant="ghost" className="h-8 w-8">
@@ -186,31 +211,49 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Task</DialogTitle>
-              <DialogDescription>Add a new task to track.</DialogDescription>
+              <DialogTitle>
+                <Trans id="tasks.create.title" />
+              </DialogTitle>
+              <DialogDescription>
+                <Trans id="tasks.create.description" />
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="subject">Title</Label>
+                <Label htmlFor="subject">
+                  <Trans id="tasks.form.title" />
+                </Label>
                 <Input
                   id="subject"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  placeholder="e.g. Implement login"
+                  placeholder={i18n._({
+                    id: "tasks.form.placeholder.title",
+                    message: "e.g. Implement login",
+                  })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">
+                  <Trans id="tasks.form.description" />
+                </Label>
                 <Textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Optional details..."
+                  placeholder={i18n._({
+                    id: "tasks.form.placeholder.description",
+                    message: "Optional details...",
+                  })}
                 />
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create"}
+                  {createMutation.isPending ? (
+                    <Trans id="common.creating" />
+                  ) : (
+                    <Trans id="common.create" />
+                  )}
                 </Button>
               </DialogFooter>
             </form>
@@ -221,7 +264,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {tasks?.length === 0 && (
           <div className="text-center text-sm text-muted-foreground py-8">
-            No tasks found.
+            <Trans id="tasks.empty" />
           </div>
         )}
         {tasks?.map((task) => (

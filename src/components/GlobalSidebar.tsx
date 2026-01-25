@@ -1,7 +1,13 @@
 import { Trans } from "@lingui/react";
 import { useNavigate } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { InfoIcon, LogOut, SearchIcon, SettingsIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  InfoIcon,
+  LogOut,
+  SearchIcon,
+  SettingsIcon,
+} from "lucide-react";
 import { type FC, type ReactNode, Suspense, useState } from "react";
 import {
   Tooltip,
@@ -16,6 +22,7 @@ import { NotificationSettings } from "./NotificationSettings";
 import { useSearch } from "./SearchProvider";
 import { SettingsControls } from "./SettingsControls";
 import { SystemInfoCard } from "./SystemInfoCard";
+import { SpecSidebarPanel } from "./spec-dashboard/SpecSidebarPanel";
 
 export interface SidebarTab {
   id: string;
@@ -92,6 +99,13 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
     ),
   };
 
+  const specTab: SidebarTab = {
+    id: "spec-dashboard",
+    icon: BookOpenIcon,
+    title: "Spec Dashboard", // TODO: i18n
+    content: <SpecSidebarPanel projectId={projectId ?? ""} />,
+  };
+
   const systemInfoTab: SidebarTab = {
     id: "system-info",
     icon: InfoIcon,
@@ -103,7 +117,7 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
     ),
   };
 
-  const allTabs = [...additionalTabs, settingsTab, systemInfoTab];
+  const allTabs = [...additionalTabs, specTab, settingsTab, systemInfoTab];
   const [activeTab, setActiveTab] = useState<string>(
     defaultActiveTab ?? allTabs[allTabs.length - 1]?.id ?? "settings",
   );

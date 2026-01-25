@@ -65,7 +65,7 @@ export const SessionSidebar: FC<{
       {
         id: "tasks",
         icon: ListTodoIcon,
-        title: "Tasks",
+        title: <Trans id="sidebar.tasks.title" />,
         content: <TasksTab projectId={projectId} sessionId={activeSessionId} />,
       },
       {

@@ -19,6 +19,8 @@ import { FeatureFlagController } from "./core/feature-flag/presentation/FeatureF
 import { FileSystemController } from "./core/file-system/presentation/FileSystemController";
 import { GitController } from "./core/git/presentation/GitController";
 import { GitService } from "./core/git/services/GitService";
+import { OpenSpecController } from "./core/openspec/presentation/OpenSpecController";
+import { OpenSpecService } from "./core/openspec/services/OpenSpecService";
 import type { CliOptions } from "./core/platform/services/CcvOptionsService";
 import { ProjectRepository } from "./core/project/infrastructure/ProjectRepository";
 import { ProjectController } from "./core/project/presentation/ProjectController";
@@ -116,7 +118,9 @@ const DomainBase = Layer.mergeAll(
   SchedulerService.Live,
   SchedulerConfigBaseDir.Live,
   SearchService.Live,
+  SearchService.Live,
   TasksService.Live,
+  OpenSpecService.Live,
 );
 
 const DomainLayer = ClaudeCodeLifeCycleService.Live.pipe(
@@ -147,6 +151,7 @@ const PresentationLayer = Layer.mergeAll(
   FeatureFlagController.Live,
   SearchController.Live,
   TasksController.Live,
+  OpenSpecController.Live,
 );
 
 const MainLayer = PresentationLayer.pipe(
