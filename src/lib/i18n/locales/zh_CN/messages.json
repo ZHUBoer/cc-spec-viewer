@@ -3216,6 +3216,42 @@
     ],
     "translation": ""
   },
+  "tasks.action.create_failed": {
+    "message": "Failed to create task",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        217
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.action.created": {
+    "message": "Task created",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        212
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.action.update_failed": {
+    "message": "Failed to update task",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        234
+      ]
+    ],
+    "translation": ""
+  },
   "user.content.document.pdf": {
     "placeholders": {},
     "comments": [],
