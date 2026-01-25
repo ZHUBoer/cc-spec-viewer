@@ -1,3 +1,4 @@
+import { Trans, useLingui } from "@lingui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -179,6 +180,7 @@ const ErrorState: FC = () => {
 };
 
 export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
+  const { i18n } = useLingui();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
@@ -205,9 +207,18 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
       setIsCreateOpen(false);
       setSubject("");
       setDescription("");
-      toast.success("Task created");
+      setDescription("");
+      toast.success(
+        i18n._({ id: "tasks.action.created", message: "Task created" }),
+      );
     },
-    onError: () => toast.error("Failed to create task"),
+    onError: () =>
+      toast.error(
+        i18n._({
+          id: "tasks.action.create_failed",
+          message: "Failed to create task",
+        }),
+      ),
   });
 
   const updateMutation = useMutation({
@@ -218,7 +229,13 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
         queryKey: ["tasks", projectId, sessionId],
       });
     },
-    onError: () => toast.error("Failed to update task"),
+    onError: () =>
+      toast.error(
+        i18n._({
+          id: "tasks.action.update_failed",
+          message: "Failed to update task",
+        }),
+      ),
   });
 
   const handleToggleStatus = (task: Task) => {
@@ -242,7 +259,21 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
     createMutation.mutate({ subject, description });
   };
 
-  const taskCount = tasks?.length ?? 0;
+  if (isLoading) {
+    return (
+      <div className="p-4 text-sm text-muted-foreground">
+        <Trans id="tasks.status.loading" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-sm text-red-500">
+        <Trans id="tasks.status.error" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">
