@@ -195,6 +195,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
     queryKey: ["tasks", projectId, sessionId],
     queryFn: () => listTasks(projectId, sessionId),
     refetchInterval: 5000,
+    enabled: !!sessionId,
   });
 
   const createMutation = useMutation({
@@ -239,8 +240,8 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
   });
 
   const handleToggleStatus = (task: Task) => {
-    // Cycle: pending -> in_progress -> completed -> pending
-    // For failed tasks: clicking resets them to pending
+    // If pending -> in_progress -> completed. But for simple toggle lets just complete.
+    // Or if currently pending, move to in_progress, if in_progress move to completed.
     let newStatus: TaskStatus = "pending";
     if (task.status === "pending") newStatus = "in_progress";
     else if (task.status === "in_progress") newStatus = "completed";
@@ -259,7 +260,41 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
     createMutation.mutate({ subject, description });
   };
 
-  const taskCount = tasks?.length ?? 0;
+  if (!sessionId) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <h2 className="font-semibold text-sm">
+            <Trans id="tasks.tab.title" />
+          </h2>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4 text-center text-sm text-muted-foreground">
+          <p>
+            <Trans
+              id="tasks.select.session"
+              message="Select a session to view tasks"
+            />
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-4 text-sm text-muted-foreground">
+        <Trans id="tasks.status.loading" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-sm text-red-500">
+        <Trans id="tasks.status.error" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">

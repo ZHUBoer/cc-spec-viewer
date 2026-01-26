@@ -2301,7 +2301,7 @@
         125
       ]
     ],
-    "translation": "会话"
+    "translation": "会话列表"
   },
   "sessions.total": {
     "placeholders": {},
@@ -3251,6 +3251,112 @@
       ]
     ],
     "translation": ""
+  },
+  "tasks.empty": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        286
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.form.description": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        257
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.form.placeholder.description": {
+    "message": "Optional details...",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        263
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.form.placeholder.title": {
+    "message": "e.g. Implement login",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        249
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.form.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        243
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.select.session": {
+    "message": "Select a session to view tasks",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        193
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.status.error": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        214
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.status.loading": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        206
+      ]
+    ],
+    "translation": ""
+  },
+  "tasks.tab.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        188
+      ],
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
+        223
+      ]
+    ],
+    "translation": "Task List"
   },
   "user.content.document.pdf": {
     "placeholders": {},
