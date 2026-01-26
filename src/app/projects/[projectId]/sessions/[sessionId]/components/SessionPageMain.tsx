@@ -501,7 +501,7 @@ const SessionPageMainContent: FC<
               scheduledJobs={sessionScheduledJobs}
             />
             {!isExistingSession && (
-              <div className="rounded-2xl border border-dashed border-muted-foreground/40 bg-muted/30 p-8 text-center space-y-3">
+              <div className="mt-[30vh] rounded-2xl border border-dashed border-muted-foreground/40 bg-muted/30 p-8 text-center space-y-3">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
                   <MessageSquareIcon className="w-5 h-5 text-muted-foreground" />
                 </div>
