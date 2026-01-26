@@ -55,13 +55,13 @@ Note: Additional UI screenshots are available in [/e2e/snapshots/](./e2e/snapsho
 Run directly from npm without installation:
 
 ```bash
-npx @ZHUBoer/spec-forge-viewer@latest --port 3400
+npx @zhuboer/spec-forge-viewer@latest --port 3400
 ```
 
 Alternatively, install globally:
 
 ```bash
-npm install -g @ZHUBoer/spec-forge-viewer
+npm install -g @zhuboer/spec-forge-viewer
 spec-forge-viewer --port 3400
 ```
 

@@ -1,5 +1,5 @@
 {
-  "name": "@ZHUBoer/spec-forge-viewer",
+  "name": "@zhuboer/spec-forge-viewer",
   "version": "0.0.1",
   "description": "A full-featured web-based Claude Code client that provides complete interactive functionality for managing Claude Code projects.",
   "type": "module",
