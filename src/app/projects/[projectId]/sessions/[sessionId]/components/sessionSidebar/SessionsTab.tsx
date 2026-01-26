@@ -120,7 +120,7 @@ export const SessionsTab: FC<{
   return (
     <div className="h-full flex flex-col">
       <div className="border-b border-sidebar-border p-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <h2 className="font-semibold text-lg">
             <Trans id="sessions.title" />
           </h2>

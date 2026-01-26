@@ -148,7 +148,7 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
           {headerButton && (
             <div className="border-b border-sidebar-border">{headerButton}</div>
           )}
-          {activeTab !== "sessions" && (
+          {activeTab !== "sessions" && !projectId && (
             <div className="p-2 border-b border-sidebar-border">
               <Tooltip>
                 <TooltipTrigger asChild>
