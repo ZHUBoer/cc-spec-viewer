@@ -26,6 +26,7 @@ import {
 import { EnvService } from "../core/platform/services/EnvService";
 import { UserConfigService } from "../core/platform/services/UserConfigService";
 import { decodeProjectId } from "../core/project/functions/id";
+
 import type { ProjectRepository } from "../core/project/infrastructure/ProjectRepository";
 import { ProjectController } from "../core/project/presentation/ProjectController";
 import type { SchedulerConfigBaseDir } from "../core/scheduler/config";
@@ -821,6 +822,38 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
                   })),
                   Effect.provide(runtime),
                 ),
+            );
+            return response;
+          },
+        )
+
+        /**
+         * OpenSpecController Routes
+         */
+        .get("/api/projects/:projectId/openspec/changes", async (c) => {
+          const { projectId } = c.req.param();
+          const projectPath = decodeProjectId(projectId);
+
+          const response = await effectToResponse(
+            c,
+            openSpecController
+              .getChangesRoute({ projectId: projectPath })
+              .pipe(Effect.provide(runtime)),
+          );
+          return response;
+        })
+
+        .get(
+          "/api/projects/:projectId/openspec/changes/:changeId",
+          async (c) => {
+            const { projectId, changeId } = c.req.param();
+            const projectPath = decodeProjectId(projectId);
+
+            const response = await effectToResponse(
+              c,
+              openSpecController
+                .getChangeDetailsRoute({ projectId: projectPath, changeId })
+                .pipe(Effect.provide(runtime)),
             );
             return response;
           },

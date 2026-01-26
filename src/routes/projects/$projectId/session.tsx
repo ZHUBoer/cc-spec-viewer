@@ -32,8 +32,8 @@ function RouteComponent() {
   const { sessionId, tab } = search;
 
   const title = projectName
-    ? `${projectName} - Claude Code Viewer`
-    : "Claude Code Viewer";
+    ? `${projectName} - SpecForge Viewer`
+    : "SpecForge Viewer";
 
   return (
     <ProtectedRoute>

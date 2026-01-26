@@ -1,6 +1,6 @@
 # Developer Documentation
 
-This document provides technical details for developers contributing to Claude Code Viewer.
+This document provides technical details for developers contributing to SpecForge Viewer.
 
 ## Architecture Overview
 
@@ -26,7 +26,7 @@ This document provides technical details for developers contributing to Claude C
 - **Single Source of Truth (SSoT)**: Claude Code's standard session logs (`~/.claude/projects/`)
   - No separate database; reads directly from JSONL files
   - Strict validation via Zod schemas ensures conversation data integrity
-- **Caching Mechanism**: For performance optimization, metadata is cached in `~/.claude-code-viewer/`
+- **Caching Mechanism**: For performance optimization, metadata is cached in `~/.spec-forge-viewer/`
   - Frequently accessed data like session lists and project information
   - Cache is automatically invalidated via SSE events
 
@@ -42,7 +42,7 @@ This document provides technical details for developers contributing to Claude C
 
 ### Session Process Management
 
-Claude Code Viewer provides advanced control over Claude Code session processes:
+SpecForge Viewer provides advanced control over Claude Code session processes:
 
 - After starting a session, the process remains in the background unless explicitly aborted
 - Paused sessions can continue without changing the session-id (no resume needed)

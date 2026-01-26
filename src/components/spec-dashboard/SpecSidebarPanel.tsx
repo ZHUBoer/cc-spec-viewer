@@ -107,6 +107,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
         open={!!selectedChange}
         onOpenChange={(open) => !open && setSelectedChange(null)}
         change={selectedChange}
+        projectId={projectId}
       />
       <NewProposalDialog
         open={newProposalOpen}

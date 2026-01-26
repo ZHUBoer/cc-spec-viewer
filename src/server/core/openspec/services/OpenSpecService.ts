@@ -27,7 +27,9 @@ export interface OpenSpecChangeItem {
 export interface OpenSpecChangeDetails {
   name: string;
   proposalContent?: string;
-  // specs, design, tasks content can be added here
+  designContent?: string;
+  tasksContent?: string;
+  specFiles: { name: string; content: string }[];
 }
 
 const LayerImpl = Effect.gen(function* () {
@@ -121,16 +123,71 @@ const LayerImpl = Effect.gen(function* () {
 
       // Read proposal.md
       const proposalPath = path.join(changeDir, "proposal.md");
-      let proposalContent: string | undefined;
-      const proposalExists = yield* fs.exists(proposalPath);
+      const proposalContent = (yield* fs.exists(proposalPath))
+        ? yield* fs.readFileString(proposalPath)
+        : undefined;
 
-      if (proposalExists) {
-        proposalContent = yield* fs.readFileString(proposalPath);
+      // Read design.md
+      const designPath = path.join(changeDir, "design.md");
+      const designContent = (yield* fs.exists(designPath))
+        ? yield* fs.readFileString(designPath)
+        : undefined;
+
+      // Read tasks.md
+      const tasksPath = path.join(changeDir, "tasks.md");
+      const tasksContent = (yield* fs.exists(tasksPath))
+        ? yield* fs.readFileString(tasksPath)
+        : undefined;
+
+      // List specs/ files recursively
+      const specsDir = path.join(changeDir, "specs");
+      let specFiles: { name: string; content: string }[] = [];
+
+      const getFilesRecursively = (
+        dir: string,
+      ): Effect.Effect<string[], Error, FileSystem.FileSystem> =>
+        Effect.gen(function* () {
+          if (!(yield* fs.exists(dir))) return [];
+
+          const entries = yield* fs.readDirectory(dir);
+          let results: string[] = [];
+
+          for (const entry of entries) {
+            const entryPath = path.join(dir, entry);
+            if (entry.startsWith(".")) continue;
+
+            const stat = yield* fs.stat(entryPath);
+            if (stat.type === "Directory") {
+              const subFiles = yield* getFilesRecursively(entryPath);
+              results = [...results, ...subFiles];
+            } else {
+              results.push(entryPath);
+            }
+          }
+          return results;
+        });
+
+      if (yield* fs.exists(specsDir)) {
+        const filePaths = yield* getFilesRecursively(specsDir);
+
+        specFiles = yield* Effect.all(
+          filePaths.map((filePath) =>
+            Effect.gen(function* () {
+              const content = yield* fs.readFileString(filePath);
+              const relativeName = path.relative(specsDir, filePath);
+              return { name: relativeName, content };
+            }),
+          ),
+          { concurrency: "unbounded" },
+        );
       }
 
       return {
         name: changeId,
         proposalContent,
+        designContent,
+        tasksContent,
+        specFiles,
       } as OpenSpecChangeDetails;
     });
 

@@ -106,7 +106,7 @@ describe("DeprecatedEnvDetector", () => {
 
     // Check the migration guide link
     expect(output).toContain(
-      "https://github.com/d-kimuson/claude-code-viewer#configuration",
+      "https://github.com/ZHUBoer/cc-spec-viewer#configuration",
     );
 
     // biome-ignore lint/style/noProcessEnv: Testing environment variable detection
@@ -129,7 +129,7 @@ describe("DeprecatedEnvDetector", () => {
 
     const output = consoleSpy.mock.calls.flat().join("\n");
     expect(output).toContain(
-      "https://github.com/d-kimuson/claude-code-viewer#configuration",
+      "https://github.com/ZHUBoer/cc-spec-viewer#configuration",
     );
 
     // biome-ignore lint/style/noProcessEnv: Testing environment variable detection

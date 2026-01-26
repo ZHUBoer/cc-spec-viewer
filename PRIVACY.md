@@ -1,6 +1,6 @@
 # Privacy and Network Communication
 
-Claude Code Viewer is designed with privacy in mind:
+SpecForge Viewer is designed with privacy in mind:
 
 - **Localhost-Only Communication**: The application runs a web client and API server on localhost, communicating exclusively between your browser and the local server
 - **Anthropic API Access**: Claude Code is invoked via the Claude Agent SDK, which handles communication to the Anthropic API. No other external services are contacted

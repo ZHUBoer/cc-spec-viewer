@@ -1,14 +1,14 @@
 {
-  "name": "@kimuson/claude-code-viewer",
+  "name": "@ZHUBoer/spec-forge-viewer",
   "version": "0.5.8",
   "description": "A full-featured web-based Claude Code client that provides complete interactive functionality for managing Claude Code projects.",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/d-kimuson/claude-code-viewer.git"
+    "url": "https://github.com/ZHUBoer/cc-spec-viewer.git"
   },
-  "homepage": "https://github.com/d-kimuson/claude-code-viewer",
+  "homepage": "https://github.com/ZHUBoer/cc-spec-viewer",
   "files": [
     "dist"
   ],
@@ -16,12 +16,12 @@
     "node": ">=20.19.0"
   },
   "bin": {
-    "claude-code-viewer": "./dist/main.js"
+    "spec-forge-viewer": "./dist/main.js"
   },
   "scripts": {
     "dev": "run-p 'dev:*'",
     "dev:frontend": "vite",
-    "dev:backend": "NODE_ENV=development tsx watch src/server/main.ts --env-file-if-exists=.env.local",
+    "dev:backend": "NODE_ENV=development tsx watch src/server/main.ts",
     "start": "node dist/main.js",
     "build": "./scripts/build.sh",
     "build:frontend": "vite build",

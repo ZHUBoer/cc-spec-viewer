@@ -3,6 +3,6 @@ import { resolve } from "node:path";
 
 export const claudeCodeViewerCacheDirPath = resolve(
   homedir(),
-  ".claude-code-viewer",
+  ".spec-forge-viewer",
   "cache",
 );

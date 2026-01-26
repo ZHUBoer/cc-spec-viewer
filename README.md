@@ -1,8 +1,8 @@
-# Claude Code Viewer
+# SpecForge Viewer
 
-[![License](https://img.shields.io/github/license/d-kimuson/claude-code-viewer)](https://github.com/d-kimuson/claude-code-viewer/blob/main/LICENSE)
-[![CI](https://github.com/d-kimuson/claude-code-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/d-kimuson/claude-code-viewer/actions/workflows/ci.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/d-kimuson/claude-code-viewer)](https://github.com/d-kimuson/claude-code-viewer/releases)
+[![License](https://img.shields.io/github/license/ZHUBoer/spec-forge-viewer)](https://github.com/ZHUBoer/cc-spec-viewer/blob/main/LICENSE)
+[![CI](https://github.com/ZHUBoer/cc-spec-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/ZHUBoer/cc-spec-viewer/actions/workflows/ci.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/ZHUBoer/spec-forge-viewer)](https://github.com/ZHUBoer/cc-spec-viewer/releases)
 
 <img height="auto" width="50%" alt="ccv-logo" src="https://github.com/user-attachments/assets/0e092b2b-6acd-4380-b924-eed7a28acd69" />
 
@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/090d4806-163f-4bac-972a-002c7433145e
 
 ## Introduction
 
-Claude Code Viewer is a web-based Claude Code client focused on **comprehensive session log analysis**. It preserves and organizes all conversation data through strict schema validation and a progressive disclosure UI that reveals details on demand.
+SpecForge Viewer is a web-based Claude Code client focused on **comprehensive session log analysis**. It preserves and organizes all conversation data through strict schema validation and a progressive disclosure UI that reveals details on demand.
 
 **Core Philosophy**: Zero data loss + Effective organization + Remote-friendly design
 
@@ -22,18 +22,18 @@ Claude Code Viewer is a web-based Claude Code client focused on **comprehensive 
 | --- | --- |
 | View Chat Logs | View Claude Code session logs in real-time through the web UI. Supports historical logs as it uses standard Claude Code logs (~/.claude/projects/...) as the data source |
 | Search Conversations | Full-text search across conversations with `⌘K` (macOS) or `Ctrl+K` (Linux). Search within a specific project or across all projects. Features fuzzy matching, prefix search, and keyboard navigation (↑↓ to navigate, Enter to select) |
-| Start Conversations | Start Claude Code sessions directly from Claude Code Viewer. Enjoy core functionality like file/command completion, pause/resume, and tool approval through a superior web experience |
+| Start Conversations | Start Claude Code sessions directly from SpecForge Viewer. Enjoy core functionality like file/command completion, pause/resume, and tool approval through a superior web experience |
 | Resume Sessions | Resume conversations directly from existing session logs |
-| Continue Sessions | Claude Code Viewer provides advanced session process control. Sessions started through Claude Code Viewer remain alive (unless aborted), allowing you to continue conversations without resuming (no session-id reassignment) |
-| Create Projects | Create new projects from Claude Code Viewer. Select a directory through the web UI to execute the `/init` command and begin project setup |
+| Continue Sessions | SpecForge Viewer provides advanced session process control. Sessions started through SpecForge Viewer remain alive (unless aborted), allowing you to continue conversations without resuming (no session-id reassignment) |
+| Create Projects | Create new projects from SpecForge Viewer. Select a directory through the web UI to execute the `/init` command and begin project setup |
 | File Upload & Preview | Upload images (PNG, JPEG, GIF, WebP), PDFs, and text files directly from the chat interface. Each file type displays with dedicated preview components—images render inline, PDFs embed with a viewer, and text files show formatted content |
-| Browser Preview | Preview web applications directly within Claude Code Viewer. Click the preview button on any URL in chat messages to open a resizable browser panel on the right side. Features include URL input with keyboard navigation, reload functionality, and automatic chat window width adjustment. The embedded browser tracks URL changes as you navigate (same-origin only) |
+| Browser Preview | Preview web applications directly within SpecForge Viewer. Click the preview button on any URL in chat messages to open a resizable browser panel on the right side. Features include URL input with keyboard navigation, reload functionality, and automatic chat window width adjustment. The embedded browser tracks URL changes as you navigate (same-origin only) |
 | Message Scheduler | Schedule Claude Code messages using cron expressions for recurring tasks or specific datetime for one-time execution. Supports concurrency control (skip/run) for periodic jobs and auto-deletion for reserved jobs |
-| Review Changes | Built-in Git Diff Viewer lets you review all changes directly within Claude Code Viewer |
+| Review Changes | Built-in Git Diff Viewer lets you review all changes directly within SpecForge Viewer |
 | Commit Changes | Execute Git commits directly from the web interface within the Git Diff Viewer |
 | Push Changes | Push committed changes directly from the Git Diff Viewer. Supports both separate push operations and combined commit-and-push workflows for streamlined deployment |
 | MCP Server Viewer | View MCP server configurations directly in the session sidebar. Lists all configured servers with their names and commands, with real-time reload capability |
-| System Information | Monitor Claude Code and Claude Code Viewer versions, feature compatibility, and system status |
+| System Information | Monitor Claude Code and SpecForge Viewer versions, feature compatibility, and system status |
 | Multi-language Support | Full internationalization support with English, Japanese, and Simplified Chinese language options |
 
 ## Screenshots
@@ -55,14 +55,14 @@ Note: Additional UI screenshots are available in [/e2e/snapshots/](./e2e/snapsho
 Run directly from npm without installation:
 
 ```bash
-npx @kimuson/claude-code-viewer@latest --port 3400
+npx @ZHUBoer/spec-forge-viewer@latest --port 3400
 ```
 
 Alternatively, install globally:
 
 ```bash
-npm install -g @kimuson/claude-code-viewer
-claude-code-viewer --port 3400
+npm install -g @ZHUBoer/spec-forge-viewer
+spec-forge-viewer --port 3400
 ```
 
 The server will start on port 3400 (or the default port 3000). Open `http://localhost:3400` in your browser to access the interface.
@@ -70,7 +70,7 @@ The server will start on port 3400 (or the default port 3000). Open `http://loca
 **Available Options:**
 
 ```bash
-claude-code-viewer [options]
+spec-forge-viewer [options]
 
 Options:
   -p, --port <port>                Port to listen on (default: 3000)
@@ -85,7 +85,7 @@ Options:
 Build the image locally:
 
 ```bash
-docker build -t claude-code-viewer .
+docker build -t spec-forge-viewer .
 ```
 
 Run the container directly:
@@ -97,7 +97,7 @@ docker run --rm -p 3400:3400 \
   -e ANTHROPIC_BASE_URL=... \
   -e ANTHROPIC_API_KEY=... \
   -e ANTHROPIC_AUTH_TOKEN=... \
-  claude-code-viewer
+  spec-forge-viewer
 ```
 
 Alternatively, use the provided Compose configuration:
@@ -136,23 +136,23 @@ The application reads Claude Code conversation logs from:
 - **Minimum Version**: Claude Code v1.0.50 or later
 - **Tool Approval Feature**: Requires Claude Code v1.0.82 or later
 
-**Note on Version Support**: Recent versions of Claude Code have adopted more aggressive summarization behavior. To accommodate users who prefer to pin to specific versions, Claude Code Viewer maintains compatibility with Claude Code v1.0.50 and later for the foreseeable future.
+**Note on Version Support**: Recent versions of Claude Code have adopted more aggressive summarization behavior. To accommodate users who prefer to pin to specific versions, SpecForge Viewer maintains compatibility with Claude Code v1.0.50 and later for the foreseeable future.
 
 ### Environment Variables
 
-**NODE_ENV Consideration**: If you have `NODE_ENV=development` set in your environment (from other projects or system configuration), the application may not work correctly. Either set `NODE_ENV=production` or leave it unset when running Claude Code Viewer.
+**NODE_ENV Consideration**: If you have `NODE_ENV=development` set in your environment (from other projects or system configuration), the application may not work correctly. Either set `NODE_ENV=production` or leave it unset when running SpecForge Viewer.
 
 ## Configuration
 
 ### Command-Line Options and Environment Variables
 
-Claude Code Viewer can be configured using command-line options or environment variables. Command-line options take precedence over environment variables.
+SpecForge Viewer can be configured using command-line options or environment variables. Command-line options take precedence over environment variables.
 
 | Command-Line Option | Environment Variable | Description | Default |
 | --- | --- | --- | --- |
-| `-p, --port <port>` | `PORT` | Port number for Claude Code Viewer to run on | `3000` |
+| `-p, --port <port>` | `PORT` | Port number for SpecForge Viewer to run on | `3000` |
 | `-h, --hostname <hostname>` | `HOSTNAME` | Hostname to listen on for remote access | `localhost` |
-| `-P, --password <password>` | `CCV_PASSWORD` | Password for authentication. When set, enables password-based authentication to protect access to Claude Code Viewer. All `/api` routes (except login, logout, check, config, and version endpoints) require authentication. If not set, authentication is disabled and the application is publicly accessible | (none) |
+| `-P, --password <password>` | `CCV_PASSWORD` | Password for authentication. When set, enables password-based authentication to protect access to SpecForge Viewer. All `/api` routes (except login, logout, check, config, and version endpoints) require authentication. If not set, authentication is disabled and the application is publicly accessible | (none) |
 | `-e, --executable <executable>` | `CCV_CC_EXECUTABLE_PATH` | Path to Claude Code installation. If not set, uses system PATH installation, or falls back to bundled version from dependencies | (auto-detect) |
 | `--claude-dir <claude-dir>` | `CCV_GLOBAL_CLAUDE_DIR` | Path to Claude directory where session logs are stored | `~/.claude` |
 
@@ -163,7 +163,7 @@ Claude Code Viewer can be configured using command-line options or environment v
 
 ### User Settings
 
-Settings can be configured from the sidebar in Claude Code Viewer.
+Settings can be configured from the sidebar in SpecForge Viewer.
 
 | Setting | Default | Description |
 | --- | --- | --- |
@@ -179,7 +179,7 @@ Settings can be configured from the sidebar in Claude Code Viewer.
 
 ## Internationalization (i18n)
 
-Claude Code Viewer currently supports **English**, **Japanese**, and **Simplified Chinese (简体中文)**. Adding new languages is straightforward—simply add a new `messages.json` file for your locale (see [src/i18n/locales/](./src/i18n/locales/) for examples).
+SpecForge Viewer currently supports **English**, **Japanese**, and **Simplified Chinese (简体中文)**. Adding new languages is straightforward—simply add a new `messages.json` file for your locale (see [src/i18n/locales/](./src/i18n/locales/) for examples).
 
 If you'd like support for your language, please open an issue—we'll add it quickly!
 
@@ -194,7 +194,7 @@ Anthropic provides [Claude Code on the Web](https://docs.claude.com/en/docs/clau
 - Casual development from mobile devices or public computers
 - Simple repository structures with single CLAUDE.md at the root
 
-**When to use Claude Code Viewer**:
+**When to use SpecForge Viewer**:
 - Working with pre-configured local environments (databases, services, large dependencies)
 - Monorepo projects with multiple CLAUDE.md files in different directories
 - Development requiring significant computational resources or long-running processes
@@ -208,7 +208,7 @@ Several excellent community-built web clients exist:
 - https://github.com/wbopan/cui
 - https://github.com/siteboon/claudecodeui
 
-**What Makes Claude Code Viewer Different**: While these tools excel as general-purpose web clients, Claude Code Viewer is specifically designed as a **session log viewer** with:
+**What Makes SpecForge Viewer Different**: While these tools excel as general-purpose web clients, SpecForge Viewer is specifically designed as a **session log viewer** with:
 
 - **Zero Information Loss**: Strict Zod schema validation ensures every conversation detail is preserved
 - **Progressive Disclosure**: Expandable elements and sub-session modals help manage information density
@@ -221,7 +221,7 @@ Each tool serves different use cases—choose the one that best fits your workfl
 
 ## Remote Development
 
-Claude Code Viewer is designed with remote hosting in mind. To support remote development workflows, it includes:
+SpecForge Viewer is designed with remote hosting in mind. To support remote development workflows, it includes:
 
 - **Mobile-Optimized UI**: Responsive interface with dedicated mobile sidebar and touch-optimized controls
 - **Built-in Git Operations**: Review and commit changes directly from the web interface

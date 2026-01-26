@@ -95,7 +95,7 @@ const SchemaErrorDisplay: FC<{ errorLine: string }> = ({ errorLine }) => {
                   <AlertDescription className="text-red-700">
                     <Trans id="conversation.error.schema_validation.description" />{" "}
                     <a
-                      href="https://github.com/d-kimuson/claude-code-viewer/issues"
+                      href="https://github.com/ZHUBoer/cc-spec-viewer/issues"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-red-600 hover:text-red-800 underline underline-offset-4"

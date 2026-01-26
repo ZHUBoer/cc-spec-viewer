@@ -21,7 +21,7 @@
 
 ## Project Overview
 
-Claude Code Viewer reads Claude Code session logs directly from JSONL files (`~/.claude/projects/`) with zero data loss. It's a web-based client built as a CLI tool serving a Vite application.
+SpecForge Viewer reads Claude Code session logs directly from JSONL files (`~/.claude/projects/`) with zero data loss. It's a web-based client built as a CLI tool serving a Vite application.
 
 **Core Architecture**:
 - Frontend: Vite + TanStack Router + React 19 + TanStack Query
@@ -157,7 +157,7 @@ Raw `fetch` and direct requests are prohibited.
 ### Data Layer
 
 - **Single Source of Truth**: `~/.claude/projects/*.jsonl`
-- **Cache**: `~/.claude-code-viewer/` (invalidated via SSE when source changes)
+- **Cache**: `~/.spec-forge-viewer/` (invalidated via SSE when source changes)
 - **Validation**: Strict Zod schemas ensure every field is captured
 
 ### Session Process Management
