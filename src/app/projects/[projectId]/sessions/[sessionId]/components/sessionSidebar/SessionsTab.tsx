@@ -5,11 +5,19 @@ import {
   CoinsIcon,
   MessageSquareIcon,
   PlusIcon,
+  SearchIcon,
   TrashIcon,
 } from "lucide-react";
 import { type FC, useState } from "react";
+import { useSearch as useGlobalSearch } from "@/components/SearchProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { formatLocaleDate } from "../../../../../../../lib/date/formatLocaleDate";
 import { useConfig } from "../../../../../../hooks/useConfig";
@@ -33,6 +41,7 @@ export const SessionsTab: FC<{
 
   const sessionProcesses = useAtomValue(sessionProcessesAtom);
   const { config } = useConfig();
+  const { openSearch } = useGlobalSearch();
   const search = useSearch({
     from: "/projects/$projectId/session",
   });
@@ -115,6 +124,28 @@ export const SessionsTab: FC<{
           <h2 className="font-semibold text-lg">
             <Trans id="sessions.title" />
           </h2>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={openSearch}
+                  className={cn(
+                    "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
+                    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    "text-sidebar-foreground/70",
+                  )}
+                >
+                  <SearchIcon className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>
+                  Search <kbd className="ml-1 text-xs opacity-60">⌘K</kbd>
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <p className="text-xs text-sidebar-foreground/70">
           {sessions.length} <Trans id="sessions.total" />

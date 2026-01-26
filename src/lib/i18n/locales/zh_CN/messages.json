@@ -380,7 +380,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        141
+        172
       ]
     ],
     "translation": "开始新对话"
@@ -709,7 +709,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        238
+        269
       ]
     ],
     "translation": "加载中..."
@@ -2265,7 +2265,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        197
+        228
       ]
     ],
     "translation": "已暂停"
@@ -2276,7 +2276,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        195
+        226
       ]
     ],
     "translation": "运行中"
@@ -2287,7 +2287,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        240
+        271
       ]
     ],
     "translation": "加载更多"
@@ -2298,7 +2298,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        116
+        125
       ]
     ],
     "translation": "会话"
@@ -2309,7 +2309,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        120
+        151
       ]
     ],
     "translation": "总计"

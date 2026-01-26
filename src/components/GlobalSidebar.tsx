@@ -148,29 +148,31 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
           {headerButton && (
             <div className="border-b border-sidebar-border">{headerButton}</div>
           )}
-          <div className="p-2 border-b border-sidebar-border">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={openSearch}
-                  className={cn(
-                    "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
-                    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                    "text-sidebar-foreground/70",
-                  )}
-                  data-testid="search-button"
-                >
-                  <SearchIcon className="w-4 h-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>
-                  Search <kbd className="ml-1 text-xs opacity-60">⌘K</kbd>
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          {activeTab !== "sessions" && (
+            <div className="p-2 border-b border-sidebar-border">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={openSearch}
+                    className={cn(
+                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
+                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      "text-sidebar-foreground/70",
+                    )}
+                    data-testid="search-button"
+                  >
+                    <SearchIcon className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>
+                    Search <kbd className="ml-1 text-xs opacity-60">⌘K</kbd>
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
           <div className="flex-1 flex flex-col p-2 space-y-1">
             {allTabs.map((tab) => {
               const Icon = tab.icon;
