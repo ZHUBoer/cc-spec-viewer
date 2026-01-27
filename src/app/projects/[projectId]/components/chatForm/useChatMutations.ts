@@ -1,6 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { useSetAtom } from "jotai";
+import type { PublicSessionProcess } from "@/types/session-process";
 import { honoClient } from "../../../../../lib/api/client";
+import { sessionProcessesAtom } from "../../sessions/[sessionId]/store/sessionProcessesAtom";
 import type { MessageInput } from "./ChatInput";
 
 export const useCreateSessionProcessMutation = (
@@ -8,6 +11,7 @@ export const useCreateSessionProcessMutation = (
   onSuccess?: () => void,
 ) => {
   const navigate = useNavigate();
+  const setSessionProcesses = useSetAtom(sessionProcessesAtom);
 
   return useMutation({
     mutationFn: async (options: {
@@ -37,6 +41,13 @@ export const useCreateSessionProcessMutation = (
     },
     onSuccess: async (response) => {
       onSuccess?.();
+      setSessionProcesses((prev) => [
+        ...prev,
+        {
+          ...response.sessionProcess,
+          status: "running" as const,
+        } as unknown as PublicSessionProcess,
+      ]);
       navigate({
         to: "/projects/$projectId/session",
         params: {
@@ -55,6 +66,7 @@ export const useContinueSessionProcessMutation = (
   projectId: string,
   baseSessionId: string,
 ) => {
+  const setSessionProcesses = useSetAtom(sessionProcessesAtom);
   return useMutation({
     mutationFn: async (options: {
       input: MessageInput;
@@ -83,6 +95,21 @@ export const useContinueSessionProcessMutation = (
       }
 
       return response.json();
+    },
+    onSuccess: (response) => {
+      setSessionProcesses((prev) => {
+        // Remove existing process if any (to avoid duplicates or stale state)
+        const filtered = prev.filter(
+          (p) => p.sessionId !== response.sessionProcess.sessionId,
+        );
+        return [
+          ...filtered,
+          {
+            ...response.sessionProcess,
+            status: "running" as const,
+          } as unknown as PublicSessionProcess,
+        ];
+      });
     },
   });
 };

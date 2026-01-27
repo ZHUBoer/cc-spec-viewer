@@ -158,9 +158,11 @@ const SessionPageMainContent: FC<
       return response.json();
     },
     onSuccess: (_, sessionProcessId) => {
-      // Optimistically remove the process from the atom to update UI immediately
+      // Optimistically update the process status to paused
       setSessionProcesses((prev: PublicSessionProcess[]) =>
-        prev.filter((p) => p.id !== sessionProcessId),
+        prev.map((p) =>
+          p.id === sessionProcessId ? { ...p, status: "paused" } : p,
+        ),
       );
     },
   });

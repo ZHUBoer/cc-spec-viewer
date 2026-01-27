@@ -27,8 +27,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
               Design Review Required
             </h4>
             <p className="text-sm text-foreground/80">
-              Please review the technical design below. Your approval is
-              required before task generation can proceed.
+              请查看下面的技术设计。任务生成需要您的批准才能继续。
             </p>
           </div>
 
