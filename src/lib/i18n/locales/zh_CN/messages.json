@@ -254,7 +254,7 @@
         199
       ]
     ],
-    "translation": "无任务数据"
+    "translation": "无 subagent 数据"
   },
   "assistant.tool.no_task_data_description": {
     "placeholders": {},
@@ -265,7 +265,7 @@
         202
       ]
     ],
-    "translation": "此任务的数据不可用"
+    "translation": "此 subagent 的数据不可用"
   },
   "assistant.tool.result": {
     "placeholders": {},
@@ -320,7 +320,7 @@
         136
       ]
     ],
-    "translation": "查看任务详情"
+    "translation": "查看 subagent 详情"
   },
   "assistant.turn_duration": {
     "placeholders": {},

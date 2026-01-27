@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
+  CheckCircle2,
   ChevronRight,
   FileText,
   GitCompare,
@@ -29,7 +30,7 @@ interface SpecContextPanelProps {
   context: unknown;
 }
 
-type Stage = "proposal" | "specs" | "design" | "tasks";
+type Stage = "proposal" | "specs" | "design" | "tasks" | "tests";
 
 export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
   const [activeStage, setActiveStage] = useState<Stage>("design"); // Default to design as per UX focus
@@ -93,37 +94,56 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
       case "specs":
         return (
           <div className="flex-1 overflow-y-auto min-h-0 bg-muted/5 p-4">
-            {change.specFiles && change.specFiles.length > 0 ? (
-              <div className="space-y-3 max-w-3xl mx-auto">
-                {change.specFiles.map(
-                  (file: { name: string; content: string }) => (
-                    <Collapsible
-                      key={file.name}
-                      defaultOpen={false}
-                      className="border border-border/60 rounded-lg bg-card shadow-sm overflow-hidden"
-                    >
-                      <CollapsibleTrigger className="flex items-center w-full px-4 py-3 text-sm font-medium bg-muted/30 hover:bg-muted/50 transition-colors group text-left">
-                        <ChevronRight className="w-4 h-4 mr-3 text-muted-foreground/70 transition-transform duration-200 group-data-[state=open]:rotate-90 shrink-0" />
-                        <span className="font-mono text-xs text-secondary-foreground truncate">
-                          {file.name}
-                        </span>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="border-t border-border/60 bg-background">
-                        <div className="p-4 overflow-auto max-h-[60vh] text-xs">
-                          <MarkdownContent
-                            content={`\`\`\`markdown\n${file.content}\n\`\`\``}
-                          />
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ),
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8">
-                <p>No spec files found</p>
-              </div>
-            )}
+            <div className="space-y-6 max-w-3xl mx-auto">
+              {/* Root specs.md content */}
+              {change.specsContent && (
+                <div className="bg-card rounded-lg border border-border/60 shadow-sm p-6">
+                  <h4 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    Core Specifications
+                  </h4>
+                  <MarkdownContent content={change.specsContent} />
+                </div>
+              )}
+
+              {/* Individual Spec Files */}
+              {change.specFiles && change.specFiles.length > 0 ? (
+                <div className="space-y-3">
+                  {change.specsContent && (
+                    <h4 className="text-sm font-medium text-muted-foreground ml-1">
+                      Detailed Specs
+                    </h4>
+                  )}
+                  {change.specFiles.map(
+                    (file: { name: string; content: string }) => (
+                      <Collapsible
+                        key={file.name}
+                        defaultOpen={false}
+                        className="border border-border/60 rounded-lg bg-card shadow-sm overflow-hidden"
+                      >
+                        <CollapsibleTrigger className="flex items-center w-full px-4 py-3 text-sm font-medium bg-muted/30 hover:bg-muted/50 transition-colors group text-left">
+                          <ChevronRight className="w-4 h-4 mr-3 text-muted-foreground/70 transition-transform duration-200 group-data-[state=open]:rotate-90 shrink-0" />
+                          <span className="font-mono text-xs text-secondary-foreground truncate">
+                            {file.name}
+                          </span>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="border-t border-border/60 bg-background">
+                          <div className="p-4 overflow-auto max-h-[60vh] text-xs">
+                            <MarkdownContent
+                              content={`\`\`\`markdown\n${file.content}\n\`\`\``}
+                            />
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ),
+                  )}
+                </div>
+              ) : !change.specsContent ? (
+                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                  <p>No spec files found</p>
+                </div>
+              ) : null}
+            </div>
           </div>
         );
       case "design":
@@ -138,6 +158,13 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
           <SpecContentView
             content={change.tasksContent}
             emptyMessage="No tasks content available"
+          />
+        );
+      case "tests":
+        return (
+          <SpecContentView
+            content={change.testsContent}
+            emptyMessage="No tests content available"
           />
         );
     }
@@ -163,6 +190,7 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
             { id: "specs", icon: GitCompare, label: "Specs" },
             { id: "design", icon: PenTool, label: "Design" },
             { id: "tasks", icon: ListTodo, label: "Tasks" },
+            { id: "tests", icon: CheckCircle2, label: "Tests" },
           ].map((stage) => {
             const Icon = stage.icon;
             const isActive = activeStage === stage.id;

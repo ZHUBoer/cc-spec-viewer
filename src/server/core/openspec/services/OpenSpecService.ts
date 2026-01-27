@@ -28,6 +28,8 @@ export interface OpenSpecChangeDetails extends OpenSpecChangeItem {
   proposalContent?: string;
   designContent?: string;
   tasksContent?: string;
+  testsContent?: string; // New: Tests content
+  specsContent?: string; // New: Root specs content
   specFiles: { name: string; content: string }[];
 }
 
@@ -74,6 +76,25 @@ const LayerImpl = Effect.gen(function* () {
             path.join(entryPath, "tasks.md"),
           );
 
+          // Try to extract description from proposal.md
+          let description = "";
+          const proposalPath = path.join(entryPath, "proposal.md");
+          if (yield* fs.exists(proposalPath)) {
+            const content = yield* fs.readFileString(proposalPath);
+            const lines = content.split("\n");
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (
+                trimmed &&
+                !trimmed.startsWith("#") &&
+                !trimmed.startsWith("![")
+              ) {
+                description = trimmed;
+                break;
+              }
+            }
+          }
+
           changes.push({
             name: entry,
             status: inferStatus(tasksExists),
@@ -81,7 +102,7 @@ const LayerImpl = Effect.gen(function* () {
               stat.mtime,
               () => new Date(),
             ).toISOString(),
-            description: "", // Placeholder
+            description: description,
           });
         }
       }
@@ -187,17 +208,52 @@ const LayerImpl = Effect.gen(function* () {
         ? yield* fs.readFileString(proposalPath)
         : undefined;
 
-      // Read design.md
+      // Extract description from proposal content
+      let description = "";
+      if (proposalContent) {
+        const lines = proposalContent.split("\n");
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (
+            trimmed &&
+            !trimmed.startsWith("#") &&
+            !trimmed.startsWith("![")
+          ) {
+            description = trimmed;
+            break;
+          }
+        }
+      }
+
+      // Read architecture.md (preferred) or design.md (fallback)
+      const architecturePath = path.join(changeDir, "architecture.md");
       const designPath = path.join(changeDir, "design.md");
-      const designContent = (yield* fs.exists(designPath))
-        ? yield* fs.readFileString(designPath)
-        : undefined;
+
+      let designContent: string | undefined;
+
+      if (yield* fs.exists(architecturePath)) {
+        designContent = yield* fs.readFileString(architecturePath);
+      } else if (yield* fs.exists(designPath)) {
+        designContent = yield* fs.readFileString(designPath);
+      }
 
       // Read tasks.md
       const tasksPath = path.join(changeDir, "tasks.md");
       const tasksExists = yield* fs.exists(tasksPath);
       const tasksContent = tasksExists
         ? yield* fs.readFileString(tasksPath)
+        : undefined;
+
+      // Read tests.md
+      const testsPath = path.join(changeDir, "tests.md");
+      const testsContent = (yield* fs.exists(testsPath))
+        ? yield* fs.readFileString(testsPath)
+        : undefined;
+
+      // Read root specs.md
+      const rootSpecsPath = path.join(changeDir, "specs.md");
+      const specsContent = (yield* fs.exists(rootSpecsPath))
+        ? yield* fs.readFileString(rootSpecsPath)
         : undefined;
 
       // List specs/ files recursively
@@ -247,10 +303,12 @@ const LayerImpl = Effect.gen(function* () {
         name: changeId,
         status: isArchived ? "archived" : inferStatus(tasksExists),
         updatedAt: Option.getOrElse(stat.mtime, () => new Date()).toISOString(),
-        description: "", // Placeholder
+        description: description,
         proposalContent,
         designContent,
         tasksContent,
+        testsContent,
+        specsContent,
         specFiles,
       } as OpenSpecChangeDetails;
     });

@@ -12,6 +12,8 @@ export interface OpenSpecChange {
   // Details
   designContent?: string;
   tasksContent?: string;
+  testsContent?: string;
+  specsContent?: string;
   specFiles?: { name: string; content: string }[];
 }
 
