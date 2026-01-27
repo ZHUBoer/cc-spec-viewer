@@ -259,21 +259,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
     createMutation.mutate({ subject, description });
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-4 text-sm text-muted-foreground">
-        <Trans id="tasks.status.loading" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 text-sm text-red-500">
-        <Trans id="tasks.status.error" />
-      </div>
-    );
-  }
+  const taskCount = tasks?.length ?? 0;
 
   return (
     <div className="h-full flex flex-col">
