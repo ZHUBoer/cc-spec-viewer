@@ -51,8 +51,28 @@ const LayerImpl = Effect.gen(function* () {
       }
     });
 
+  const getArchivedChangesRoute = (options: { projectId: string }) =>
+    Effect.gen(function* () {
+      const { projectId } = options;
+
+      try {
+        const changes = yield* openSpecService.getArchivedChanges(projectId);
+        return {
+          response: changes,
+          status: 200,
+        } as const satisfies ControllerResponse;
+      } catch (error) {
+        console.error("OpenSpec getArchivedChanges error:", error);
+        return {
+          response: { error: "Failed to list OpenSpec archived changes" },
+          status: 500,
+        } as const satisfies ControllerResponse;
+      }
+    });
+
   return {
     getChangesRoute,
+    getArchivedChangesRoute,
     getChangeDetailsRoute,
   };
 });

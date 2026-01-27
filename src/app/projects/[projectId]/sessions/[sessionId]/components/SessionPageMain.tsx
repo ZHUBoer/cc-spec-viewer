@@ -1,6 +1,7 @@
 import { Trans } from "@lingui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { useSetAtom } from "jotai";
 import {
   DownloadIcon,
   GitBranchIcon,
@@ -36,12 +37,14 @@ import { usePermissionRequests } from "@/hooks/usePermissionRequests";
 import { useSchedulerJobs } from "@/hooks/useScheduler";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { honoClient } from "@/lib/api/client";
+import type { PublicSessionProcess } from "@/types/session-process";
 import { firstUserMessageToTitle } from "../../../services/firstCommandToTitle";
 import { useExportSession } from "../hooks/useExportSession";
 import type { useGitCurrentRevisions } from "../hooks/useGit";
 import { useGitCurrentRevisions as useGitCurrentRevisionsHook } from "../hooks/useGit";
 import { useSession } from "../hooks/useSession";
 import { useSessionProcess } from "../hooks/useSessionProcess";
+import { sessionProcessesAtom } from "../store/sessionProcessesAtom";
 import { ConversationList } from "./conversationList/ConversationList";
 import { DiffModal } from "./diffModal";
 import { ChatActionMenu } from "./resumeChat/ChatActionMenu";
@@ -117,6 +120,8 @@ const SessionPageMainContent: FC<
     return sessionProcess.getSessionProcess(sessionId);
   }, [sessionProcess, sessionId]);
 
+  const setSessionProcesses = useSetAtom(sessionProcessesAtom);
+
   useTaskNotifications(relatedSessionProcess?.status === "running");
 
   // Filter scheduler jobs related to this session
@@ -151,6 +156,12 @@ const SessionPageMainContent: FC<
       }
 
       return response.json();
+    },
+    onSuccess: (_, sessionProcessId) => {
+      // Optimistically remove the process from the atom to update UI immediately
+      setSessionProcesses((prev: PublicSessionProcess[]) =>
+        prev.filter((p) => p.id !== sessionProcessId),
+      );
     },
   });
 

@@ -182,6 +182,18 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           return response;
         })
 
+        .get("/api/projects/:projectId/openspec/archive", async (c) => {
+          const response = await effectToResponse(
+            c,
+            openSpecController
+              .getArchivedChangesRoute({
+                projectId: c.req.param("projectId"),
+              })
+              .pipe(Effect.provide(runtime)),
+          );
+          return response;
+        })
+
         .get(
           "/api/projects/:projectId/openspec/changes/:changeId",
           async (c) => {

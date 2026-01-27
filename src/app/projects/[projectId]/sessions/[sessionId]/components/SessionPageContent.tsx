@@ -1,6 +1,5 @@
-import type { FC } from "react";
-import { useState } from "react";
-import { useBrowserPreview } from "@/hooks/useBrowserPreview";
+import { type FC, useState } from "react";
+import { useWorkspacePanel } from "@/hooks/useWorkspacePanel";
 
 import { SessionPageMainWrapper } from "./SessionPageMainWrapper";
 import type { Tab } from "./sessionSidebar/schema";
@@ -11,9 +10,9 @@ export const SessionPageContent: FC<{
   tab: Tab;
 }> = ({ projectId, sessionId, tab }) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const { previewUrl, previewWidth } = useBrowserPreview();
+  const { activeMode, panelWidth } = useWorkspacePanel();
 
-  const mainContentWidth = previewUrl ? 100 - previewWidth : 100;
+  const mainContentWidth = activeMode !== "none" ? 100 - panelWidth : 100;
 
   return (
     <div

@@ -9,6 +9,10 @@ export interface OpenSpecChange {
   description?: string;
   updatedAt: string;
   proposalContent?: string;
+  // Details
+  designContent?: string;
+  tasksContent?: string;
+  specFiles?: { name: string; content: string }[];
 }
 
 export const specDashboardService = {
@@ -18,6 +22,24 @@ export const specDashboardService = {
     });
     if (!res.ok) {
       throw new Error("Failed to fetch changes");
+    }
+    const data = await res.json();
+    if ("error" in data) {
+      const errorMessage =
+        typeof data.error === "string"
+          ? data.error
+          : JSON.stringify(data.error);
+      throw new Error(errorMessage);
+    }
+    return data;
+  },
+
+  getArchivedChanges: async (projectId: string): Promise<OpenSpecChange[]> => {
+    const res = await client.api.projects[":projectId"].openspec.archive.$get({
+      param: { projectId },
+    });
+    if (!res.ok) {
+      throw new Error("Failed to fetch archived changes");
     }
     const data = await res.json();
     if ("error" in data) {
@@ -50,16 +72,7 @@ export const specDashboardService = {
           : JSON.stringify(data.error);
       throw new Error(errorMessage);
     }
-    // Map backend OpenSpecChangeDetails to frontend OpenSpecChange if fields differ slightly,
-    // but for now they are compatible enough for this demo.
-    // Need to fill in missing fields like status/updatedAt if the details endpoint doesn't return them,
-    // or merge with list data. For now, details endpoint returns name and content.
-    return {
-      name: data.name,
-      status: "draft", // default if not provided
-      updatedAt: new Date().toISOString(), // default
-      proposalContent: data.proposalContent,
-      description: "",
-    };
+    // Backend now returns full details including status and content
+    return data as OpenSpecChange;
   },
 };

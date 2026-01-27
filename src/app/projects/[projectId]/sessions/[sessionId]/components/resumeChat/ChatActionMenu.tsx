@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import type { FC } from "react";
 import { Button } from "@/components/ui/button";
-import { useBrowserPreview } from "../../../../../../../hooks/useBrowserPreview";
+import { useWorkspacePanel } from "../../../../../../../hooks/useWorkspacePanel";
 import type { PublicSessionProcess } from "../../../../../../../types/session-process";
 
 interface ChatActionMenuProps {
@@ -38,7 +38,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
 }) => {
   const { i18n } = useLingui();
   const navigate = useNavigate();
-  const { openPreview } = useBrowserPreview();
+  const { openBrowser } = useWorkspacePanel();
 
   const handleStartNewChat = () => {
     navigate({
@@ -77,7 +77,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => openPreview("about:blank")}
+          onClick={() => openBrowser("about:blank")}
           disabled={isPending}
           className="h-7 px-2 text-xs bg-muted/20 rounded-lg border border-border/40"
           title={i18n._({
@@ -136,18 +136,18 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
             <ArrowDownIcon className="w-3.5 h-3.5" />
           </Button>
         )}
-        {sessionProcess && abortTask && (
+        {sessionProcess && (
           <Button
             type="button"
             variant="destructive"
             size="sm"
             onClick={() => {
-              abortTask.mutate(sessionProcess.id);
+              abortTask?.mutate(sessionProcess.id);
             }}
-            disabled={abortTask.isPending || isPending}
+            disabled={!abortTask || abortTask.isPending || isPending}
             className="h-7 px-2 gap-1.5 text-xs rounded-lg"
           >
-            {abortTask.isPending ? (
+            {abortTask?.isPending ? (
               <LoaderIcon className="w-3.5 h-3.5 animate-spin" />
             ) : (
               <XIcon className="w-3.5 h-3.5" />

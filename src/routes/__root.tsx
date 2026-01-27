@@ -1,6 +1,6 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { BrowserPreviewProvider } from "../app/components/BrowserPreviewProvider";
 import { RootErrorBoundary } from "../app/components/RootErrorBoundary";
+import { WorkspacePanelProvider } from "../app/components/WorkspacePanelProvider";
 import { AuthenticatedProviders } from "../components/AuthenticatedProviders";
 import { AuthProvider } from "../components/AuthProvider";
 import { ThemeProvider } from "../components/ThemeProvider";
@@ -14,9 +14,9 @@ export const Route = createRootRoute({
         <AuthProvider>
           <LinguiClientProvider>
             <AuthenticatedProviders>
-              <BrowserPreviewProvider>
+              <WorkspacePanelProvider>
                 <Outlet />
-              </BrowserPreviewProvider>
+              </WorkspacePanelProvider>
             </AuthenticatedProviders>
           </LinguiClientProvider>
         </AuthProvider>

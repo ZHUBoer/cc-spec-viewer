@@ -24,8 +24,7 @@ export interface OpenSpecChangeItem {
   updatedAt: string;
 }
 
-export interface OpenSpecChangeDetails {
-  name: string;
+export interface OpenSpecChangeDetails extends OpenSpecChangeItem {
   proposalContent?: string;
   designContent?: string;
   tasksContent?: string;
@@ -35,6 +34,13 @@ export interface OpenSpecChangeDetails {
 const LayerImpl = Effect.gen(function* () {
   const projectRepository = yield* ProjectRepository;
   const fs = yield* FileSystem.FileSystem;
+
+  const inferStatus = (existsTasks: boolean): OpenSpecChangeItem["status"] => {
+    if (existsTasks) {
+      return "implementing";
+    }
+    return "draft";
+  };
 
   const getChanges = (projectId: string) =>
     Effect.gen(function* () {
@@ -51,36 +57,26 @@ const LayerImpl = Effect.gen(function* () {
 
       const exists = yield* fs.exists(changesDir);
       if (!exists) {
-        // If openspec/changes doesn't exist, return empty list (not error)
         return [];
       }
 
       const entries = yield* fs.readDirectory(changesDir);
-
       const changes: OpenSpecChangeItem[] = [];
 
       for (const entry of entries) {
+        if (entry === "archive") continue;
+
         const entryPath = path.join(changesDir, entry);
         const stat = yield* fs.stat(entryPath);
 
         if (stat.type === "Directory") {
-          // Basic status inference
-          let status: OpenSpecChangeItem["status"] = "draft";
-
-          // Check for tasks.md to upgrade status
           const tasksExists = yield* fs.exists(
             path.join(entryPath, "tasks.md"),
           );
-          if (tasksExists) {
-            status = "implementing"; // Simply assume implementing if tasks exist for now
-          }
-
-          // Check description from package.json or simple heuristics?
-          // For now, no description reading to keep it fast.
 
           changes.push({
             name: entry,
-            status,
+            status: inferStatus(tasksExists),
             updatedAt: Option.getOrElse(
               stat.mtime,
               () => new Date(),
@@ -90,7 +86,51 @@ const LayerImpl = Effect.gen(function* () {
         }
       }
 
-      // Sort by updatedAt desc
+      return changes.sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+      );
+    });
+
+  const getArchivedChanges = (projectId: string) =>
+    Effect.gen(function* () {
+      const { project } = yield* projectRepository.getProject(projectId);
+      if (project.meta.projectPath === null) {
+        return yield* Effect.fail(new ProjectPathNotFoundError({ projectId }));
+      }
+
+      const archiveDir = path.join(
+        project.meta.projectPath,
+        "openspec",
+        "changes",
+        "archive",
+      );
+
+      const exists = yield* fs.exists(archiveDir);
+      if (!exists) {
+        return [];
+      }
+
+      const entries = yield* fs.readDirectory(archiveDir);
+      const changes: OpenSpecChangeItem[] = [];
+
+      for (const entry of entries) {
+        const entryPath = path.join(archiveDir, entry);
+        const stat = yield* fs.stat(entryPath);
+
+        if (stat.type === "Directory") {
+          changes.push({
+            name: entry,
+            status: "archived",
+            updatedAt: Option.getOrElse(
+              stat.mtime,
+              () => new Date(),
+            ).toISOString(),
+            description: "", // Placeholder
+          });
+        }
+      }
+
       return changes.sort(
         (a, b) =>
           new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
@@ -104,13 +144,30 @@ const LayerImpl = Effect.gen(function* () {
         return yield* Effect.fail(new ProjectPathNotFoundError({ projectId }));
       }
 
-      const changeDir = path.join(
+      // Check standard changes first
+      let changeDir = path.join(
         project.meta.projectPath,
         "openspec",
         "changes",
         changeId,
       );
-      const exists = yield* fs.exists(changeDir);
+
+      let exists = yield* fs.exists(changeDir);
+
+      // If not found in changes, check archive
+      if (!exists) {
+        const archiveDir = path.join(
+          project.meta.projectPath,
+          "openspec",
+          "changes",
+          "archive",
+          changeId,
+        );
+        if (yield* fs.exists(archiveDir)) {
+          changeDir = archiveDir;
+          exists = true;
+        }
+      }
 
       if (!exists) {
         return yield* Effect.fail(
@@ -120,6 +177,9 @@ const LayerImpl = Effect.gen(function* () {
           }),
         );
       }
+
+      const stat = yield* fs.stat(changeDir);
+      const isArchived = changeDir.includes("/archive/");
 
       // Read proposal.md
       const proposalPath = path.join(changeDir, "proposal.md");
@@ -135,7 +195,8 @@ const LayerImpl = Effect.gen(function* () {
 
       // Read tasks.md
       const tasksPath = path.join(changeDir, "tasks.md");
-      const tasksContent = (yield* fs.exists(tasksPath))
+      const tasksExists = yield* fs.exists(tasksPath);
+      const tasksContent = tasksExists
         ? yield* fs.readFileString(tasksPath)
         : undefined;
 
@@ -184,6 +245,9 @@ const LayerImpl = Effect.gen(function* () {
 
       return {
         name: changeId,
+        status: isArchived ? "archived" : inferStatus(tasksExists),
+        updatedAt: Option.getOrElse(stat.mtime, () => new Date()).toISOString(),
+        description: "", // Placeholder
         proposalContent,
         designContent,
         tasksContent,
@@ -193,6 +257,7 @@ const LayerImpl = Effect.gen(function* () {
 
   return {
     getChanges,
+    getArchivedChanges,
     getChangeDetails,
   };
 });

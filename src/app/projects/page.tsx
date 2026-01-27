@@ -1,11 +1,18 @@
 import { Trans } from "@lingui/react";
 import { HistoryIcon } from "lucide-react";
-import { type FC, Suspense } from "react";
+import { type FC, Suspense, useEffect } from "react";
 import { GlobalSidebar } from "@/components/GlobalSidebar";
+import { useWorkspacePanel } from "@/hooks/useWorkspacePanel";
 import { ProjectList } from "./components/ProjectList";
 import { SetupProjectDialog } from "./components/SetupProjectDialog";
 
 export const ProjectsPage: FC = () => {
+  const { closePanel } = useWorkspacePanel();
+
+  useEffect(() => {
+    closePanel();
+  }, [closePanel]);
+
   return (
     <div className="flex h-screen max-h-screen overflow-hidden">
       <GlobalSidebar />

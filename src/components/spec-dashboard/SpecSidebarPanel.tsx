@@ -1,12 +1,15 @@
 import {
+  Archive,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   CircleDashed,
   Clock,
   FileText,
   PlusIcon,
 } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
-import { ChangeDetailDialog } from "./ChangeDetailDialog";
+import { useWorkspacePanel } from "@/hooks/useWorkspacePanel";
 import { NewProposalDialog } from "./NewProposalDialog";
 import {
   type OpenSpecChange,
@@ -32,11 +35,12 @@ const StatusIcon = ({ status }: { status: OpenSpecChange["status"] }) => {
 
 export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
   const [changes, setChanges] = useState<OpenSpecChange[]>([]);
+  const [archivedChanges, setArchivedChanges] = useState<OpenSpecChange[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedChange, setSelectedChange] = useState<OpenSpecChange | null>(
-    null,
-  );
+  const [archivedLoading, setArchivedLoading] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [newProposalOpen, setNewProposalOpen] = useState(false);
+  const { openSpec } = useWorkspacePanel();
 
   useEffect(() => {
     const loadData = async () => {
@@ -48,13 +52,40 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
     loadData();
   }, [projectId]);
 
+  const loadArchivedData = async () => {
+    if (archivedChanges.length > 0) return;
+    setArchivedLoading(true);
+    try {
+      const data = await specDashboardService.getArchivedChanges(projectId);
+      setArchivedChanges(data);
+    } catch (error) {
+      console.error("Failed to load archived changes", error);
+    } finally {
+      setArchivedLoading(false);
+    }
+  };
+
+  const toggleArchived = () => {
+    if (!showArchived) {
+      loadArchivedData();
+    }
+    setShowArchived(!showArchived);
+  };
+
+  const handleSelectChange = (change: OpenSpecChange) => {
+    openSpec({
+      projectId,
+      changeId: change.name,
+    });
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="border-b border-sidebar-border p-4 flex items-center justify-between">
         <div>
           <h2 className="font-semibold text-lg">Spec Dashboard</h2>
           <p className="text-xs text-sidebar-foreground/70">
-            Manage OpenSpec changes
+            Manage Spec changes
           </p>
         </div>
         <button
@@ -82,7 +113,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
               key={change.name}
               type="button"
               className="w-full text-left p-3 rounded-lg border border-sidebar-border hover:bg-sidebar-accent/50 cursor-pointer transition-colors group"
-              onClick={() => setSelectedChange(change)}
+              onClick={() => handleSelectChange(change)}
             >
               <div className="flex items-start justify-between mb-1">
                 <div className="font-medium text-sm truncate pr-2">
@@ -101,14 +132,56 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
             </button>
           ))
         )}
+
+        <div className="pt-4 border-t border-sidebar-border mt-4">
+          <button
+            type="button"
+            className="flex items-center justify-between w-full px-2 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 rounded-md transition-colors"
+            onClick={toggleArchived}
+          >
+            <div className="flex items-center gap-2">
+              <Archive className="w-4 h-4" />
+              <span>Archived</span>
+            </div>
+            {showArchived ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
+          </button>
+
+          {showArchived && (
+            <div className="mt-2 space-y-1 pl-2 border-l border-sidebar-border/50 ml-2">
+              {archivedLoading ? (
+                <div className="text-xs text-sidebar-foreground/50 p-2">
+                  Loading...
+                </div>
+              ) : archivedChanges.length === 0 ? (
+                <div className="text-xs text-sidebar-foreground/50 p-2">
+                  No archived changes
+                </div>
+              ) : (
+                archivedChanges.map((change) => (
+                  <button
+                    key={change.name}
+                    type="button"
+                    className="w-full text-left p-2 rounded-md hover:bg-sidebar-accent/50 text-xs text-sidebar-foreground/80 transition-colors"
+                    onClick={() => handleSelectChange(change)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="truncate flex-1">{change.name}</span>
+                      <span className="text-[10px] text-sidebar-foreground/40 ml-2">
+                        {new Date(change.updatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      <ChangeDetailDialog
-        open={!!selectedChange}
-        onOpenChange={(open) => !open && setSelectedChange(null)}
-        change={selectedChange}
-        projectId={projectId}
-      />
       <NewProposalDialog
         open={newProposalOpen}
         onOpenChange={setNewProposalOpen}
