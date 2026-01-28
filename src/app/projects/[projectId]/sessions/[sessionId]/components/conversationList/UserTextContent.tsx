@@ -1,8 +1,14 @@
-import { Terminal } from "lucide-react";
+import { ChevronDown, Terminal } from "lucide-react";
 import type { FC } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { parseUserMessage } from "../../../../../../../server/core/claude-code/functions/parseUserMessage";
 import { MarkdownContent } from "../../../../../../components/MarkdownContent";
 
@@ -36,30 +42,45 @@ export const UserTextContent: FC<{ text: string; id?: string }> = ({
           <CardContent className="py-0 px-4">
             <div className="space-y-2">
               <div>
-                {parsed.commandArgs && (
-                  <>
+                <Collapsible defaultOpen className="group/collapsible">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-muted-foreground">
-                      Arguments:
+                      Details
                     </span>
-                    <div className="bg-background rounded border p-2 mt-1">
-                      <code className="text-xs whitespace-pre-line break-all">
-                        {parsed.commandArgs}
-                      </code>
-                    </div>
-                  </>
-                )}
-                {parsed.commandMessage && (
-                  <>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      Message:
-                    </span>
-                    <div className="bg-background rounded border p-2 mt-1">
-                      <code className="text-xs whitespace-pre-line break-all">
-                        {parsed.commandMessage}
-                      </code>
-                    </div>
-                  </>
-                )}
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                        <span className="sr-only">Toggle</span>
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                  <CollapsibleContent>
+                    {parsed.commandArgs && (
+                      <div className="mb-2">
+                        <span className="text-xs font-medium text-muted-foreground block mb-1">
+                          Arguments:
+                        </span>
+                        <div className="bg-background rounded border p-2">
+                          <code className="text-xs whitespace-pre-line break-all">
+                            {parsed.commandArgs}
+                          </code>
+                        </div>
+                      </div>
+                    )}
+                    {parsed.commandMessage && (
+                      <div>
+                        <span className="text-xs font-medium text-muted-foreground block mb-1">
+                          Message:
+                        </span>
+                        <div className="bg-background rounded border p-2">
+                          <code className="text-xs whitespace-pre-line break-all">
+                            {parsed.commandMessage}
+                          </code>
+                        </div>
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             </div>
           </CardContent>
