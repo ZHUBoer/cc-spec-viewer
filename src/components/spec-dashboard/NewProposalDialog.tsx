@@ -20,7 +20,7 @@ export const NewProposalDialog: FC<NewProposalDialogProps> = ({
   onOpenChange,
 }) => {
   const [copied, setCopied] = useState(false);
-  const command = "/openspec:proposal";
+  const command = "/opsx:new";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(command);

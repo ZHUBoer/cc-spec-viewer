@@ -97,13 +97,26 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
             <div className="space-y-6 max-w-3xl mx-auto">
               {/* Root specs.md content */}
               {change.specsContent && (
-                <div className="bg-card rounded-lg border border-border/60 shadow-sm p-6">
-                  <h4 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-primary" />
-                    Core Specifications
-                  </h4>
-                  <MarkdownContent content={change.specsContent} />
-                </div>
+                <Collapsible
+                  defaultOpen={true}
+                  className="bg-card rounded-lg border border-border/60 shadow-sm overflow-hidden"
+                >
+                  <CollapsibleTrigger className="w-full flex items-center justify-between p-6 hover:bg-muted/30 transition-colors group text-left">
+                    <h4 className="text-sm font-semibold flex items-center gap-2 font-mono break-all">
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      {change.status === "archived"
+                        ? "changes/archive"
+                        : "changes"}
+                      /{change.name}/specs.md
+                    </h4>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/70 transition-transform duration-200 group-data-[state=open]:rotate-90 shrink-0" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="px-6 pb-6 pt-0">
+                      <MarkdownContent content={change.specsContent} />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
 
               {/* Individual Spec Files */}
@@ -124,11 +137,14 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
                         <CollapsibleTrigger className="flex items-center w-full px-4 py-3 text-sm font-medium bg-muted/30 hover:bg-muted/50 transition-colors group text-left">
                           <ChevronRight className="w-4 h-4 mr-3 text-muted-foreground/70 transition-transform duration-200 group-data-[state=open]:rotate-90 shrink-0" />
                           <span className="font-mono text-xs text-secondary-foreground truncate">
-                            {file.name}
+                            {change.status === "archived"
+                              ? "changes/archive"
+                              : "changes"}
+                            /{change.name}/specs/{file.name}
                           </span>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="border-t border-border/60 bg-background">
-                          <div className="p-4 overflow-auto max-h-[60vh] text-xs">
+                          <div className="p-4 text-xs">
                             <MarkdownContent
                               content={`\`\`\`markdown\n${file.content}\n\`\`\``}
                             />
