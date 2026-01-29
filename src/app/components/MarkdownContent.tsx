@@ -6,6 +6,7 @@ import {
   oneLight,
 } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
+import { Mermaid } from "../../components/ui/Mermaid";
 import { useTheme } from "../../hooks/useTheme";
 import { MarkdownLink } from "./MarkdownLink";
 
@@ -122,6 +123,7 @@ export const MarkdownContent: FC<MarkdownContentProps> = ({
           code({ className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || "");
             const isInline = !match;
+            const language = match ? match[1] : "";
 
             if (isInline) {
               return (
@@ -134,16 +136,20 @@ export const MarkdownContent: FC<MarkdownContentProps> = ({
               );
             }
 
+            if (language === "mermaid") {
+              return <Mermaid chart={String(children)} />;
+            }
+
             return (
-              <div className="relative my-6">
+              <div className="relative my-2">
                 <div className="flex items-center justify-between bg-muted/30 px-4 py-2 border-b border-border rounded-t-lg">
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    {match[1]}
+                    {language}
                   </span>
                 </div>
                 <SyntaxHighlighter
                   style={syntaxTheme}
-                  language={match[1]}
+                  language={language}
                   PreTag="div"
                   className="!mt-0 !rounded-t-none !rounded-b-lg !border-t-0 !border !border-border"
                   customStyle={{

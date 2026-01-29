@@ -104,7 +104,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
             Loading...
           </div>
         ) : changes.length === 0 ? (
-          <div className="text-sm text-sidebar-foreground/50 text-center mt-10">
+          <div className="text-sm text-sidebar-foreground/50 text-center mt-4">
             No active changes
           </div>
         ) : (

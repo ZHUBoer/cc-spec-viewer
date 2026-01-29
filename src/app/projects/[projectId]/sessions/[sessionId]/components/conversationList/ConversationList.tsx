@@ -65,6 +65,13 @@ const getConversationKey = (conversation: Conversation) => {
   throw new Error(`Unknown conversation type: ${conversation}`);
 };
 
+const getUniqueKey = (item: Conversation | ErrorJsonl): string => {
+  if (item.type === "x-error") {
+    return `error_${item.lineNumber}`;
+  }
+  return getConversationKey(item);
+};
+
 const SchemaErrorDisplay: FC<{ errorLine: string }> = ({ errorLine }) => {
   return (
     <li className="w-full flex justify-start">
@@ -137,10 +144,33 @@ export const ConversationList: FC<ConversationListProps> = ({
   sessionId,
   scheduledJobs,
 }) => {
+  const deduplicatedConversations = useMemo(() => {
+    const seen = new Set<string>();
+    return conversations.filter((item) => {
+      try {
+        const key = getUniqueKey(item);
+        if (seen.has(key)) {
+          return false;
+        }
+        seen.add(key);
+        return true;
+      } catch (e) {
+        console.warn("Failed to generate key for conversation item", item, e);
+        // If we can't generate a key, we probably shouldn't filter it out blindly,
+        // but it might crash later. Let's keep it and let it crash or be handled?
+        // Or filter it out to be safe?
+        // Given existing code threw error, let's keep it safe.
+        return true;
+      }
+    });
+  }, [conversations]);
+
   const validConversations = useMemo(
     () =>
-      conversations.filter((conversation) => conversation.type !== "x-error"),
-    [conversations],
+      deduplicatedConversations.filter(
+        (conversation) => conversation.type !== "x-error",
+      ),
+    [deduplicatedConversations],
   );
   const {
     isRootSidechain,
@@ -306,7 +336,7 @@ export const ConversationList: FC<ConversationListProps> = ({
 
   // Calculate timestamp visibility
   const conversationsWithTimestamp = useMemo(() => {
-    return conversations.map((conv) => {
+    return deduplicatedConversations.map((conv) => {
       if (conv.type === "x-error") {
         return { conversation: conv, showTimestamp: false };
       }
@@ -330,7 +360,7 @@ export const ConversationList: FC<ConversationListProps> = ({
 
       return { conversation: conv, showTimestamp };
     });
-  }, [conversations, shouldRenderConversation]);
+  }, [deduplicatedConversations, shouldRenderConversation]);
 
   return (
     <>

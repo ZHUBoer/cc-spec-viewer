@@ -884,7 +884,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        110
+        117
       ]
     ],
     "translation": "Raw Data: "
@@ -895,7 +895,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        103
+        110
       ]
     ],
     "translation": "Report This Issue"
@@ -906,7 +906,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        78
+        85
       ]
     ],
     "translation": "Schema Error"
@@ -917,7 +917,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        93
+        100
       ]
     ],
     "translation": "Schema Validation Error"
@@ -928,7 +928,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        96
+        103
       ]
     ],
     "translation": "Failed to parse this conversation entry. This may be due to format changes or parsing issues."

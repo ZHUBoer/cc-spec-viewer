@@ -46,6 +46,7 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     data: change,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["openspec", "change", ctx?.projectId, ctx?.changeId],
     queryFn: async () => {
@@ -144,7 +145,7 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
                           </span>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="border-t border-border/60 bg-background">
-                          <div className="p-4 text-xs">
+                          <div className="p-4 text-xs max-h-[60vh] overflow-y-auto overflow-x-auto">
                             <MarkdownContent
                               content={`\`\`\`markdown\n${file.content}\n\`\`\``}
                             />
@@ -214,7 +215,10 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
               <button
                 key={stage.id}
                 type="button"
-                onClick={() => setActiveStage(stage.id as Stage)}
+                onClick={() => {
+                  setActiveStage(stage.id as Stage);
+                  refetch();
+                }}
                 className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                   isActive
                     ? "border-primary text-primary bg-primary/5"
