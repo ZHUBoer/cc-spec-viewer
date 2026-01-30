@@ -3,24 +3,22 @@ description: '不足しているi18n翻訳を補完してコンパイル'
 allowed-tools: Bash(pnpm), Read(*), Edit(*.json), Grep
 ---
 
-Generate missing i18n translations for Japanese and Simplified Chinese locales, then compile and verify catalogs.
+Generate missing i18n translations for Simplified Chinese locale, then compile and verify catalogs.
 
 <workflow>
 ## 1. Extract and Identify Missing Translations
 
 Run `pnpm lingui:extract` to update catalogs and identify missing entries.
 
-For each locale (ja, zh_CN), identify all keys with empty translations by comparing against the English source.
+For each locale (zh_CN), identify all keys with empty translations by comparing against the English source.
 
 ## 2. Generate Translations
 
 For each missing translation:
-- **Japanese (ja)**: Translate to natural Japanese
 - **Simplified Chinese (zh_CN)**: Translate to Simplified Chinese (简体中文)
 
 **Guidelines**:
 - Keep technical terminology in English (e.g., "API", "TypeScript", "React")
-- Example: "API documentation" → Japanese: "APIドキュメント"
 
 ## 3. Update Translation Files
 

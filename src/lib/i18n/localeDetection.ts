@@ -16,10 +16,6 @@ const normalizeTag = (tag?: string): SupportedLocale | undefined => {
     return "zh_CN";
   }
 
-  if (normalized.startsWith("ja") || normalized.startsWith("jp")) {
-    return "ja";
-  }
-
   if (normalized.startsWith("en")) {
     return "en";
   }

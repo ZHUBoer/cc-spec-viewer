@@ -332,9 +332,6 @@ export const SettingsControls: FC<SettingsControlsProps> = ({
             <SelectValue placeholder={i18n._("Select language")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ja">
-              <Trans id="settings.locale.ja" />
-            </SelectItem>
             <SelectItem value="en">
               <Trans id="settings.locale.en" />
             </SelectItem>

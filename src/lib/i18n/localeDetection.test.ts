@@ -17,7 +17,7 @@ describe("localeDetection", () => {
 
     it("honors quality values", () => {
       expect(
-        detectLocaleFromAcceptLanguage("ja-JP;q=0.8,en-US;q=0.9"),
+        detectLocaleFromAcceptLanguage("zh-CN;q=0.8,en-US;q=0.9"),
       ).toBe<SupportedLocale>("en");
     });
 
@@ -30,10 +30,10 @@ describe("localeDetection", () => {
     it("returns first supported navigator language", () => {
       expect(
         detectLocaleFromNavigator({
-          languages: ["ja-JP", "en-US"],
+          languages: ["zh-CN", "en-US"],
           language: "en-US",
         }),
-      ).toBe<SupportedLocale>("ja");
+      ).toBe<SupportedLocale>("zh_CN");
     });
 
     it("falls back to navigator.language when languages list is empty", () => {
@@ -50,13 +50,13 @@ describe("localeDetection", () => {
     it("prioritizes accept-language header", () => {
       expect(
         resolvePreferredLocale({
-          acceptLanguageHeader: "ja-JP,zh-CN;q=0.8",
+          acceptLanguageHeader: "zh-CN,en-US;q=0.8",
           navigator: {
             languages: ["en-US"],
             language: "en-US",
           },
         }),
-      ).toBe<SupportedLocale>("ja");
+      ).toBe<SupportedLocale>("zh_CN");
     });
 
     it("falls back to navigator or default locale", () => {

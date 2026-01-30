@@ -170,7 +170,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        361
+        358
       ]
     ],
     "translation": "选择主题"
@@ -2441,7 +2441,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        348
+        345
       ]
     ],
     "translation": "选择您偏好的语言"
@@ -2452,21 +2452,10 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        339
-      ]
-    ],
-    "translation": "英语"
-  },
-  "settings.locale.ja": {
-    "placeholders": {},
-    "comments": [],
-    "origin": [
-      [
-        "src/components/SettingsControls.tsx",
         336
       ]
     ],
-    "translation": "日语"
+    "translation": "英语"
   },
   "settings.locale.zh_CN": {
     "placeholders": {},
@@ -2474,7 +2463,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        342
+        339
       ]
     ],
     "translation": "简体中文"
@@ -2698,7 +2687,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        356
+        353
       ]
     ],
     "translation": "主题"
@@ -2709,7 +2698,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        368
+        365
       ]
     ],
     "translation": "深色"
@@ -2720,7 +2709,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        377
+        374
       ]
     ],
     "translation": "选择您偏好的颜色主题"
@@ -2731,7 +2720,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        365
+        362
       ]
     ],
     "translation": "浅色"
@@ -2742,7 +2731,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        371
+        368
       ]
     ],
     "translation": "跟随系统"

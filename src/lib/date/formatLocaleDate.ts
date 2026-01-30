@@ -1,13 +1,10 @@
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
-import { ja } from "date-fns/locale/ja";
 import { zhCN } from "date-fns/locale/zh-CN";
 import type { SupportedLocale } from "../i18n/schema";
 
 export const convertDateFnsLocale = (locale: SupportedLocale) => {
   switch (locale) {
-    case "ja":
-      return ja;
     case "en":
       return enUS;
     case "zh_CN":
@@ -41,18 +38,7 @@ export const formatLocaleDate = (
     locale: SupportedLocale,
     target: "month" | "day" | "time" | "datetime",
   ): string => {
-    if (locale === "ja") {
-      switch (target) {
-        case "month":
-          return "yyyy年M月";
-        case "day":
-          return "yyyy年M月d日";
-        case "time":
-          return "yyyy年M月d日 HH:mm";
-        case "datetime":
-          return "yyyy年M月d日 HH:mm:ss";
-      }
-    } else if (locale === "en") {
+    if (locale === "en") {
       switch (target) {
         case "month":
           return "MM/yyyy";

@@ -170,7 +170,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        361
+        358
       ]
     ],
     "translation": "Select theme"
@@ -2441,7 +2441,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        348
+        345
       ]
     ],
     "translation": "Select your preferred language"
@@ -2452,21 +2452,10 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        339
-      ]
-    ],
-    "translation": "English"
-  },
-  "settings.locale.ja": {
-    "placeholders": {},
-    "comments": [],
-    "origin": [
-      [
-        "src/components/SettingsControls.tsx",
         336
       ]
     ],
-    "translation": "Japanese"
+    "translation": "English"
   },
   "settings.locale.zh_CN": {
     "placeholders": {},
@@ -2474,7 +2463,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        342
+        339
       ]
     ],
     "translation": "Chinese (Simplified)"
@@ -2698,7 +2687,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        356
+        353
       ]
     ],
     "translation": "Theme"
@@ -2709,7 +2698,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        368
+        365
       ]
     ],
     "translation": "Dark"
@@ -2720,7 +2709,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        377
+        374
       ]
     ],
     "translation": "Select your preferred color theme"
@@ -2731,7 +2720,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        365
+        362
       ]
     ],
     "translation": "Light"
@@ -2742,7 +2731,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        371
+        368
       ]
     ],
     "translation": "System"
