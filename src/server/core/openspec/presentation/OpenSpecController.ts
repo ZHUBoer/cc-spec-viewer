@@ -70,10 +70,40 @@ const LayerImpl = Effect.gen(function* () {
       }
     });
 
+  const updateFileRoute = (options: {
+    projectId: string;
+    changeId: string;
+    fileName: string;
+    content: string;
+  }) =>
+    Effect.gen(function* () {
+      const { projectId, changeId, fileName, content } = options;
+
+      try {
+        yield* openSpecService.updateChangeFile(
+          projectId,
+          changeId,
+          fileName,
+          content,
+        );
+        return {
+          response: { success: true },
+          status: 200,
+        } as const satisfies ControllerResponse;
+      } catch (error) {
+        console.error("OpenSpec updateFile error:", error);
+        return {
+          response: { error: "Failed to update file" },
+          status: 500,
+        } as const satisfies ControllerResponse;
+      }
+    });
+
   return {
     getChangesRoute,
     getArchivedChangesRoute,
     getChangeDetailsRoute,
+    updateFileRoute,
   };
 });
 

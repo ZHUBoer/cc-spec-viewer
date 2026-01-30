@@ -313,10 +313,79 @@ const LayerImpl = Effect.gen(function* () {
       } as OpenSpecChangeDetails;
     });
 
+  const updateChangeFile = (
+    projectId: string,
+    changeId: string,
+    fileName: string,
+    content: string,
+  ) =>
+    Effect.gen(function* () {
+      const { project } = yield* projectRepository.getProject(projectId);
+      if (project.meta.projectPath === null) {
+        return yield* Effect.fail(new ProjectPathNotFoundError({ projectId }));
+      }
+
+      // Validate fileName to prevent directory traversal
+      const allowedFiles = [
+        "design.md",
+        "proposal.md",
+        "tasks.md",
+        "tests.md",
+        "specs.md",
+      ];
+      // Also allow files in specs/ directory
+      const isSpecsFile =
+        fileName.startsWith("specs/") && !fileName.includes("..");
+
+      if (!allowedFiles.includes(fileName) && !isSpecsFile) {
+        return yield* Effect.fail(
+          new Error(`Invalid file name for update: ${fileName}`),
+        );
+      }
+
+      let changeDir = path.join(
+        project.meta.projectPath,
+        "openspec",
+        "changes",
+        changeId,
+      );
+
+      // Check standard changes first
+      let exists = yield* fs.exists(changeDir);
+
+      // If not found in changes, check archive (allow editing archived? maybe no, but let's locate it first)
+      if (!exists) {
+        const archiveDir = path.join(
+          project.meta.projectPath,
+          "openspec",
+          "changes",
+          "archive",
+          changeId,
+        );
+        if (yield* fs.exists(archiveDir)) {
+          changeDir = archiveDir;
+          exists = true;
+        }
+      }
+
+      if (!exists) {
+        return yield* Effect.fail(
+          new OpenSpecDirectoryNotFoundError({
+            path: changeDir,
+            message: `Change directory not found: ${changeId}`,
+          }),
+        );
+      }
+
+      const filePath = path.join(changeDir, fileName);
+      yield* fs.writeFileString(filePath, content);
+    });
+
   return {
     getChanges,
     getArchivedChanges,
     getChangeDetails,
+    updateChangeFile,
   };
 });
 

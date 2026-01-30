@@ -10,6 +10,14 @@ import { Mermaid } from "../../components/ui/Mermaid";
 import { useTheme } from "../../hooks/useTheme";
 import { MarkdownLink } from "./MarkdownLink";
 
+// Utility to generate IDs from text
+const generateId = (text: string) => {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\u4e00-\u9fa5-]/g, ""); // Keep Chinese characters
+};
+
 interface MarkdownContentProps {
   content: string;
   className?: string;
@@ -30,9 +38,12 @@ export const MarkdownContent: FC<MarkdownContentProps> = ({
         remarkPlugins={[remarkGfm]}
         components={{
           h1({ children, ...props }) {
+            const id =
+              typeof children === "string" ? generateId(children) : undefined;
             return (
               <h1
-                className="text-3xl font-bold mb-6 mt-8 pb-3 border-b border-border text-foreground"
+                id={id}
+                className="text-3xl font-bold mb-6 mt-8 pb-3 border-b border-border text-foreground scroll-mt-20"
                 {...props}
               >
                 {children}
@@ -40,9 +51,12 @@ export const MarkdownContent: FC<MarkdownContentProps> = ({
             );
           },
           h2({ children, ...props }) {
+            const id =
+              typeof children === "string" ? generateId(children) : undefined;
             return (
               <h2
-                className="text-2xl font-semibold mb-4 mt-8 pb-2 border-b border-border/50 text-foreground"
+                id={id}
+                className="text-2xl font-semibold mb-4 mt-8 pb-2 border-b border-border/50 text-foreground scroll-mt-20"
                 {...props}
               >
                 {children}
@@ -50,9 +64,12 @@ export const MarkdownContent: FC<MarkdownContentProps> = ({
             );
           },
           h3({ children, ...props }) {
+            const id =
+              typeof children === "string" ? generateId(children) : undefined;
             return (
               <h3
-                className="text-xl font-semibold mb-3 mt-6 text-foreground"
+                id={id}
+                className="text-xl font-semibold mb-3 mt-6 text-foreground scroll-mt-20"
                 {...props}
               >
                 {children}
@@ -60,9 +77,12 @@ export const MarkdownContent: FC<MarkdownContentProps> = ({
             );
           },
           h4({ children, ...props }) {
+            const id =
+              typeof children === "string" ? generateId(children) : undefined;
             return (
               <h4
-                className="text-lg font-medium mb-2 mt-4 text-foreground"
+                id={id}
+                className="text-lg font-medium mb-2 mt-4 text-foreground scroll-mt-20"
                 {...props}
               >
                 {children}
@@ -70,9 +90,12 @@ export const MarkdownContent: FC<MarkdownContentProps> = ({
             );
           },
           h5({ children, ...props }) {
+            const id =
+              typeof children === "string" ? generateId(children) : undefined;
             return (
               <h5
-                className="text-base font-medium mb-2 mt-4 text-foreground"
+                id={id}
+                className="text-base font-medium mb-2 mt-4 text-foreground scroll-mt-20"
                 {...props}
               >
                 {children}
@@ -80,9 +103,12 @@ export const MarkdownContent: FC<MarkdownContentProps> = ({
             );
           },
           h6({ children, ...props }) {
+            const id =
+              typeof children === "string" ? generateId(children) : undefined;
             return (
               <h6
-                className="text-sm font-medium mb-2 mt-4 text-muted-foreground"
+                id={id}
+                className="text-sm font-medium mb-2 mt-4 text-muted-foreground scroll-mt-20"
                 {...props}
               >
                 {children}
@@ -92,7 +118,7 @@ export const MarkdownContent: FC<MarkdownContentProps> = ({
           p({ children, ...props }) {
             return (
               <p
-                className="mb-4 leading-7 text-foreground break-all"
+                className="mb-2 leading-7 text-foreground break-all"
                 {...props}
               >
                 {children}

@@ -210,6 +210,29 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           },
         )
 
+        .post(
+          "/api/projects/:projectId/openspec/changes/:changeId/file",
+          zValidator(
+            "json",
+            z.object({
+              fileName: z.string(),
+              content: z.string(),
+            }),
+          ),
+          async (c) => {
+            const response = await effectToResponse(
+              c,
+              openSpecController
+                .updateFileRoute({
+                  ...c.req.param(),
+                  ...c.req.valid("json"),
+                })
+                .pipe(Effect.provide(runtime)),
+            );
+            return response;
+          },
+        )
+
         .get("/api/config", async (c) => {
           return c.json({
             config: c.get("userConfig"),

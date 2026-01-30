@@ -77,4 +77,22 @@ export const specDashboardService = {
     // Backend now returns full details including status and content
     return data as OpenSpecChange;
   },
+
+  updateChangeFile: async (
+    projectId: string,
+    changeId: string,
+    fileName: string,
+    content: string,
+  ): Promise<void> => {
+    const res = await client.api.projects[":projectId"].openspec.changes[
+      ":changeId"
+    ].file.$post({
+      param: { projectId, changeId },
+      json: { fileName, content },
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to update file");
+    }
+  },
 };

@@ -166,6 +166,8 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
       case "design":
         return (
           <DesignReviewView
+            projectId={ctx.projectId}
+            changeId={ctx.changeId}
             content={change.designContent || "*No design content*"}
             readonly={change.status === "archived"}
           />
