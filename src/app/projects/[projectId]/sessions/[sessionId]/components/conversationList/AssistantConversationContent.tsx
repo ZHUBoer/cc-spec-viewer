@@ -89,9 +89,9 @@ export const AssistantConversationContent: FC<{
     const toolResult = getToolResult(content.id);
 
     const taskModal = (() => {
-      // NOTE: taskToolInputSchema は prompt 以外（description, subagent_type等）が含まれていると parse 失敗する可能性がある？
-      // z.object({ prompt: z.string() }) は unknown keys を strip するので成功するはず。
-      // ただし念の為 safeParse の結果を確認する。
+      // 注意：如果 taskToolInputSchema 包含 prompt 以外的字段（如 description、subagent_type 等），可能会导致解析失败
+      // z.object({ prompt: z.string() }) 会去除 unknown keys，所以应该能成功解析
+      // 但为了保险起见，仍需检查 safeParse 的结果
       const taskInput =
         content.name === "Task"
           ? taskToolInputSchema.safeParse(content.input)

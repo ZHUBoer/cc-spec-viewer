@@ -30,7 +30,7 @@ export class InitializeService extends Context.Tag("InitializeService")<
       const virtualConversationDatabase = yield* VirtualConversationDatabase;
       const rateLimitAutoScheduleService = yield* RateLimitAutoScheduleService;
 
-      // 状態管理用の Ref
+      // Ref for state management
       const listenersRef = yield* Ref.make<{
         sessionProcessChanged?:
           | ((event: InternalEventDeclaration["sessionProcessChanged"]) => void)
@@ -42,13 +42,13 @@ export class InitializeService extends Context.Tag("InitializeService")<
 
       const startInitialization = (): Effect.Effect<void> => {
         return Effect.gen(function* () {
-          // ファイルウォッチャーを開始
+          // Start file watcher
           yield* fileWatcher.startWatching();
 
-          // Rate limit auto-schedule service を開始
+          // Start Rate limit auto-schedule service
           yield* rateLimitAutoScheduleService.start();
 
-          // ハートビートを定期的に送信
+          // Send periodic heartbeat
           const daemon = Effect.repeat(
             eventBus.emit("heartbeat", {}),
             Schedule.fixed("10 seconds"),
@@ -58,7 +58,7 @@ export class InitializeService extends Context.Tag("InitializeService")<
           yield* Effect.forkDaemon(daemon);
           console.log("after starting heartbeat fork");
 
-          // sessionChanged イベントのリスナーを登録
+          // Register listener for sessionChanged event
           const onSessionChanged = (
             event: InternalEventDeclaration["sessionChanged"],
           ) => {

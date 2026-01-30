@@ -20,20 +20,20 @@ type CCSessionProcessStateBase = {
 };
 
 export type CCSessionProcessPendingState = CCSessionProcessStateBase & {
-  type: "pending" /* メッセージがまだ解決されていない状態 */;
+  type: "pending" /* Message not yet resolved state */;
   sessionId?: undefined;
   currentTask: CCTask.PendingClaudeCodeTaskState;
 };
 
 export type CCSessionProcessNotInitializedState = CCSessionProcessStateBase & {
-  type: "not_initialized" /* メッセージは解決されているが、init メッセージを未受信 */;
+  type: "not_initialized" /* Message resolved but init message not yet received */;
   sessionId?: undefined;
   currentTask: CCTask.RunningClaudeCodeTaskState;
   rawUserMessage: string;
 };
 
 export type CCSessionProcessInitializedState = CCSessionProcessStateBase & {
-  type: "initialized" /* init メッセージを受信した状態 */;
+  type: "initialized" /* State after receiving init message */;
   sessionId: string;
   currentTask: CCTask.RunningClaudeCodeTaskState;
   rawUserMessage: string;
@@ -41,7 +41,7 @@ export type CCSessionProcessInitializedState = CCSessionProcessStateBase & {
 };
 
 export type CCSessionProcessFileCreatedState = CCSessionProcessStateBase & {
-  type: "file_created" /* ファイルが作成された状態 */;
+  type: "file_created" /* State after file has been created */;
   sessionId: string;
   currentTask: CCTask.RunningClaudeCodeTaskState;
   rawUserMessage: string;
@@ -49,12 +49,12 @@ export type CCSessionProcessFileCreatedState = CCSessionProcessStateBase & {
 };
 
 export type CCSessionProcessPausedState = CCSessionProcessStateBase & {
-  type: "paused" /* タスクが完了し、次のタスクを受け付け可能 */;
+  type: "paused" /* Task completed, can accept next task */;
   sessionId: string;
 };
 
 export type CCSessionProcessCompletedState = CCSessionProcessStateBase & {
-  type: "completed" /* paused あるいは起動中のタスクが中断された状態。再開不可 */;
+  type: "completed" /* State where paused or starting task was interrupted. Cannot resume */;
   sessionId?: string | undefined;
 };
 

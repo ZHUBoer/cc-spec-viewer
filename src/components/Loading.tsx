@@ -4,19 +4,19 @@ import { cn } from "@/lib/utils";
 
 export interface LoadingProps {
   /**
-   * ローディングメッセージ（省略可能）
+   * 加载消息（可选）
    */
   message?: string;
   /**
-   * サイズ（デフォルト: "default"）
+   * 尺寸（默认: "default"）
    */
   size?: "sm" | "default" | "lg";
   /**
-   * フルスクリーンで表示するか（デフォルト: true）
+   * 是否全屏显示（默认: true）
    */
   fullScreen?: boolean;
   /**
-   * 追加のクラス名
+   * 额外的类名
    */
   className?: string;
 }

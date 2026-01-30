@@ -276,12 +276,12 @@ describe("parseCommandXml", () => {
     });
 
     it("handles Unicode content", () => {
-      const input = "<command-name>テスト コマンド 🚀</command-name>";
+      const input = "<command-name>测试命令 🚀</command-name>";
       const result = parseUserMessage(input);
 
       expect(result).toEqual({
         kind: "command",
-        commandName: "テスト コマンド 🚀",
+        commandName: "测试命令 🚀",
         commandArgs: undefined,
         commandMessage: undefined,
       });

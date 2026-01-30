@@ -8,7 +8,7 @@ describe("computeClaudeProjectFilePath", () => {
   const TEST_GLOBAL_CLAUDE_DIR = "/test/mock/claude";
   const TEST_PROJECTS_DIR = path.join(TEST_GLOBAL_CLAUDE_DIR, "projects");
 
-  it("プロジェクトパスからClaudeの設定ディレクトリパスを計算する", async () => {
+  it("Calculate Claude config directory path from project path", async () => {
     const projectPath = "/home/me/dev/example";
     const expected = `${TEST_PROJECTS_DIR}/-home-me-dev-example`;
 
@@ -22,7 +22,7 @@ describe("computeClaudeProjectFilePath", () => {
     expect(result).toBe(expected);
   });
 
-  it("末尾にスラッシュがある場合も正しく処理される", async () => {
+  it("Correctly handles trailing slashes", async () => {
     const projectPath = "/home/me/dev/example/";
     const expected = `${TEST_PROJECTS_DIR}/-home-me-dev-example`;
 

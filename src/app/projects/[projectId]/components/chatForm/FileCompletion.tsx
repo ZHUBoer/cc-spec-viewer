@@ -152,7 +152,7 @@ export const FileCompletion = forwardRef<
   // Scroll to selected entry
   const scrollToSelected = useCallback((index: number) => {
     if (index >= 0 && listRef.current) {
-      // ボタン要素を直接検索
+      // 获取空格分隔的最后一个输入模式
       const buttons = listRef.current.querySelectorAll('button[role="option"]');
       const selectedButton = buttons[index] as HTMLElement;
       if (selectedButton) {

@@ -101,11 +101,11 @@ describe("FileCacheStorage", () => {
       expect(result).toBeUndefined();
     });
 
-    it("getAll ですべてのデータを取得できる", async () => {
+    it("Can retrieve all data with getAll", async () => {
       const program = Effect.gen(function* () {
         const cache = yield* FileCacheStorage<User>();
 
-        // 複数のデータを保存
+        // Save multiple entries
         yield* cache.set("user-1", {
           id: "user-1",
           name: "Alice",
@@ -117,7 +117,7 @@ describe("FileCacheStorage", () => {
           email: "bob@example.com",
         });
 
-        // すべてのデータを取得
+        // Get all data
         return yield* cache.getAll();
       });
 
@@ -146,9 +146,9 @@ describe("FileCacheStorage", () => {
     });
   });
 
-  describe("永続化データの読み込み", () => {
-    it("初期化時に永続化データを読み込む", async () => {
-      // 永続化データを返すモック
+  describe("Reading persisted data", () => {
+    it("Reads persisted data on initialization", async () => {
+      // Mock returning persisted data
       const program = Effect.gen(function* () {
         const cache = yield* FileCacheStorage<User>();
         return yield* cache.getAll();
@@ -191,7 +191,7 @@ describe("FileCacheStorage", () => {
       expect(result.get("user-2")?.name).toBe("Bob");
     });
 
-    it("スキーマバリデーションに失敗したデータは無視される", async () => {
+    it("Data that fails validation is ignored", async () => {
       const program = Effect.gen(function* () {
         const cache = yield* FileCacheStorage<User>();
         return yield* cache.getAll();
@@ -217,7 +217,7 @@ describe("FileCacheStorage", () => {
                       {
                         id: "invalid",
                         name: "Invalid",
-                        // email が無い（バリデーションエラー）
+                        // Missing email (validation error)
                       },
                     ],
                     [
@@ -225,7 +225,7 @@ describe("FileCacheStorage", () => {
                       {
                         id: "user-2",
                         name: "Bob",
-                        email: "invalid-email", // 不正なメールアドレス
+                        email: "invalid-email", // Invalid email address
                       },
                     ],
                   ],
@@ -238,7 +238,7 @@ describe("FileCacheStorage", () => {
         ),
       );
 
-      // 有効なデータのみ読み込まれる
+      // Only load valid data
       expect(result.size).toBe(1);
       expect(result.get("user-1")?.name).toBe("Alice");
       expect(result.get("user-invalid")).toBeUndefined();
@@ -246,8 +246,8 @@ describe("FileCacheStorage", () => {
     });
   });
 
-  describe("永続化への同期", () => {
-    it("set でデータを保存すると save が呼ばれる", async () => {
+  describe("Persistence synchronization", () => {
+    it("Calls save when saving data with set", async () => {
       const saveCallsRef = await Effect.runPromise(Ref.make<number>(0));
 
       const program = Effect.gen(function* () {
@@ -259,7 +259,7 @@ describe("FileCacheStorage", () => {
           email: "alice@example.com",
         });
 
-        // バックグラウンド実行を待つために少し待機
+        // Wait for background execution
         yield* Effect.sleep("10 millis");
       });
 
@@ -285,20 +285,20 @@ describe("FileCacheStorage", () => {
       expect(saveCalls).toBeGreaterThan(0);
     });
 
-    it("同じ値を set しても save は呼ばれない（差分検出）", async () => {
+    it("Does not call save when setting the same value (diff detection)", async () => {
       const saveCallsRef = await Effect.runPromise(Ref.make<number>(0));
 
       const program = Effect.gen(function* () {
         const cache = yield* FileCacheStorage<User>();
 
-        // 既に存在する同じ値を set
+        // Set the same existing value
         yield* cache.set("user-1", {
           id: "user-1",
           name: "Alice",
           email: "alice@example.com",
         });
 
-        // バックグラウンド実行を待つために少し待機
+        // Wait for background execution
         yield* Effect.sleep("10 millis");
       });
 
@@ -331,11 +331,11 @@ describe("FileCacheStorage", () => {
       );
 
       const saveCalls = await Effect.runPromise(Ref.get(saveCallsRef));
-      // 差分がないので save は呼ばれない
+      // No diff, so save is not called
       expect(saveCalls).toBe(0);
     });
 
-    it("invalidate でデータを削除すると save が呼ばれる", async () => {
+    it("Calls save when deleting data with invalidate", async () => {
       const saveCallsRef = await Effect.runPromise(Ref.make<number>(0));
 
       const program = Effect.gen(function* () {
@@ -343,7 +343,7 @@ describe("FileCacheStorage", () => {
 
         yield* cache.invalidate("user-1");
 
-        // バックグラウンド実行を待つために少し待機
+        // Wait for background execution
         yield* Effect.sleep("10 millis");
       });
 
@@ -379,16 +379,16 @@ describe("FileCacheStorage", () => {
       expect(saveCalls).toBeGreaterThan(0);
     });
 
-    it("存在しないキーを invalidate しても save は呼ばれない", async () => {
+    it("Calling invalidate on a non-existent key does not trigger save", async () => {
       const saveCallsRef = await Effect.runPromise(Ref.make<number>(0));
 
       const program = Effect.gen(function* () {
         const cache = yield* FileCacheStorage<User>();
 
-        // 存在しないキーを invalidate
+        // Call invalidate on a non-existent key
         yield* cache.invalidate("non-existent");
 
-        // バックグラウンド実行を待つために少し待機
+        // Wait for background execution
         yield* Effect.sleep("10 millis");
       });
 
@@ -411,44 +411,44 @@ describe("FileCacheStorage", () => {
       );
 
       const saveCalls = await Effect.runPromise(Ref.get(saveCallsRef));
-      // 存在しないキーなので save は呼ばれない
+      // Key does not exist, so save is not called
       expect(saveCalls).toBe(0);
     });
   });
 
-  describe("複雑なシナリオ", () => {
-    it("複数の操作を順次実行できる", async () => {
+  describe("Complex scenarios", () => {
+    it("Can execute multiple operations in sequence", async () => {
       const program = Effect.gen(function* () {
         const cache = yield* FileCacheStorage<User>();
 
-        // 初期データの確認
+        // Verify initial data
         const initial = yield* cache.getAll();
         expect(initial.size).toBe(1);
 
-        // 新しいユーザーを追加
+        // Add new user
         yield* cache.set("user-2", {
           id: "user-2",
           name: "Bob",
           email: "bob@example.com",
         });
 
-        // 既存のユーザーを更新
+        // Update existing user
         yield* cache.set("user-1", {
           id: "user-1",
           name: "Alice Updated",
           email: "alice.updated@example.com",
         });
 
-        // すべてのデータを取得
+        // Get all data
         const afterUpdate = yield* cache.getAll();
         expect(afterUpdate.size).toBe(2);
         expect(afterUpdate.get("user-1")?.name).toBe("Alice Updated");
         expect(afterUpdate.get("user-2")?.name).toBe("Bob");
 
-        // ユーザーを削除
+        // Delete user
         yield* cache.invalidate("user-1");
 
-        // 削除後の確認
+        // Verify state after deletion
         const afterDelete = yield* cache.getAll();
         expect(afterDelete.size).toBe(1);
         expect(afterDelete.get("user-1")).toBeUndefined();

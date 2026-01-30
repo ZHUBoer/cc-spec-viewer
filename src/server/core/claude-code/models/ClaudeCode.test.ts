@@ -144,7 +144,7 @@ describe("ClaudeCode.Config", () => {
           ...realExecutor,
           string: (() => {
             const responses = [
-              // 1st: which -a claude returns multiple paths (npx shim + legitimate)
+              // First: which -a claude returns multiple paths (npx shim + legitimate path)
               "/home/user/.npm/_npx/abc123/node_modules/.bin/claude\n/usr/local/bin/claude",
               // 2nd: claude --version
               "1.0.100 (Claude Code)\n",
@@ -161,7 +161,7 @@ describe("ClaudeCode.Config", () => {
         ),
       );
 
-      // npx shim がスキップされ、高優先度の /usr/local/bin/claude が使用される
+      // npx shim is skipped, use higher priority /usr/local/bin/claude
       expect(config.claudeCodeExecutablePath).toBe("/usr/local/bin/claude");
       expect(config.claudeCodeVersion).toStrictEqual({
         major: 1,
@@ -177,7 +177,7 @@ describe("ClaudeCode.Config", () => {
           ...realExecutor,
           string: (() => {
             const responses = [
-              // 1st: which -a claude returns only npx shim paths
+              // First: which -a claude only returns npx shim paths
               "/home/user/.npm/_npx/abc123/node_modules/.bin/claude\n/custom/cache/_npx/def456/node_modules/.bin/claude",
               // 2nd: claude --version
               "1.0.50 (Claude Code)\n",
@@ -194,7 +194,7 @@ describe("ClaudeCode.Config", () => {
         ),
       );
 
-      // すべてが同じ優先度（0）の場合、最初のパスが使用される
+      // When all paths have the same priority (0), use the first path
       expect(config.claudeCodeExecutablePath).toBe(
         "/home/user/.npm/_npx/abc123/node_modules/.bin/claude",
       );
@@ -212,7 +212,7 @@ describe("ClaudeCode.Config", () => {
           ...realExecutor,
           string: (() => {
             const responses = [
-              // 1st: which claude (without shell) returns local node_modules (NOT _npx)
+              // First: which claude (without shell) returns local node_modules (not _npx)
               "/some/project/node_modules/.bin/claude",
               // 2nd: claude --version
               "2.0.30 (Claude Code)\n",
@@ -229,7 +229,7 @@ describe("ClaudeCode.Config", () => {
         ),
       );
 
-      // プロジェクトローカルの node_modules/.bin はユーザーが意図的に PATH を通している可能性があるので使用する
+      // Use project-local node_modules/.bin because user may have intentionally added it to PATH
       expect(config.claudeCodeExecutablePath).toBe(
         "/some/project/node_modules/.bin/claude",
       );

@@ -202,7 +202,7 @@ export const ConversationItem: FC<{
       ) : null;
 
     return conversation.isMeta === true ? (
-      // 展開可能にしてデフォで非展開
+      // 设置为可展开，默认不展开
       <MetaConversationContent>
         <div className="flex flex-col w-full">
           {timestamp}

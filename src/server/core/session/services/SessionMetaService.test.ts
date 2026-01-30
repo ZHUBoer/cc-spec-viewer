@@ -100,10 +100,10 @@ describe("SessionMetaService", () => {
           "base64url",
         );
 
-        // 1回目の呼び出し
+        // First call
         const result1 = yield* storage.getSessionMeta(projectId, sessionId);
 
-        // 2回目の呼び出し（キャッシュから取得）
+        // Second call (retrieved from cache)
         const result2 = yield* storage.getSessionMeta(projectId, sessionId);
 
         return { result1, result2, readFileStringCalls };

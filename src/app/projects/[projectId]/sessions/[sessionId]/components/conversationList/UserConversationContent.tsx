@@ -99,7 +99,7 @@ export const UserConversationContent: FC<{
 
   if (content.type === "document") {
     if (content.source.type === "base64") {
-      // PDFの場合
+      // PDF 的情况
       if (content.source.media_type === "application/pdf") {
         return (
           <Card
@@ -142,7 +142,7 @@ export const UserConversationContent: FC<{
     }
 
     if (content.source.type === "text") {
-      // テキストファイルの場合
+      // 文本文件的情况
       return (
         <Card
           className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20 mb-2 p-0 overflow-hidden"
@@ -204,7 +204,7 @@ export const UserConversationContent: FC<{
   }
 
   if (content.type === "tool_result") {
-    // ツール結果は Assistant の呼び出し側に添えるので
+    // 工具结果将附加到 Assistant 的调用方
     return null;
   }
 

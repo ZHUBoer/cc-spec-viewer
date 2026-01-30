@@ -18,8 +18,8 @@ describe("getDiff", () => {
     vi.clearAllMocks();
   });
 
-  describe("正常系", () => {
-    it("2つのブランチ間のdiffを取得できる", async () => {
+  describe("Normal cases", () => {
+    it("Can get diff between two branches", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -87,7 +87,7 @@ index 0000000..ghi789
       );
     });
 
-    it("HEADとworking directoryの比較ができる", async () => {
+    it("Can compare HEAD and working directory", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:HEAD";
       const toRef = "compare:working";
@@ -134,7 +134,7 @@ M  src/modified.ts
       }
     });
 
-    it("同一refの場合は空の結果を返す", async () => {
+    it("Returns empty result when refs are the same", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:main";
       const toRef = "compare:main";
@@ -153,7 +153,7 @@ M  src/modified.ts
       expect(utils.executeGitCommand).not.toHaveBeenCalled();
     });
 
-    it.skip("削除されたファイルを処理できる", async () => {
+    it.skip("Can handle deleted files", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -198,7 +198,7 @@ index abc123..0000000 100644
       }
     });
 
-    it.skip("名前変更されたファイルを処理できる", async () => {
+    it.skip("Can handle renamed files", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -231,7 +231,7 @@ index abc123..abc123 100644`;
       }
     });
 
-    it("空のdiffを処理できる", async () => {
+    it("Can handle empty diff", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -260,8 +260,8 @@ index abc123..abc123 100644`;
     });
   });
 
-  describe("エラー系", () => {
-    it("ディレクトリが存在しない場合", async () => {
+  describe("Error cases", () => {
+    it("When directory does not exist", async () => {
       const mockCwd = "/nonexistent/repo";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -284,7 +284,7 @@ index abc123..abc123 100644`;
       }
     });
 
-    it("Gitリポジトリでない場合", async () => {
+    it("When not a Git repository", async () => {
       const mockCwd = "/test/not-a-repo";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -307,7 +307,7 @@ index abc123..abc123 100644`;
       }
     });
 
-    it("ブランチが見つからない場合", async () => {
+    it("When branch is not found", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:nonexistent";
       const toRef = "compare:feature";
@@ -332,7 +332,7 @@ index abc123..abc123 100644`;
       }
     });
 
-    it("numstatコマンドが失敗した場合", async () => {
+    it("When numstat command fails", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -355,7 +355,7 @@ index abc123..abc123 100644`;
       }
     });
 
-    it("無効なfromRefの場合", async () => {
+    it("When fromRef is invalid", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "invalidref";
       const toRef = "compare:feature";
@@ -366,8 +366,8 @@ index abc123..abc123 100644`;
     });
   });
 
-  describe("エッジケース", () => {
-    it("サブディレクトリから実行しても動作する", async () => {
+  describe("Edge cases", () => {
+    it("Works correctly when executed from subdirectory", async () => {
       const mockCwd = "/test/repo/subdirectory";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -405,7 +405,7 @@ index abc123..def456 100644
       );
     });
 
-    it("特殊文字を含むファイル名を処理できる", async () => {
+    it("Can handle file names with special characters", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -446,7 +446,7 @@ index abc123..def456 100644
       }
     });
 
-    it("バイナリファイルの変更を処理できる", async () => {
+    it("Can handle binary file changes", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -477,7 +477,7 @@ Binary files a/image.png and b/image.png differ`;
       }
     });
 
-    it("大量のファイル変更を処理できる", async () => {
+    it("Can handle large number of file changes", async () => {
       const mockCwd = "/test/repo";
       const fromRef = "base:main";
       const toRef = "compare:feature";
@@ -525,7 +525,7 @@ describe("compareBranches", () => {
     vi.clearAllMocks();
   });
 
-  it("getDiffのショートハンドとして機能する", async () => {
+  it("Works as a shortcut for getDiff", async () => {
     const mockCwd = "/test/repo";
     const baseBranch = "base:main";
     const targetBranch = "compare:feature";

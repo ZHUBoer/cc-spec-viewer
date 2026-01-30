@@ -69,7 +69,7 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
             onValueChange={handleSoundTypeChange}
           >
             <SelectTrigger id={selectId} className="w-[180px]">
-              <SelectValue placeholder="音を選択" />
+              <SelectValue placeholder="选择声音" />
             </SelectTrigger>
             <SelectContent>
               {availableSoundTypes.map((soundType) => (

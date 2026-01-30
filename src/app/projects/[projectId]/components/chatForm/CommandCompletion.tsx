@@ -46,14 +46,14 @@ export const CommandCompletion = forwardRef<
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // コマンドリストを取得
+  // 检查是否与现有命令重复
   const { data: commandData } = useQuery({
     queryKey: claudeCommandsQuery(projectId).queryKey,
     queryFn: claudeCommandsQuery(projectId).queryFn,
-    staleTime: 1000 * 60 * 5, // 5分間キャッシュ
+    staleTime: 1000 * 60 * 5, // 5分钟缓存
   });
 
-  // メモ化されたコマンドフィルタリング
+  // 记忆化的命令过滤
   const { shouldShowCompletion, filteredCommands } = useMemo(() => {
     const allCommands: CommandInfo[] = [
       ...(commandData?.defaultCommands || []),
@@ -77,16 +77,16 @@ export const CommandCompletion = forwardRef<
     return { shouldShowCompletion: shouldShow, filteredCommands: filtered };
   }, [commandData, inputValue]);
 
-  // 表示状態の導出（useEffectを削除）
+  // 显示状态的推导（删除useEffect）
   const shouldBeOpen = shouldShowCompletion && filteredCommands.length > 0;
 
-  // 状態が変更された時のリセット処理
+  // 状态变更时的重置处理
   if (isOpen !== shouldBeOpen) {
     setIsOpen(shouldBeOpen);
     setSelectedIndex(-1);
   }
 
-  // メモ化されたコマンド選択処理
+  // 记忆化的命令选择处理
   const handleCommandSelect = useCallback(
     (command: CommandInfo) => {
       // Append argumentHint as placeholder if exists
@@ -98,10 +98,10 @@ export const CommandCompletion = forwardRef<
     [onCommandSelect],
   );
 
-  // スクロール処理
+  // 滚动处理
   const scrollToSelected = useCallback((index: number) => {
     if (index >= 0 && listRef.current) {
-      // ボタン要素を直接検索
+      // 直接搜索按钮元素
       const buttons = listRef.current.querySelectorAll('button[role="option"]');
       const selectedButton = buttons[index] as HTMLElement;
       if (selectedButton) {
@@ -113,7 +113,7 @@ export const CommandCompletion = forwardRef<
     }
   }, []);
 
-  // メモ化されたキーボードナビゲーション処理
+  // 记忆化的键盘导航处理
   const handleKeyboardNavigation = useCallback(
     (e: React.KeyboardEvent): boolean => {
       if (!isOpen || filteredCommands.length === 0) return false;
@@ -123,7 +123,7 @@ export const CommandCompletion = forwardRef<
           e.preventDefault();
           setSelectedIndex((prev) => {
             const newIndex = prev < filteredCommands.length - 1 ? prev + 1 : 0;
-            // スクロールを次のフレームで実行
+            // 在下一帧执行滚动
             requestAnimationFrame(() => scrollToSelected(newIndex));
             return newIndex;
           });
@@ -132,7 +132,7 @@ export const CommandCompletion = forwardRef<
           e.preventDefault();
           setSelectedIndex((prev) => {
             const newIndex = prev > 0 ? prev - 1 : filteredCommands.length - 1;
-            // スクロールを次のフレームで実行
+            // 在下一帧执行滚动
             requestAnimationFrame(() => scrollToSelected(newIndex));
             return newIndex;
           });
@@ -166,7 +166,7 @@ export const CommandCompletion = forwardRef<
     ],
   );
 
-  // 外部クリック処理をuseEffectで設定
+  // 使用useEffect设置外部点击处理
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -182,7 +182,7 @@ export const CommandCompletion = forwardRef<
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // useImperativeHandleでキーボードハンドラーを公開
+  // 使用useImperativeHandle公开键盘处理器
   useImperativeHandle(
     ref,
     () => ({

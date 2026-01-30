@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { parseGitCommitsOutput } from "./parseGitCommitsOutput";
 
 describe("getCommits", () => {
-  describe("正常系", () => {
-    it("コミット一覧を取得できる", async () => {
+  describe("Normal cases", () => {
+    it("Can retrieve commit list", async () => {
       const mockOutput = `abc123|feat: add new feature|John Doe|2024-01-15 10:30:00 +0900
 def456|fix: bug fix|Jane Smith|2024-01-14 09:20:00 +0900
 ghi789|chore: update deps|Bob Johnson|2024-01-13 08:10:00 +0900`;
@@ -34,7 +34,7 @@ ghi789|chore: update deps|Bob Johnson|2024-01-13 08:10:00 +0900`;
       }
     });
 
-    it("空の結果を返す（コミットがない場合）", async () => {
+    it("Returns empty result (when no commits)", async () => {
       const mockOutput = "";
       const result = parseGitCommitsOutput(mockOutput);
 
@@ -44,7 +44,7 @@ ghi789|chore: update deps|Bob Johnson|2024-01-13 08:10:00 +0900`;
       }
     });
 
-    it("不正な形式の行をスキップする", async () => {
+    it("Skips incorrectly formatted lines", async () => {
       const mockOutput = `abc123|feat: add new feature|John Doe|2024-01-15 10:30:00 +0900
 invalid line without enough pipes
 def456|fix: bug fix|Jane Smith|2024-01-14 09:20:00 +0900
@@ -63,8 +63,8 @@ ghi789|chore: update deps|Bob Johnson|2024-01-13 08:10:00 +0900`;
     });
   });
 
-  describe("エッジケース", () => {
-    it("特殊文字を含むコミットメッセージを処理できる", async () => {
+  describe("Edge cases", () => {
+    it("Can handle commit messages with special characters", async () => {
       const mockOutput = `abc123|feat: add "quotes" & <special> chars|Author Name|2024-01-15 10:30:00 +0900
 def456|fix: 日本語メッセージ|日本語 著者|2024-01-14 09:20:00 +0900`;
 
@@ -81,7 +81,7 @@ def456|fix: 日本語メッセージ|日本語 著者|2024-01-14 09:20:00 +0900`
       }
     });
 
-    it("空白を含むパスでも正常に動作する", async () => {
+    it("Works correctly with paths containing spaces", async () => {
       const mockOutput = `abc123|feat: test|Author|2024-01-15 10:30:00 +0900`;
 
       const result = parseGitCommitsOutput(mockOutput);
@@ -92,7 +92,7 @@ def456|fix: 日本語メッセージ|日本語 著者|2024-01-14 09:20:00 +0900`
       }
     });
 
-    it("空行やスペースのみの行をスキップする", async () => {
+    it("Skips empty lines and lines containing only whitespace", async () => {
       const mockOutput = `abc123|feat: add feature|Author|2024-01-15 10:30:00 +0900
 
   

@@ -269,7 +269,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       return;
     }
 
-    // IMEで変換中の場合は送信しない
+    // IME 转换中不发送
     if (e.key === "Enter" && !e.nativeEvent.isComposing) {
       const enterKeyBehavior = config?.enterKeyBehavior;
 

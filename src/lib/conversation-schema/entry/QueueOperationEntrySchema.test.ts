@@ -19,7 +19,7 @@ describe("QueueOperationEntrySchema", () => {
         type: "queue-operation",
         operation: "enqueue",
         timestamp: "2025-11-15T04:36:38.085Z",
-        content: [{ type: "text", text: "こんにちは！" }],
+        content: [{ type: "text", text: "你好！" }],
         sessionId: "9bb43739-21f2-45f2-bf3c-9270ba0dddca",
       });
       expect(result.success).toBe(true);

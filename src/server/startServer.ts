@@ -69,7 +69,7 @@ export const startServer = async (options: CliOptions) => {
   }
 
   const program = routes(honoApp, options)
-    // 依存の浅い順にコンテナに pipe する必要がある
+    // Pipe to container in shallow dependency order
     .pipe(Effect.provide(MainLayer));
 
   await Effect.runPromise(program);

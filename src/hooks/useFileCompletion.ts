@@ -22,6 +22,6 @@ export const useFileCompletion = (
     queryKey: fileCompletionQuery(projectId, basePath).queryKey,
     queryFn: fileCompletionQuery(projectId, basePath).queryFn,
     enabled: enabled && !!projectId,
-    staleTime: 1000 * 60 * 5, // 5分間キャッシュ
+    staleTime: 1000 * 60 * 5, // 缓存5分钟
   });
 };

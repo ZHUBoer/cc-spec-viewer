@@ -3,8 +3,8 @@ import type { ErrorJsonl } from "../../types";
 import { parseJsonl } from "./parseJsonl";
 
 describe("parseJsonl", () => {
-  describe("正常系: 有効なJSONLをパースできる", () => {
-    it("単一のUserエントリをパースできる", () => {
+  describe("Normal flow: can parse valid JSONL", () => {
+    it("Can parse a single User entry", () => {
       const jsonl = JSON.stringify({
         type: "user",
         uuid: "550e8400-e29b-41d4-a716-446655440000",
@@ -28,7 +28,7 @@ describe("parseJsonl", () => {
       }
     });
 
-    it("単一のSummaryエントリをパースできる", () => {
+    it("Can parse a single Summary entry", () => {
       const jsonl = JSON.stringify({
         type: "summary",
         summary: "This is a summary",
@@ -45,7 +45,7 @@ describe("parseJsonl", () => {
       }
     });
 
-    it("複数のエントリをパースできる", () => {
+    it("Can parse multiple entries", () => {
       const jsonl = [
         JSON.stringify({
           type: "user",
@@ -74,16 +74,16 @@ describe("parseJsonl", () => {
     });
   });
 
-  describe("エラー系: 不正なJSON行をErrorJsonlとして返す", () => {
-    it("無効なJSONを渡すとエラーを投げる", () => {
+  describe("Error cases: return invalid JSON lines as ErrorJsonl", () => {
+    it("Passing invalid JSON throws an error", () => {
       const jsonl = "invalid json";
 
-      // parseJsonl の実装は JSON.parse をそのまま呼び出すため、
-      // 無効な JSON は例外を投げます
+      // The parseJsonl implementation directly calls JSON.parse,
+      // so invalid JSON will throw an exception
       expect(() => parseJsonl(jsonl)).toThrow();
     });
 
-    it("スキーマに合わないオブジェクトをErrorJsonlとして返す", () => {
+    it("Returns objects that don't match the schema as ErrorJsonl", () => {
       const jsonl = JSON.stringify({
         type: "unknown",
         someField: "value",
@@ -97,11 +97,11 @@ describe("parseJsonl", () => {
       expect(errorEntry.lineNumber).toBe(1);
     });
 
-    it("必須フィールドが欠けているエントリをErrorJsonlとして返す", () => {
+    it("Returns entries missing required fields as ErrorJsonl", () => {
       const jsonl = JSON.stringify({
         type: "user",
         uuid: "550e8400-e29b-41d4-a716-446655440000",
-        // timestamp, message などの必須フィールドが欠けている
+        // Missing required fields like timestamp, message, etc.
       });
 
       const result = parseJsonl(jsonl);
@@ -112,7 +112,7 @@ describe("parseJsonl", () => {
       expect(errorEntry.lineNumber).toBe(1);
     });
 
-    it("正常なエントリとエラーエントリを混在して返す", () => {
+    it("Returns a mix of normal entries and error entries", () => {
       const jsonl = [
         JSON.stringify({
           type: "user",
@@ -146,20 +146,20 @@ describe("parseJsonl", () => {
     });
   });
 
-  describe("エッジケース: 空行、トリム、複数エントリ", () => {
-    it("空文字列を渡すと空配列を返す", () => {
+  describe("Edge cases: empty lines, trimming, multiple entries", () => {
+    it("Passing empty string returns empty array", () => {
       const result = parseJsonl("");
 
       expect(result).toEqual([]);
     });
 
-    it("空行のみを渡すと空配列を返す", () => {
+    it("Passing only empty lines returns empty array", () => {
       const result = parseJsonl("\n\n\n");
 
       expect(result).toEqual([]);
     });
 
-    it("前後の空白をトリムする", () => {
+    it("Trims leading and trailing whitespace", () => {
       const jsonl = `  
         ${JSON.stringify({
           type: "user",
@@ -181,7 +181,7 @@ describe("parseJsonl", () => {
       expect(result[0]).toHaveProperty("type", "user");
     });
 
-    it("行間の空行を除外する", () => {
+    it("Excludes empty lines between entries", () => {
       const jsonl = [
         JSON.stringify({
           type: "user",
@@ -211,7 +211,7 @@ describe("parseJsonl", () => {
       expect(result[1]).toHaveProperty("type", "summary");
     });
 
-    it("空白のみの行を除外する", () => {
+    it("Excludes lines containing only whitespace", () => {
       const jsonl = [
         JSON.stringify({
           type: "user",
@@ -241,7 +241,7 @@ describe("parseJsonl", () => {
       expect(result[1]).toHaveProperty("type", "summary");
     });
 
-    it("多数のエントリを含むJSONLをパースできる", () => {
+    it("Can parse JSONL containing a large number of entries", () => {
       const entries = Array.from({ length: 100 }, (_, i) => {
         return JSON.stringify({
           type: "user",
@@ -271,8 +271,8 @@ describe("parseJsonl", () => {
     });
   });
 
-  describe("行番号の正確性", () => {
-    it("スキーマ検証エラー時の行番号が正確に記録される", () => {
+  describe("Line number accuracy", () => {
+    it("Line numbers are accurately recorded on schema validation errors", () => {
       const jsonl = [
         JSON.stringify({
           type: "user",
@@ -311,7 +311,7 @@ describe("parseJsonl", () => {
       expect((result[3] as ErrorJsonl).type).toBe("x-error");
     });
 
-    it("空行フィルタ後の行番号が正確に記録される", () => {
+    it("Line numbers are accurately recorded after filtering empty lines", () => {
       const jsonl = ["", "", JSON.stringify({ type: "invalid-schema" })].join(
         "\n",
       );
@@ -319,13 +319,13 @@ describe("parseJsonl", () => {
       const result = parseJsonl(jsonl);
 
       expect(result).toHaveLength(1);
-      // 空行がフィルタされた後のインデックスは0だが、lineNumberは1として記録される
+      // After filtering empty lines, the index is 0, but lineNumber is recorded as 1
       expect((result[0] as ErrorJsonl).lineNumber).toBe(1);
     });
   });
 
-  describe("ConversationSchemaのバリエーション", () => {
-    it("オプショナルフィールドを含むUserエントリをパースできる", () => {
+  describe("ConversationSchema variations", () => {
+    it("Can parse User entries with optional fields", () => {
       const jsonl = JSON.stringify({
         type: "user",
         uuid: "550e8400-e29b-41d4-a716-446655440000",
@@ -352,7 +352,7 @@ describe("parseJsonl", () => {
       }
     });
 
-    it("nullableフィールドがnullのエントリをパースできる", () => {
+    it("Can parse entries with nullable fields set to null", () => {
       const jsonl = JSON.stringify({
         type: "user",
         uuid: "550e8400-e29b-41d4-a716-446655440000",

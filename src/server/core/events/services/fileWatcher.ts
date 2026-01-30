@@ -130,7 +130,7 @@ export class FileWatcherService extends Context.Tag("FileWatcherService")<
               );
             },
           }).pipe(
-            // エラーが発生しても続行する
+            // 即使发生错误也继续执行
             Effect.catchAll(() => Effect.void),
           );
         });

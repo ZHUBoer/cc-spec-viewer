@@ -165,7 +165,7 @@ const LayerImpl = Effect.gen(function* () {
           }
 
           if (processState.type === "paused") {
-            // rule: paused 假定更新为 not_initialized
+            // rule: paused is assumed to be updated to not_initialized
             return yield* Effect.die(
               new Error("Illegal state: paused is not expected"),
             );
@@ -191,7 +191,7 @@ const LayerImpl = Effect.gen(function* () {
               });
 
             if (processState.currentTask.def.type === "new") {
-              // 末尾に追加するだけで OK
+              // Simply append to the end
               yield* virtualConversationDatabase.createVirtualConversation(
                 baseSession.projectId,
                 message.session_id,
@@ -310,7 +310,7 @@ const LayerImpl = Effect.gen(function* () {
             const result = await Runtime.runPromise(runtime)(
               handleMessage(fallbackMessage),
             ).catch((error) => {
-              // iter 自体が落ちてなければ継続したいので握りつぶす
+              // If the iter itself hasn't crashed, we want to continue, so swallow the error
               Effect.runFork(
                 sessionProcessService.changeTaskState({
                   sessionProcessId: sessionProcess.def.sessionProcessId,
