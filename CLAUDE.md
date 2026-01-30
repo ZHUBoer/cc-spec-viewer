@@ -3,9 +3,9 @@
 ## Critical Rules (Read First)
 
 **Communication**:
-- Always communicate with users in English
-- Code, comments, and commit messages should be in English
-- This document is in English for context efficiency
+- Always communicate with users in Chinese-simplified
+- Code, comments, and commit messages should be in Chinese-simplified
+- This document is in Chinese-simplified for context efficiency
 
 **NEVER**:
 - Use `as` type casting in ANY context including test code (explain the problem to the user instead)
