@@ -34,7 +34,10 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
 }) => {
   // Utility to strip confirmation tag
   const cleanContent = (text: string) => {
-    return text.replace(/\n+✅ (逻辑已确认|确认无误).*/g, "").trim();
+    return text
+      .replace(/<!-- STATUS: CONFIRMED -->/g, "")
+      .replace(/(^|\n+)✅ (逻辑已确认|确认无误).*/g, "")
+      .trim();
   };
 
   const [isEditing, setIsEditing] = useState(false);
@@ -132,9 +135,7 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
 
   if (status === "confirmed") {
     // Strip the confirmation tag from display since we have the header
-    const displayContent = initialContent
-      .replace(/\n+✅ 逻辑已确认.*/, "")
-      .trim();
+    const displayContent = cleanContent(initialContent);
 
     return (
       <div className="my-4 p-4 border-l-4 border-green-500 bg-green-500/5 rounded-r-lg">

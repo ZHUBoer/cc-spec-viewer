@@ -107,7 +107,10 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       }
 
       // Check status for Global Approve
-      const isConfirmed = blockContent.includes("✅");
+      // Robust check: Metadata tag OR legacy visual tag
+      const isConfirmed =
+        blockContent.includes("<!-- STATUS: CONFIRMED -->") ||
+        blockContent.includes("✅");
       // If neither confirmed nor seemingly addressed (simple heuristic), block global approve
       if (!isConfirmed && !blockContent.includes("已修改") && !readonly) {
         allBlocksConfirmed = false;
@@ -183,10 +186,14 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       const match = regex.exec(newFullContent);
       if (match?.[0] && match[2]) {
         const blockContent = match[2].trim();
-        // Only confirm if not already confirmed
-        if (!blockContent.includes("✅")) {
+        // Only confirm if not already confirmed (Check metadata OR legacy)
+        if (
+          !blockContent.includes("<!-- STATUS: CONFIRMED -->") &&
+          !blockContent.includes("✅")
+        ) {
           const timestamp = new Date().toLocaleString();
-          const newBlock = `${blockContent}\n\n✅ 确认无误 (${timestamp})`;
+          // Append metadata tag
+          const newBlock = `${blockContent}\n\n✅ 确认无误 (${timestamp})\n<!-- STATUS: CONFIRMED -->`;
           const replacement = `<!-- USER_INPUT_START:${qId} -->\n\n${newBlock}\n\n<!-- USER_INPUT_END:${qId} -->`;
           newFullContent = newFullContent.replace(match[0], replacement);
           updateCount++;
@@ -278,7 +285,10 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
 
             // Status inference logic
             let status: ReviewStatus = "pending";
-            if (blockContent.includes("✅")) {
+            if (
+              blockContent.includes("<!-- STATUS: CONFIRMED -->") ||
+              blockContent.includes("✅")
+            ) {
               status = "confirmed";
             } else if (blockContent.match(/\[x\]/i)) {
               status = "pending"; // Checkboxes interaction kept pending until explicit confirm
@@ -306,9 +316,10 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
 
                     // If content becomes empty after strip, we just have the tag.
                     // If there was user content, we keep it.
+                    // Append metadata tag
                     const newBlock = cleanContent
-                      ? `${cleanContent}\n\n✅ 逻辑已确认 (${timestamp})`
-                      : `✅ 逻辑已确认 (${timestamp})`;
+                      ? `${cleanContent}\n\n✅ 逻辑已确认 (${timestamp})\n<!-- STATUS: CONFIRMED -->`
+                      : `✅ 逻辑已确认 (${timestamp})\n<!-- STATUS: CONFIRMED -->`;
 
                     handleUpdateContent(id, newBlock);
                   }}
