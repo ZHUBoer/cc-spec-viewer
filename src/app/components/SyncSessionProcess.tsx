@@ -10,6 +10,7 @@ export const SyncSessionProcess: FC<PropsWithChildren> = ({ children }) => {
   const { data } = useSuspenseQuery({
     queryKey: sessionProcessesQuery.queryKey,
     queryFn: sessionProcessesQuery.queryFn,
+    refetchInterval: 2000,
   });
 
   useServerEventListener("sessionProcessChanged", async ({ processes }) => {
