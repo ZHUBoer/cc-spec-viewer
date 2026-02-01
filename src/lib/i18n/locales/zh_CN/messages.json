@@ -2305,7 +2305,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        69
+        71
       ]
     ],
     "translation": "显示和行为设置"
@@ -2419,7 +2419,7 @@
       ],
       [
         "src/components/GlobalSidebar.tsx",
-        77
+        79
       ]
     ],
     "translation": "正在加载设置..."
@@ -2562,7 +2562,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        92
+        94
       ]
     ],
     "translation": "通知"
@@ -2573,7 +2573,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        85
+        87
       ]
     ],
     "translation": "会话显示"
@@ -2584,7 +2584,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        112
+        114
       ]
     ],
     "translation": "系统信息"
@@ -2676,7 +2676,7 @@
       ],
       [
         "src/components/GlobalSidebar.tsx",
-        61
+        63
       ]
     ],
     "translation": "显示和通知设置"
@@ -2742,7 +2742,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        66
+        68
       ]
     ],
     "translation": "设置"
@@ -2757,7 +2757,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
-        104
+        107
       ]
     ],
     "translation": "返回项目列表"
@@ -2772,7 +2772,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
-        62
+        64
       ]
     ],
     "translation": "显示 MCP 服务器设置"
@@ -2783,7 +2783,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
-        74
+        76
       ]
     ],
     "translation": "显示定时任务"
@@ -2798,7 +2798,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
-        49
+        51
       ]
     ],
     "translation": "显示会话列表"
@@ -2809,7 +2809,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
-        68
+        70
       ]
     ],
     "translation": ""

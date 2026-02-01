@@ -2305,7 +2305,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        69
+        71
       ]
     ],
     "translation": "Display and behavior settings"
@@ -2419,7 +2419,7 @@
       ],
       [
         "src/components/GlobalSidebar.tsx",
-        77
+        79
       ]
     ],
     "translation": "Loading settings..."
@@ -2562,7 +2562,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        92
+        94
       ]
     ],
     "translation": "Notifications"
@@ -2573,7 +2573,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        85
+        87
       ]
     ],
     "translation": "Session Display"
@@ -2584,7 +2584,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        112
+        114
       ]
     ],
     "translation": "System Information"
@@ -2676,7 +2676,7 @@
       ],
       [
         "src/components/GlobalSidebar.tsx",
-        61
+        63
       ]
     ],
     "translation": "Display and Notification Settings"
@@ -2742,7 +2742,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        66
+        68
       ]
     ],
     "translation": "Settings"
@@ -2757,7 +2757,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
-        104
+        107
       ]
     ],
     "translation": "Back to Projects"
@@ -2772,7 +2772,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
-        62
+        64
       ]
     ],
     "translation": "Show MCP Server Settings"
@@ -2783,7 +2783,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
-        74
+        76
       ]
     ],
     "translation": "Show Scheduler Jobs"
@@ -2798,7 +2798,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
-        49
+        51
       ]
     ],
     "translation": "Show Session List"
@@ -2809,7 +2809,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
-        68
+        70
       ]
     ],
     "translation": "sidebar.tasks.title"

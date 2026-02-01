@@ -8,7 +8,7 @@ import {
   SearchIcon,
   SettingsIcon,
 } from "lucide-react";
-import { type FC, type ReactNode, Suspense, useState } from "react";
+import { type FC, type ReactNode, Suspense, useEffect, useState } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -37,6 +37,7 @@ interface GlobalSidebarProps {
   additionalTabs?: SidebarTab[];
   defaultActiveTab?: string;
   headerButton?: ReactNode;
+  forceCollapsed?: boolean;
 }
 
 export const GlobalSidebar: FC<GlobalSidebarProps> = ({
@@ -45,6 +46,7 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
   additionalTabs = [],
   defaultActiveTab,
   headerButton,
+  forceCollapsed = false,
 }) => {
   const { openSearch } = useSearch();
   const { authEnabled, logout } = useAuth();
@@ -122,6 +124,14 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
     defaultActiveTab ?? allTabs[allTabs.length - 1]?.id ?? "settings",
   );
   const [isExpanded, setIsExpanded] = useState(!!defaultActiveTab);
+
+  // Auto-collapse when forceCollapsed becomes true (e.g. window resize)
+  // But allow user to re-expand it manually
+  useEffect(() => {
+    if (forceCollapsed) {
+      setIsExpanded(false);
+    }
+  }, [forceCollapsed]);
 
   const handleTabClick = (tabId: string) => {
     if (activeTab === tabId && isExpanded) {

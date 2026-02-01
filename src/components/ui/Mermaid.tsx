@@ -65,11 +65,15 @@ function parsedColor(varName: string): string {
   return computedColor;
 }
 
+import { Maximize2Icon } from "lucide-react";
+import { MermaidModal } from "./MermaidModal";
+
 export const Mermaid = ({ chart }: MermaidProps) => {
   const { resolvedTheme } = useTheme();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLButtonElement>(null);
   const [svg, setSvg] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -140,11 +144,36 @@ export const Mermaid = ({ chart }: MermaidProps) => {
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="mermaid-chart flex justify-center p-4 my-6 bg-white dark:bg-neutral-900/50 rounded-lg border border-border overflow-x-auto"
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: Mermaid generates safe SVG
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
+    <>
+      <div className="relative group my-6">
+        <button
+          type="button"
+          ref={containerRef}
+          onClick={() => setIsModalOpen(true)}
+          className="mermaid-chart w-full flex justify-center p-4 bg-white dark:bg-neutral-900/50 rounded-lg border border-border overflow-x-auto cursor-zoom-in hover:border-primary/50 hover:shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Mermaid generates safe SVG
+          dangerouslySetInnerHTML={{ __html: svg }}
+          aria-label="Click to view full screen"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setIsModalOpen(true);
+            }
+          }}
+        />
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <div className="bg-background/80 backdrop-blur-sm p-1.5 rounded-md border shadow-sm text-xs flex items-center gap-1 text-muted-foreground">
+            <Maximize2Icon className="w-3.5 h-3.5" />
+            <span className="sr-only">Expand</span>
+          </div>
+        </div>
+      </div>
+      <MermaidModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        svg={svg}
+        chart={chart}
+      />
+    </>
   );
 };

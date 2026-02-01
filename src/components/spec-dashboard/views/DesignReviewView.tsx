@@ -225,7 +225,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   return (
     <div className="flex h-full bg-background animate-in fade-in duration-300 relative">
       {/* ToC Sidebar */}
-      <div className="hidden lg:block w-64 border-r border-border overflow-y-auto p-4 bg-muted/5">
+      <div className="hidden lg:block w-48 border-r border-border overflow-y-auto p-2 bg-muted/5">
         <div className="font-semibold mb-4 flex items-center gap-2 text-primary">
           <List className="w-4 h-4" /> 目录
         </div>

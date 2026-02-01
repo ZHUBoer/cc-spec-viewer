@@ -13,12 +13,14 @@ export const SessionPageMainWrapper: FC<{
   isMobileSidebarOpen: boolean;
   setIsMobileSidebarOpen: (open: boolean) => void;
   tab: Tab;
+  forceCollapsed?: boolean;
 }> = ({
   projectId,
   sessionId,
   isMobileSidebarOpen,
   setIsMobileSidebarOpen,
   tab,
+  forceCollapsed,
 }) => {
   const { data: projectData } = useProject(projectId);
   const { data: revisionsData } = useGitCurrentRevisions(projectId);
@@ -42,6 +44,7 @@ export const SessionPageMainWrapper: FC<{
           isMobileOpen={isMobileSidebarOpen}
           onMobileOpenChange={setIsMobileSidebarOpen}
           initialTab={tab}
+          forceCollapsed={forceCollapsed}
         />
       </Suspense>
       <Suspense fallback={<Loading />}>

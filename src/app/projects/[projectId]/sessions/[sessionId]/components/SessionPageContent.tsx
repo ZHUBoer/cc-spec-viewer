@@ -1,4 +1,4 @@
-import { type FC, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { useWorkspacePanel } from "@/hooks/useWorkspacePanel";
 
 import { SessionPageMainWrapper } from "./SessionPageMainWrapper";
@@ -11,8 +11,27 @@ export const SessionPageContent: FC<{
 }> = ({ projectId, sessionId, tab }) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { activeMode, panelWidth } = useWorkspacePanel();
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const mainContentWidth = activeMode !== "none" ? 100 - panelWidth : 100;
+
+  // Calculate approximate pixel width of the session area
+  // If undefined/0, assume full width for safety.
+  // We want to collapse sidebar if the remaining width for chat (after 320px sidebar) is too small.
+  // Say < 500px for chat is bad. So if session area < 320 + 500 = 820px, collapse.
+  const sessionAreaPx = (windowWidth * mainContentWidth) / 100;
+
+  // If in Split mode, we might want to be more aggressive with collapsing.
+  const shouldCollapseSidebar = sessionAreaPx < 900;
 
   return (
     <div
@@ -25,6 +44,7 @@ export const SessionPageContent: FC<{
         tab={tab}
         isMobileSidebarOpen={isMobileSidebarOpen}
         setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+        forceCollapsed={shouldCollapseSidebar}
       />
     </div>
   );

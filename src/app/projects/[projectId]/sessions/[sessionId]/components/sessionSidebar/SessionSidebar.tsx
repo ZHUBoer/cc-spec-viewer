@@ -32,6 +32,7 @@ export const SessionSidebar: FC<{
   isMobileOpen?: boolean;
   onMobileOpenChange?: (open: boolean) => void;
   initialTab: Tab;
+  forceCollapsed?: boolean;
 }> = ({
   currentSessionId,
   projectId,
@@ -39,6 +40,7 @@ export const SessionSidebar: FC<{
   isMobileOpen = false,
   onMobileOpenChange,
   initialTab,
+  forceCollapsed,
 }) => {
   const activeSessionId = currentSessionId ?? "";
   const additionalTabs: SidebarTab[] = useMemo(
@@ -88,6 +90,7 @@ export const SessionSidebar: FC<{
           projectId={projectId}
           additionalTabs={additionalTabs}
           defaultActiveTab={initialTab}
+          forceCollapsed={forceCollapsed}
           headerButton={
             <TooltipProvider>
               <Tooltip>

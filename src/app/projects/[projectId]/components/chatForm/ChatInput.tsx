@@ -485,7 +485,7 @@ export const ChatInput: FC<ChatInputProps> = ({
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3 text-muted-foreground/70">
                 <input
                   ref={fileInputRef}
@@ -517,7 +517,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-auto">
                 {enableScheduledSend && sendMode === "immediate" && (
                   <div className="hidden sm:flex items-center gap-2">
                     <Label
@@ -535,7 +535,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                     >
                       <SelectTrigger
                         id="send-mode-desktop"
-                        className="h-9 w-[140px] text-xs font-medium bg-background/50 border-transparent hover:bg-background hover:border-border/50 shadow-none hover:shadow-sm focus:ring-1 focus:ring-primary/20 transition-all duration-200"
+                        className="h-9 w-auto min-w-[120px] max-w-[140px] text-xs font-medium bg-background/50 border-transparent hover:bg-background hover:border-border/50 shadow-none hover:shadow-sm focus:ring-1 focus:ring-primary/20 transition-all duration-200"
                       >
                         <SelectValue />
                       </SelectTrigger>
@@ -574,7 +574,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                     disabled
                   }
                   size={buttonSize}
-                  className="gap-2 px-6 h-9 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 disabled:from-muted disabled:to-muted disabled:shadow-none bg-[length:200%_auto] hover:bg-[position:right_center]"
+                  className="gap-2 px-4 sm:px-6 h-9 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 disabled:from-muted disabled:to-muted disabled:shadow-none bg-[length:200%_auto] hover:bg-[position:right_center]"
                 >
                   {isPending ? (
                     <>
@@ -585,7 +585,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                     </>
                   ) : (
                     <>
-                      <SendIcon className="w-4 h-4" />
+                      <SendIcon className="w-4 h-4 shrink-0" />
                       <span className="hidden sm:inline font-medium">
                         {buttonText}
                       </span>
