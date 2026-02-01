@@ -145,7 +145,7 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
                           </span>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="border-t border-border/60 bg-background">
-                          <div className="p-4 text-xs max-h-[60vh] overflow-y-auto overflow-x-auto">
+                          <div className="p-4 text-xs overflow-x-auto">
                             <MarkdownContent
                               content={`\`\`\`markdown\n${file.content}\n\`\`\``}
                             />
@@ -236,7 +236,7 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden min-h-0 relative">
+      <div className="flex-1 overflow-y-scroll min-h-0 relative">
         {renderContent()}
       </div>
     </div>
