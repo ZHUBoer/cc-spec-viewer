@@ -90,10 +90,32 @@ export const TasksView: FC<TasksViewProps> = ({
       setIsProcessing(true);
 
       // 1. 更新 tasks.md 状态
-      const updatedContent =
-        content +
-        "\n\n<!-- TASKS_CONFIRMED: true -->" +
-        "\n<!-- CONFIRMED_AT: " +
+      const confirmationTag = "<!-- TASKS_CONFIRMED: true -->";
+      const timeTagPrefix = "<!-- CONFIRMED_AT: ";
+
+      let updatedContent = content;
+
+      // 移除旧的确认标记（如果有）
+      if (updatedContent.includes(confirmationTag)) {
+        updatedContent = updatedContent.replace(
+          new RegExp(`${confirmationTag}\\s*`, "g"),
+          "",
+        );
+      }
+      if (updatedContent.includes(timeTagPrefix)) {
+        updatedContent = updatedContent.replace(
+          /<!-- CONFIRMED_AT: .*? -->\s*/g,
+          "",
+        );
+      }
+
+      // 追加新的标记
+      updatedContent =
+        updatedContent.trim() +
+        "\n\n" +
+        confirmationTag +
+        "\n" +
+        timeTagPrefix +
         new Date().toISOString() +
         " -->";
 
@@ -110,57 +132,34 @@ export const TasksView: FC<TasksViewProps> = ({
 
       toast.success("任务规划已确认");
 
-      // 2. 创建新会话并发送 /clear (相当于新开干净会话)
-      toast.info("正在创建实施会话...");
-
-      const clearResponse = await honoClient.api.cc["session-processes"].$post({
-        json: {
-          projectId,
-          input: { text: "/clear" },
-        },
-      });
-
-      const clearData = await clearResponse.json();
-
-      if ("error" in clearData) {
-        throw new Error(clearData.error);
-      }
-
-      const sessionProcessId = clearData.sessionProcess.id;
-
-      // 3. 等待一下让 /clear 完成
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // 4. 在同一会话中继续，发送 /opsx:apply
+      // 2. 创建新会话并直接发送 /opsx:apply
       toast.info("正在启动实施 Agent...");
 
-      const applyResponse = await honoClient.api.cc["session-processes"][
-        ":sessionProcessId"
-      ].continue.$post({
-        param: { sessionProcessId },
-        json: {
-          projectId,
-          baseSessionId: clearData.sessionProcess.sessionId,
-          input: { text: `/opsx:apply ${changeId}` },
+      const createResponse = await honoClient.api.cc["session-processes"].$post(
+        {
+          json: {
+            projectId,
+            input: { text: `/opsx:apply ${changeId}` },
+          },
         },
-      });
+      );
 
-      const applyData = await applyResponse.json();
+      const createData = await createResponse.json();
 
-      if ("error" in applyData) {
-        throw new Error(applyData.error);
+      if ("error" in createData) {
+        throw new Error(createData.error);
       }
 
       toast.success("实施流程已启动，即将跳转...");
 
-      // 5. 导航到会话页面
+      // 3. 导航到会话页面
       navigate({
         to: "/projects/$projectId/session",
         params: {
           projectId,
         },
         search: {
-          sessionId: applyData.sessionProcess.sessionId,
+          sessionId: createData.sessionProcess.sessionId,
         },
       });
     } catch (error) {
@@ -215,37 +214,102 @@ export const TasksView: FC<TasksViewProps> = ({
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <MarkdownContent content={content} />
           </div>
+        </div>
+      </div>
 
-          {isImplementing && (
-            <Alert className="mt-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>⚙️ 实施进行中</AlertTitle>
-              <AlertDescription>
-                OpenSpec 正在引导 Claude 执行任务。进度会自动更新。
-              </AlertDescription>
-            </Alert>
-          )}
+      {/* Footer / Global Actions (Persistent) */}
+      {!readonly && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-background shadow-lg z-10 transition-transform">
+          <div className="max-w-4xl mx-auto">
+            {/* Planning State Actions */}
+            {isPlanning && !tasksConfirmed && (
+              <>
+                <div className="mb-3 flex items-center gap-2">
+                  <h4 className="font-semibold text-base">任务规划评审</h4>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    className="flex-1"
+                    variant="outline"
+                    onClick={handleRegenerateTasks}
+                    disabled={isProcessing}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    {isProcessing ? "处理中..." : "重新生成任务"}
+                  </Button>
 
-          {isCompleted && (
-            <Card className="p-4 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 mt-6">
-              <h4 className="text-lg font-semibold mb-2 flex items-center gap-2 text-green-700 dark:text-green-400">
-                ✨ 实施完成
-              </h4>
-              <p className="text-sm mb-4 text-muted-foreground">
-                所有任务已完成。你可以：
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    onClick={handleConfirmAndStart}
+                    disabled={isProcessing}
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    {isProcessing ? "请求中..." : "确认计划并开始实施"}
+                  </Button>
+                </div>
+                <div className="mt-3 text-xs text-muted-foreground flex items-start gap-1">
+                  <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                  <span>
+                    点击"重新生成"将复制提示词，请在左侧会话中发送以调整任务。
+                    点击"确认"将自动创建新会话并启动实施 Agent。
+                  </span>
+                </div>
+              </>
+            )}
+
+            {/* Planning Confirmed (Waiting) */}
+            {isPlanning && tasksConfirmed && (
+              <div className="text-center py-2">
+                <span className="flex items-center justify-center gap-2 text-primary font-medium">
+                  <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  任务已确认，正在启动实施流程...
+                </span>
+              </div>
+            )}
+
+            {/* Implementing State */}
+            {isImplementing && (
+              <div className="flex items-center justify-between gap-4 py-2">
+                <div className="flex items-center gap-4">
+                  <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  <div>
+                    <p className="font-medium text-sm">实施进行中</p>
+                    <p className="text-xs text-muted-foreground">
+                      执行任务时，请保持页面开启。
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleConfirmAndStart}
+                  disabled={isProcessing}
+                >
+                  <RefreshCw className="h-3 w-3 mr-2" />
+                  重试实施
+                </Button>
+              </div>
+            )}
+
+            {/* Completed State */}
+            {isCompleted && (
+              <div className="flex flex-col sm:flex-row gap-3 items-center">
+                <div className="flex-1">
+                  <p className="font-medium text-green-600 dark:text-green-500 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    实施已完成
+                  </p>
+                </div>
+
                 <Button
                   variant="outline"
                   onClick={() => {
-                    // 导航到项目页面
-                    navigate({
-                      to: "/projects",
-                    });
+                    navigate({ to: "/projects" });
                   }}
                 >
                   查看项目列表
                 </Button>
+
                 <Button
                   className="bg-gray-600 hover:bg-gray-700"
                   onClick={async () => {
@@ -269,12 +333,8 @@ export const TasksView: FC<TasksViewProps> = ({
 
                       navigate({
                         to: "/projects/$projectId/session",
-                        params: {
-                          projectId,
-                        },
-                        search: {
-                          sessionId: data.sessionProcess.sessionId,
-                        },
+                        params: { projectId },
+                        search: { sessionId: data.sessionProcess.sessionId },
                       });
                     } catch (error) {
                       console.error("Failed to archive", error);
@@ -285,62 +345,7 @@ export const TasksView: FC<TasksViewProps> = ({
                   归档此 Change
                 </Button>
               </div>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Footer / Global Actions (Only for Task Planning) */}
-      {isPlanning && !readonly && !tasksConfirmed && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-background shadow-lg z-10 transition-transform">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-3 flex items-center gap-2">
-              <h4 className="font-semibold text-base">任务规划评审</h4>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Option 1: Regenerate Tasks */}
-              <Button
-                className="flex-1"
-                variant="outline"
-                onClick={handleRegenerateTasks}
-                disabled={isProcessing}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {isProcessing ? "处理中..." : "重新生成任务"}
-              </Button>
-
-              {/* Option 2: Confirm and Start */}
-              <Button
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-                onClick={handleConfirmAndStart}
-                disabled={isProcessing}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                {isProcessing ? "请求中..." : "确认计划并开始实施"}
-              </Button>
-            </div>
-
-            {/* Hint */}
-            <div className="mt-3 text-xs text-muted-foreground flex items-start gap-1">
-              <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-              <span>
-                点击"重新生成"将复制提示词，请在左侧会话中发送以调整任务。
-                点击"确认"将自动创建新会话并启动实施 Agent。
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Fallback for when tasks are confirmed but status hasn't updated yet */}
-      {isPlanning && tasksConfirmed && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-background shadow-lg z-10">
-          <div className="max-w-4xl mx-auto text-center py-2">
-            <span className="flex items-center justify-center gap-2 text-primary font-medium">
-              <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              任务已确认，正在启动实施流程...
-            </span>
+            )}
           </div>
         </div>
       )}

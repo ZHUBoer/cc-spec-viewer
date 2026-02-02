@@ -279,10 +279,33 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       setIsProcessing(true);
 
       // 1. 添加最终确认标记
-      const updatedContent =
-        content +
-        "\n\n<!-- DESIGN_FINAL_CONFIRMATION: true -->" +
-        "\n<!-- CONFIRMED_AT: " +
+      // 1. 添加或更新最终确认标记
+      const confirmationTag = "<!-- DESIGN_FINAL_CONFIRMATION: true -->";
+      const timeTagPrefix = "<!-- CONFIRMED_AT: ";
+
+      let updatedContent = content;
+
+      // 移除旧的确认标记（如果有）
+      if (updatedContent.includes(confirmationTag)) {
+        updatedContent = updatedContent.replace(
+          new RegExp(`${confirmationTag}\\s*`, "g"),
+          "",
+        );
+      }
+      if (updatedContent.includes(timeTagPrefix)) {
+        updatedContent = updatedContent.replace(
+          /<!-- CONFIRMED_AT: .*? -->\s*/g,
+          "",
+        );
+      }
+
+      // 追加新的标记
+      updatedContent =
+        updatedContent.trim() +
+        "\n\n" +
+        confirmationTag +
+        "\n" +
+        timeTagPrefix +
         new Date().toISOString() +
         " -->";
 
