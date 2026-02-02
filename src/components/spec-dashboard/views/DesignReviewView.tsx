@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2, List, RefreshCw } from "lucide-react";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 import { MarkdownContent } from "@/app/components/MarkdownContent";
@@ -45,7 +45,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   readonly = false,
 }) => {
   const queryClient = useQueryClient();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessingRef = useRef(false);
 
   // Extract ToC
   const toc = useMemo(() => {
@@ -253,8 +253,9 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   // 重新生成设计
   // 重新生成设计
   const handleRegenerateDesign = async () => {
+    if (isProcessingRef.current) return;
     try {
-      setIsProcessing(true);
+      isProcessingRef.current = true;
       const message = `我已经在 design.md 中添加了一些意见和修改建议。必须仔细阅读我的意见，理解我的意图，然后重新生成 design.md。重点关注标记为 "**用户意见**" 的部分，确保新的设计充分考虑了这些反馈。直接修改 design.md 文件，不要创建新的文件。`;
 
       await navigator.clipboard.writeText(message);
@@ -268,15 +269,16 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       console.error("Failed to copy to clipboard", error);
       toast.error("复制失败，请手动复制");
     } finally {
-      setIsProcessing(false);
+      isProcessingRef.current = false;
     }
   };
 
   // 确认设计并生成任务
   // 确认设计并生成任务
   const handleConfirmDesignAndGenerateTasks = async () => {
+    if (isProcessingRef.current) return;
     try {
-      setIsProcessing(true);
+      isProcessingRef.current = true;
 
       // 1. 添加最终确认标记
       // 1. 添加或更新最终确认标记
@@ -334,7 +336,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       console.error("Failed to confirm design", error);
       toast.error("确认设计失败");
     } finally {
-      setIsProcessing(false);
+      isProcessingRef.current = false;
     }
   };
 
@@ -540,20 +542,18 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
                   className="flex-1 cursor-pointer"
                   variant="outline"
                   onClick={handleRegenerateDesign}
-                  disabled={isProcessing}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  {isProcessing ? "处理中..." : "重新生成设计"}
+                  重新生成设计
                 </Button>
 
                 {/* Option 2: Confirm Design and Generate Tasks */}
                 <Button
                   className="flex-1 bg-green-600 hover:bg-green-700 cursor-pointer"
                   onClick={handleConfirmDesignAndGenerateTasks}
-                  disabled={isProcessing}
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  {isProcessing ? "处理中..." : "设计无误，生成任务"}
+                  设计无误，生成任务
                 </Button>
               </div>
 
