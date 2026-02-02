@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -18,6 +18,7 @@ interface TasksViewProps {
   changeId: string;
   content: string;
   status: OpenSpecChange["status"];
+  readonly?: boolean;
 }
 
 /**
@@ -32,11 +33,25 @@ const parseTasksProgress = (content: string) => {
   return { completed, total, percent };
 };
 
+// Layout components for consistent styling with DesignReviewView
+const Header = () => (
+  <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+    <h4 className="flex items-center gap-2 font-semibold text-primary mb-2">
+      <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+      Task Planning Mode
+    </h4>
+    <p className="text-sm text-foreground/80">
+      请审查生成的实施任务列表。确保所有步骤完整且合理。
+    </p>
+  </div>
+);
+
 export const TasksView: FC<TasksViewProps> = ({
   projectId,
   changeId,
   content,
   status,
+  readonly = false,
 }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -44,6 +59,30 @@ export const TasksView: FC<TasksViewProps> = ({
 
   const progress = useMemo(() => parseTasksProgress(content), [content]);
   const tasksConfirmed = content.includes("<!-- TASKS_CONFIRMED: true -->");
+
+  const isCompleted = status === "completed";
+  const isImplementing = status === "implementing";
+  const isPlanning = status === "task-planning";
+
+  const handleRegenerateTasks = async () => {
+    try {
+      setIsProcessing(true);
+      const message = `我已经查看了 tasks.md 的任务规划，你需要根据我的意见来修改任务列表：\n（请在此处补充具体的修改意见，例如：细分某个任务、添加测试步骤等）。\n\n直接修改 tasks.md 文件，不要创建新的文件。`;
+
+      await navigator.clipboard.writeText(message);
+      toast.success(
+        "提示词已复制！请前往左侧【会话列表】，选择刚才的会话，粘贴并补充意见。",
+        {
+          duration: 5000,
+        },
+      );
+    } catch (error) {
+      console.error("Failed to copy to clipboard", error);
+      toast.error("复制失败，请手动复制");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   // 确认任务规划并开始实施
   const handleConfirmAndStart = async () => {
@@ -133,143 +172,177 @@ export const TasksView: FC<TasksViewProps> = ({
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-4">
-      {/* Progress Card - for implementing and completed states */}
-      {(status === "implementing" || status === "completed") && (
-        <Card className="p-4">
-          <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-            {status === "completed" ? (
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-            ) : (
-              <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            )}
-            实施进度
-          </h4>
-          <Progress value={progress.percent} className="mb-2 h-2" />
-          <p className="text-sm text-muted-foreground">
-            {progress.completed} / {progress.total} 任务已完成
-          </p>
+    <div className="flex h-full bg-background animate-in fade-in duration-300 relative">
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto min-h-0 relative mb-40">
+        <div className="p-6 max-w-4xl mx-auto space-y-4">
+          {isPlanning && <Header />}
 
-          {status === "completed" && (
-            <Alert
-              variant="default"
-              className="mt-3 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
-            >
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-700 dark:text-green-400">
-                所有任务已完成！
-              </AlertTitle>
-              <AlertDescription className="text-green-600 dark:text-green-500">
-                实施阶段完成，可以进行验收或归档。
+          {/* Progress Card - for implementing and completed states */}
+          {(isImplementing || isCompleted) && (
+            <Card className="p-4">
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                {isCompleted ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                ) : (
+                  <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                )}
+                实施进度
+              </h4>
+              <Progress value={progress.percent} className="mb-2 h-2" />
+              <p className="text-sm text-muted-foreground">
+                {progress.completed} / {progress.total} 任务已完成
+              </p>
+
+              {isCompleted && (
+                <Alert
+                  variant="default"
+                  className="mt-3 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
+                >
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-700 dark:text-green-400">
+                    所有任务已完成！
+                  </AlertTitle>
+                  <AlertDescription className="text-green-600 dark:text-green-500">
+                    实施阶段完成，可以进行验收或归档。
+                  </AlertDescription>
+                </Alert>
+              )}
+            </Card>
+          )}
+
+          {/* Markdown Content */}
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <MarkdownContent content={content} />
+          </div>
+
+          {isImplementing && (
+            <Alert className="mt-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>⚙️ 实施进行中</AlertTitle>
+              <AlertDescription>
+                OpenSpec 正在引导 Claude 执行任务。进度会自动更新。
               </AlertDescription>
             </Alert>
           )}
-        </Card>
-      )}
 
-      {/* Markdown Content */}
-      <div className="prose prose-sm dark:prose-invert max-w-none">
-        <MarkdownContent content={content} />
+          {isCompleted && (
+            <Card className="p-4 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 mt-6">
+              <h4 className="text-lg font-semibold mb-2 flex items-center gap-2 text-green-700 dark:text-green-400">
+                ✨ 实施完成
+              </h4>
+              <p className="text-sm mb-4 text-muted-foreground">
+                所有任务已完成。你可以：
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // 导航到项目页面
+                    navigate({
+                      to: "/projects",
+                    });
+                  }}
+                >
+                  查看项目列表
+                </Button>
+                <Button
+                  className="bg-gray-600 hover:bg-gray-700"
+                  onClick={async () => {
+                    try {
+                      const response = await honoClient.api.cc[
+                        "session-processes"
+                      ].$post({
+                        json: {
+                          projectId,
+                          input: { text: `/opsx:archive ${changeId}` },
+                        },
+                      });
+
+                      const data = await response.json();
+
+                      if ("error" in data) {
+                        throw new Error(data.error);
+                      }
+
+                      toast.success("正在归档...");
+
+                      navigate({
+                        to: "/projects/$projectId/session",
+                        params: {
+                          projectId,
+                        },
+                        search: {
+                          sessionId: data.sessionProcess.sessionId,
+                        },
+                      });
+                    } catch (error) {
+                      console.error("Failed to archive", error);
+                      toast.error("归档失败");
+                    }
+                  }}
+                >
+                  归档此 Change
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
 
-      {/* Action Cards */}
-      {status === "task-planning" && !tasksConfirmed && (
-        <Card className="p-4 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
-          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-            🚀 确认并实施
-          </h4>
-          <p className="text-sm mb-3 text-muted-foreground">
-            确认任务规划无误后，将自动创建新会话并启动实施 Agent。
-          </p>
-          <Button
-            onClick={handleConfirmAndStart}
-            disabled={isProcessing}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-          >
-            {isProcessing ? "正在启动..." : "确认任务规划并实施"}
-          </Button>
-        </Card>
-      )}
+      {/* Footer / Global Actions (Only for Task Planning) */}
+      {isPlanning && !readonly && !tasksConfirmed && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-background shadow-lg z-10 transition-transform">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-3 flex items-center gap-2">
+              <h4 className="font-semibold text-base">任务规划评审</h4>
+            </div>
 
-      {/* Fallback state if somehow confirmed but not implementing yet (should normally jump) */}
-      {status === "task-planning" && tasksConfirmed && (
-        <Card className="p-4 bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800">
-          <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            任务已确认，正在等待状态更新...
-          </p>
-        </Card>
-      )}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Option 1: Regenerate Tasks */}
+              <Button
+                className="flex-1"
+                variant="outline"
+                onClick={handleRegenerateTasks}
+                disabled={isProcessing}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {isProcessing ? "处理中..." : "重新生成任务"}
+              </Button>
 
-      {status === "implementing" && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>⚙️ 实施进行中</AlertTitle>
-          <AlertDescription>
-            OpenSpec 正在引导 Claude 执行任务。进度会自动更新。
-          </AlertDescription>
-        </Alert>
-      )}
+              {/* Option 2: Confirm and Start */}
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={handleConfirmAndStart}
+                disabled={isProcessing}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                {isProcessing ? "请求中..." : "确认计划并开始实施"}
+              </Button>
+            </div>
 
-      {status === "completed" && (
-        <Card className="p-4 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
-          <h4 className="text-lg font-semibold mb-2 flex items-center gap-2 text-green-700 dark:text-green-400">
-            ✨ 实施完成
-          </h4>
-          <p className="text-sm mb-4 text-muted-foreground">
-            所有任务已完成。你可以：
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                // 导航到项目页面
-                navigate({
-                  to: "/projects",
-                });
-              }}
-            >
-              查看项目列表
-            </Button>
-            <Button
-              className="bg-gray-600 hover:bg-gray-700"
-              onClick={async () => {
-                try {
-                  const response = await honoClient.api.cc[
-                    "session-processes"
-                  ].$post({
-                    json: {
-                      projectId,
-                      input: { text: `/opsx:archive ${changeId}` },
-                    },
-                  });
-
-                  const data = await response.json();
-
-                  if ("error" in data) {
-                    throw new Error(data.error);
-                  }
-
-                  toast.success("正在归档...");
-
-                  navigate({
-                    to: "/projects/$projectId/session",
-                    params: {
-                      projectId,
-                    },
-                    search: {
-                      sessionId: data.sessionProcess.sessionId,
-                    },
-                  });
-                } catch (error) {
-                  console.error("Failed to archive", error);
-                  toast.error("归档失败");
-                }
-              }}
-            >
-              归档此 Change
-            </Button>
+            {/* Hint */}
+            <div className="mt-3 text-xs text-muted-foreground flex items-start gap-1">
+              <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+              <span>
+                点击"重新生成"将复制提示词，请在左侧会话中发送以调整任务。
+                点击"确认"将自动创建新会话并启动实施 Agent。
+              </span>
+            </div>
           </div>
-        </Card>
+        </div>
+      )}
+
+      {/* Fallback for when tasks are confirmed but status hasn't updated yet */}
+      {isPlanning && tasksConfirmed && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-background shadow-lg z-10">
+          <div className="max-w-4xl mx-auto text-center py-2">
+            <span className="flex items-center justify-center gap-2 text-primary font-medium">
+              <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              任务已确认，正在启动实施流程...
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );

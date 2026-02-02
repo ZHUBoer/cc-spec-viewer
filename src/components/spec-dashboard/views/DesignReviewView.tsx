@@ -255,9 +255,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   const handleRegenerateDesign = async () => {
     try {
       setIsProcessing(true);
-      const message = `我已经在 design.md 中添加了一些意见和修改建议。请仔细阅读我的评论，理解我的意图，然后重新生成 design.md。
-
-重点关注标记为 "**用户意见**" 的部分，确保新的设计充分考虑了这些反馈。`;
+      const message = `我已经在 design.md 中添加了一些意见和修改建议。必须仔细阅读我的意见，理解我的意图，然后重新生成 design.md。重点关注标记为 "**用户意见**" 的部分，确保新的设计充分考虑了这些反馈。直接修改 design.md 文件，不要创建新的文件。`;
 
       await navigator.clipboard.writeText(message);
       toast.success(
@@ -296,7 +294,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       );
 
       // 2. 复制提示词
-      const message = `设计已确认。请根据 design.md 生成详细的实现任务列表（tasks.md）。`;
+      const message = `设计已确认。按照 artifact 的构建要求，根据 design.md 生成 tasks.md。`;
       await navigator.clipboard.writeText(message);
 
       await queryClient.invalidateQueries({
