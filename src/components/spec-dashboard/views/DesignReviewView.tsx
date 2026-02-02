@@ -508,7 +508,6 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
           <div className="absolute bottom-0 left-48 right-0 p-4 border-t border-border bg-background shadow-lg z-10">
             <div className="max-w-4xl mx-auto">
               <div className="mb-3 flex items-center gap-2">
-                <span className="text-lg">🎯</span>
                 <h4 className="font-semibold text-base">
                   设计评审完成 - 请选择下一步
                 </h4>
@@ -523,7 +522,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
                   disabled={isProcessing}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  {isProcessing ? "处理中..." : "🔄 重新生成设计"}
+                  {isProcessing ? "处理中..." : "重新生成设计"}
                 </Button>
 
                 {/* Option 2: Confirm Design and Generate Tasks */}
@@ -533,7 +532,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
                   disabled={isProcessing}
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  {isProcessing ? "处理中..." : "✅ 设计无误，生成任务"}
+                  {isProcessing ? "处理中..." : "设计无误，生成任务"}
                 </Button>
               </div>
 

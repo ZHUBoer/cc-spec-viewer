@@ -216,15 +216,6 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsAddingComment(true)}
-                  className="h-8"
-                >
-                  <MessageSquarePlus className="w-4 h-4 mr-1" />
-                  添加意见
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
                   onClick={() => setIsEditing(true)}
                   className="h-8"
                 >
