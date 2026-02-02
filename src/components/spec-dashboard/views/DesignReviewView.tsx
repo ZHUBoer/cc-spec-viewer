@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { honoClient } from "@/lib/api/client";
-import { cn } from "@/lib/utils";
 
 import { specDashboardService } from "../SpecDashboardService";
 import { ReviewBlock, type ReviewStatus } from "./ReviewBlock";
@@ -95,6 +94,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       pending: 0,
       commented: 0,
       confirmed: 0,
+      withOpinion: 0,
     };
 
     let lastIndex = 0;
@@ -131,14 +131,25 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       const isConfirmed =
         blockContent.includes("<!-- STATUS: CONFIRMED -->") ||
         blockContent.includes("✅");
-      const hasComment = blockContent.includes("**用户意见**");
+
+      // 判断是否是用户添加了意见或修改：
+      // 1. 包含用户意见标记
+      // 2. 或者内容不为空，且不是占位符文本
+      const hasOpinionMark = blockContent.includes("**用户意见**");
+      if (hasOpinionMark) {
+        stats.withOpinion++;
+      }
+
+      const hasUserContent =
+        hasOpinionMark ||
+        (blockContent.trim() &&
+          !blockContent.includes("(待确认：请审查上方内容)") &&
+          !blockContent.includes("(待确认)") &&
+          blockContent.replace(/\s+/g, "") !== ""); // 不是纯空白
 
       if (isConfirmed) {
         stats.confirmed++;
-      } else if (
-        hasComment ||
-        (!blockContent.includes("(待确认") && blockContent.trim())
-      ) {
+      } else if (hasUserContent) {
         stats.commented++;
       } else {
         stats.pending++;
@@ -167,7 +178,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
 
   // 计算是否所有块都已处理（confirmed 或 commented）
   const allBlocksProcessed = blockStats.pending === 0 && blockStats.total > 0;
-  const hasComments = blockStats.commented > 0;
+  const hasComments = blockStats.commented > 0 || blockStats.withOpinion > 0;
 
   const handleUpdateContent = async (id: string, newBlockContent: string) => {
     try {
@@ -461,14 +472,18 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
               blockContent.includes("✅")
             ) {
               status = "confirmed";
-            } else if (blockContent.includes("**用户意见**")) {
-              // 如果包含用户意见标记，说明已添加评论
+            } else if (
+              blockContent.includes("**用户意见**") ||
+              (blockContent.trim() &&
+                !blockContent.includes("(待确认：请审查上方内容)") &&
+                !blockContent.includes("(待确认)") &&
+                blockContent.replace(/\s+/g, "") !== "")
+            ) {
+              // 用户已添加内容或意见
               status = "commented";
             } else if (blockContent.match(/\[x\]/i)) {
-              status = "pending"; // Checkboxes interaction kept pending until explicit confirm
-            } else if (blockContent && !blockContent.includes("(待确认")) {
-              // If content changed but no confirm tag
-              status = "commented";
+              // 复选框勾选也算作用户交互，但仍是 pending 直到显式确认
+              status = "pending";
             }
 
             const isQuestion = questionBlockIds.includes(id);
@@ -582,32 +597,31 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
                   <div className="mb-3 text-sm text-blue-600 dark:text-blue-400 flex items-start gap-2">
                     <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <span>
-                      检测到 {blockStats.commented} 个意见，可以让 Claude
+                      检测到您添加了意见或修改，可以让 Claude
                       根据反馈重新生成设计
                     </span>
                   </div>
                 )}
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  {/* Option 1: Regenerate Design (only if has comments) */}
-                  {hasComments && (
-                    <Button
-                      className="flex-1"
-                      variant="outline"
-                      onClick={handleRegenerateDesign}
-                      disabled={isProcessing}
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      {isProcessing ? "处理中..." : "🔄 根据意见重新生成"}
-                    </Button>
-                  )}
+                  {/* Option 1: Regenerate Design (Always available now) */}
+                  <Button
+                    className="flex-1"
+                    variant="outline"
+                    onClick={handleRegenerateDesign}
+                    disabled={isProcessing}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    {isProcessing
+                      ? "处理中..."
+                      : hasComments
+                        ? "🔄 根据意见重新生成"
+                        : "🔄 重新生成设计"}
+                  </Button>
 
                   {/* Option 2: Confirm Design and Generate Tasks */}
                   <Button
-                    className={cn(
-                      "flex-1 bg-green-600 hover:bg-green-700",
-                      !hasComments && "sm:max-w-md sm:mx-auto",
-                    )}
+                    className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={handleConfirmDesignAndGenerateTasks}
                     disabled={isProcessing}
                   >
