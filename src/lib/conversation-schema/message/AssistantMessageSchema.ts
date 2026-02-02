@@ -23,7 +23,7 @@ export const AssistantMessageSchema = z.object({
   model: z.string(),
   content: z.array(AssistantMessageContentSchema),
   stop_reason: z.string().nullable(),
-  stop_sequence: z.string().nullable(),
+  stop_sequence: z.string().nullable().optional(),
   usage: z.object({
     input_tokens: z.number(),
     cache_creation_input_tokens: z.number().optional(),

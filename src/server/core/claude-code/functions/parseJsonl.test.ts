@@ -374,5 +374,51 @@ describe("parseJsonl", () => {
         expect(entry.parentUuid).toBeNull();
       }
     });
+
+    it("Can parse Assistant entries with missing stop_sequence (repro Mode Error)", () => {
+      const jsonl = JSON.stringify({
+        parentUuid: "4095c49f-6da8-4e06-ab79-1561b8bc0f4b",
+        isSidechain: false,
+        userType: "external",
+        cwd: "/Users/fage/Documents/ztrip/trn-ztrip-common-vip-nfes-function",
+        sessionId: "cdb8f14d-9516-4355-b100-1568d7716ca5",
+        version: "2.0.44",
+        gitBranch: "feat/spec-forge-test-3",
+        message: {
+          id: "msg_1770014832794776791",
+          type: "message",
+          role: "assistant",
+          model: "kimi-k2.5",
+          content: [
+            {
+              type: "tool_use",
+              id: "Bash:16",
+              name: "Bash",
+              input: {
+                command:
+                  "npm install @ctrip/openspec --save-dev 2>&1 | tail -10",
+                description: "尝试安装 @ctrip/openspec 包",
+                timeout: 120000,
+              },
+            },
+          ],
+          stop_reason: "tool_use",
+          usage: { input_tokens: 28232, output_tokens: 159 },
+          // stop_sequence is missing here
+        },
+        type: "assistant",
+        uuid: "ce3464e2-e857-400c-9735-ac33e56228a8",
+        timestamp: "2026-02-02T06:47:15.536Z",
+      });
+
+      const result = parseJsonl(jsonl);
+
+      // Should succeed, but currently fails (returns ErrorJsonl)
+      // We expect it to be an array of length 1
+      expect(result).toHaveLength(1);
+      // Once fixed, this should be 'assistant'. Before fix, it might be 'x-error' if we were strictly asserting failure first.
+      // But let's assert what we WANT:
+      expect(result[0]).toHaveProperty("type", "assistant");
+    });
   });
 });
