@@ -1,4 +1,4 @@
-import { Trans, useLingui } from "@lingui/react";
+import { useLingui } from "@lingui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
