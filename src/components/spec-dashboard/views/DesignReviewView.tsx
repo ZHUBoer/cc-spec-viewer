@@ -1,5 +1,4 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { AlertCircle, CheckCircle2, List, RefreshCw } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -8,7 +7,6 @@ import { MarkdownContent } from "@/app/components/MarkdownContent";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { honoClient } from "@/lib/api/client";
 
 import { specDashboardService } from "../SpecDashboardService";
 import { ReviewBlock, type ReviewStatus } from "./ReviewBlock";
@@ -44,11 +42,9 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   projectId,
   changeId,
   content,
-  onRefine,
   readonly = false,
 }) => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Extract ToC
@@ -255,6 +251,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   };
 
   // 重新生成设计
+  // 重新生成设计
   const handleRegenerateDesign = async () => {
     try {
       setIsProcessing(true);
@@ -262,39 +259,22 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
 
 重点关注标记为 "**用户意见**" 的部分，确保新的设计充分考虑了这些反馈。`;
 
-      const response = await honoClient.api.cc["session-processes"].$post({
-        json: {
-          projectId,
-          input: { text: message },
+      await navigator.clipboard.writeText(message);
+      toast.success(
+        "提示词已复制！请前往左侧【会话列表】，选择刚才的会话，粘贴并发送。",
+        {
+          duration: 5000,
         },
-      });
-
-      const data = await response.json();
-
-      if ("error" in data) {
-        throw new Error(data.error);
-      }
-
-      toast.success("正在重新生成设计文档...");
-
-      // 导航到会话页面
-      navigate({
-        to: "/projects/$projectId/session",
-        params: {
-          projectId,
-        },
-        search: {
-          sessionId: data.sessionProcess.sessionId,
-        },
-      });
+      );
     } catch (error) {
-      console.error("Failed to regenerate design", error);
-      toast.error("重新生成设计失败");
+      console.error("Failed to copy to clipboard", error);
+      toast.error("复制失败，请手动复制");
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // 确认设计并生成任务
   // 确认设计并生成任务
   const handleConfirmDesignAndGenerateTasks = async () => {
     try {
@@ -315,38 +295,20 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
         updatedContent,
       );
 
-      // 2. 生成任务列表
+      // 2. 复制提示词
       const message = `设计已确认。请根据 design.md 生成详细的实现任务列表（tasks.md）。`;
-
-      const response = await honoClient.api.cc["session-processes"].$post({
-        json: {
-          projectId,
-          input: { text: message },
-        },
-      });
-
-      const data = await response.json();
-
-      if ("error" in data) {
-        throw new Error(data.error);
-      }
+      await navigator.clipboard.writeText(message);
 
       await queryClient.invalidateQueries({
         queryKey: ["openspec", "change", projectId, changeId],
       });
 
-      toast.success("设计已确认，正在生成任务列表...");
-
-      // 导航到会话页面
-      navigate({
-        to: "/projects/$projectId/session",
-        params: {
-          projectId,
+      toast.success(
+        "设计已确认！提示词已复制。请前往左侧【会话列表】，选择刚才的会话，粘贴并发送以生成任务。",
+        {
+          duration: 6000,
         },
-        search: {
-          sessionId: data.sessionProcess.sessionId,
-        },
-      });
+      );
     } catch (error) {
       console.error("Failed to confirm design", error);
       toast.error("确认设计失败");
@@ -579,8 +541,8 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
               <div className="mt-3 text-xs text-muted-foreground flex items-start gap-1">
                 <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
                 <span>
-                  design.md 是与 Claude
-                  对齐认知的关键环节。如有疑问或需调整，建议选择"重新生成设计"进行迭代。
+                  为保证上下文连续性，点击按钮后将<b>复制提示词</b>
+                  ，请在左侧列表选择<b>原会话</b>继续对话。
                 </span>
               </div>
             </div>

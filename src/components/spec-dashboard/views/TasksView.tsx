@@ -45,11 +45,12 @@ export const TasksView: FC<TasksViewProps> = ({
   const progress = useMemo(() => parseTasksProgress(content), [content]);
   const tasksConfirmed = content.includes("<!-- TASKS_CONFIRMED: true -->");
 
-  // 确认任务规划
-  const handleConfirmTasks = async () => {
+  // 确认任务规划并开始实施
+  const handleConfirmAndStart = async () => {
     try {
       setIsProcessing(true);
 
+      // 1. 更新 tasks.md 状态
       const updatedContent =
         content +
         "\n\n<!-- TASKS_CONFIRMED: true -->" +
@@ -69,20 +70,10 @@ export const TasksView: FC<TasksViewProps> = ({
       });
 
       toast.success("任务规划已确认");
-    } catch (error) {
-      console.error("Failed to confirm tasks", error);
-      toast.error("确认任务失败");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
-  // 开始实施（/clear + /opsx:apply）
-  const handleStartImplementation = async () => {
-    try {
-      setIsProcessing(true);
+      // 2. 创建新会话并发送 /clear (相当于新开干净会话)
+      toast.info("正在创建实施会话...");
 
-      // 1. 创建会话并发送 /clear
       const clearResponse = await honoClient.api.cc["session-processes"].$post({
         json: {
           projectId,
@@ -98,12 +89,12 @@ export const TasksView: FC<TasksViewProps> = ({
 
       const sessionProcessId = clearData.sessionProcess.id;
 
-      toast.info("正在清空上下文...");
-
-      // 2. 等待一下让 /clear 完成
+      // 3. 等待一下让 /clear 完成
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // 3. 在同一会话中继续，发送 /opsx:apply
+      // 4. 在同一会话中继续，发送 /opsx:apply
+      toast.info("正在启动实施 Agent...");
+
       const applyResponse = await honoClient.api.cc["session-processes"][
         ":sessionProcessId"
       ].continue.$post({
@@ -121,9 +112,9 @@ export const TasksView: FC<TasksViewProps> = ({
         throw new Error(applyData.error);
       }
 
-      toast.success("正在启动实施流程...");
+      toast.success("实施流程已启动，即将跳转...");
 
-      // 4. 导航到会话页面
+      // 5. 导航到会话页面
       navigate({
         to: "/projects/$projectId/session",
         params: {
@@ -134,8 +125,8 @@ export const TasksView: FC<TasksViewProps> = ({
         },
       });
     } catch (error) {
-      console.error("Failed to start implementation", error);
-      toast.error("启动实施失败");
+      console.error("Failed to confirm and start", error);
+      toast.error("启动实施失败，请重试");
     } finally {
       setIsProcessing(false);
     }
@@ -185,46 +176,27 @@ export const TasksView: FC<TasksViewProps> = ({
       {status === "task-planning" && !tasksConfirmed && (
         <Card className="p-4 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
           <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-            📋 任务规划确认
+            🚀 确认并实施
           </h4>
           <p className="text-sm mb-3 text-muted-foreground">
-            请仔细审查任务列表。点击确认后，将开始实施。
+            确认任务规划无误后，将自动创建新会话并启动实施 Agent。
           </p>
           <Button
-            onClick={handleConfirmTasks}
+            onClick={handleConfirmAndStart}
             disabled={isProcessing}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
           >
-            {isProcessing ? "处理中..." : "确认任务规划"}
+            {isProcessing ? "正在启动..." : "确认任务规划并实施"}
           </Button>
         </Card>
       )}
 
+      {/* Fallback state if somehow confirmed but not implementing yet (should normally jump) */}
       {status === "task-planning" && tasksConfirmed && (
-        <Card className="p-4 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
-          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2 text-green-700 dark:text-green-400">
-            🚀 准备开始实施
-          </h4>
-          <p className="text-sm mb-3 text-muted-foreground">
-            任务规划已确认。点击按钮后将：
+        <Card className="p-4 bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            任务已确认，正在等待状态更新...
           </p>
-          <ol className="text-sm mb-3 ml-4 list-decimal space-y-1 text-muted-foreground">
-            <li>
-              清空当前上下文 (<code className="text-xs">/clear</code>)
-            </li>
-            <li>
-              启动 OpenSpec 实施流程 (
-              <code className="text-xs">/opsx:apply {changeId}</code>)
-            </li>
-            <li>OpenSpec 将引导 Claude 自动完成所有任务</li>
-          </ol>
-          <Button
-            onClick={handleStartImplementation}
-            disabled={isProcessing}
-            className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
-          >
-            {isProcessing ? "处理中..." : "开始实施"}
-          </Button>
         </Card>
       )}
 
