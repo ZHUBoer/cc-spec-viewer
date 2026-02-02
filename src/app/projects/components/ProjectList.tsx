@@ -64,7 +64,7 @@ export const ProjectList: FC = () => {
             </p>
           </CardContent>
           <CardContent className="pt-0">
-            <Button asChild className="w-full">
+            <Button asChild className="w-full cursor-pointer">
               <Link
                 to={"/projects/$projectId/session"}
                 params={{ projectId: project.id }}

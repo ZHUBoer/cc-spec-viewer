@@ -344,12 +344,14 @@ export const SchedulerJobDialog: FC<SchedulerJobDialogProps> = ({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
+            className="cursor-pointer"
           >
             <Trans id="common.cancel" />
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={!isFormValid || isSubmitting}
+            className="cursor-pointer"
           >
             {isSubmitting ? (
               <Trans id="common.saving" />

@@ -46,7 +46,7 @@ export const McpTab: FC<{ projectId: string }> = ({ projectId }) => {
             onClick={handleReload}
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 cursor-pointer"
             disabled={isLoading || isFetching}
             title={i18n._("Reload MCP servers")}
           >

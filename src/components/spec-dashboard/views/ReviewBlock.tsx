@@ -107,7 +107,7 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
               />
               <label
                 htmlFor={`cb-${index}`}
-                className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mt-1 whitespace-pre-wrap"
+                className="text-sm leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mt-1 whitespace-pre-wrap"
               >
                 {line.replace(/^(\s*[-*]?\s*)\[ \]/, "$1").trim()}
               </label>
@@ -128,7 +128,7 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
               />
               <label
                 htmlFor={`cb-${index}`}
-                className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mt-1 whitespace-pre-wrap text-muted-foreground line-through decoration-muted-foreground/50"
+                className="text-sm leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mt-1 whitespace-pre-wrap text-muted-foreground line-through decoration-muted-foreground/50"
               >
                 {line.replace(/^(\s*[-*]?\s*)\[x\]/i, "$1").trim()}
               </label>
@@ -165,7 +165,7 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
                   // Using the stripped content as the new content
                   onUpdate(displayContent);
                 }}
-                className="text-muted-foreground hover:text-foreground h-8"
+                className="text-muted-foreground hover:text-foreground h-8 cursor-pointer"
               >
                 <Undo2 className="w-4 h-4 mr-1" />
                 撤销
@@ -217,7 +217,7 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsEditing(true)}
-                  className="h-8"
+                  className="h-8 cursor-pointer"
                 >
                   <Edit2 className="w-4 h-4 mr-1" />
                   补充 / 修改
@@ -226,7 +226,7 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
                   <Button
                     size="sm"
                     onClick={onConfirm}
-                    className="h-8 bg-green-600 hover:bg-green-700 text-white"
+                    className="h-8 bg-green-600 hover:bg-green-700 text-white cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4 mr-1" />
                     确认无误
@@ -262,10 +262,12 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
                     setIsAddingComment(false);
                     setUserComment("");
                   }}
+                  className="cursor-pointer"
                 >
                   取消
                 </Button>
                 <Button
+                  className="cursor-pointer"
                   size="sm"
                   onClick={handleSubmitComment}
                   disabled={!userComment.trim()}
@@ -297,6 +299,7 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
         />
         <div className="flex justify-end gap-2">
           <Button
+            className="cursor-pointer"
             variant="ghost"
             size="sm"
             onClick={() => {
@@ -306,7 +309,7 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
           >
             取消
           </Button>
-          <Button size="sm" onClick={handleSave}>
+          <Button className="cursor-pointer" size="sm" onClick={handleSave}>
             保存
           </Button>
         </div>

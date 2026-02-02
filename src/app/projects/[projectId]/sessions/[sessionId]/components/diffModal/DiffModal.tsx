@@ -411,7 +411,7 @@ export const DiffModal: FC<DiffModalProps> = ({
             disabled={
               isDiffLoading || isLoadingRevisions || compareFrom === compareTo
             }
-            className="sm:self-end w-full sm:w-auto"
+            className="sm:self-end w-full sm:w-auto cursor-pointer"
           >
             {isDiffLoading ? (
               <>
@@ -463,7 +463,7 @@ export const DiffModal: FC<DiffModalProps> = ({
                   onClick={() =>
                     setIsCommitSectionExpanded(!isCommitSectionExpanded)
                   }
-                  className="w-full flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-t-lg"
+                  className="w-full flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-t-lg cursor-pointer"
                 >
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     <Trans id="diff.commit.changes" />
@@ -486,6 +486,7 @@ export const DiffModal: FC<DiffModalProps> = ({
                           variant="ghost"
                           onClick={handleSelectAll}
                           disabled={commitMutation.isPending}
+                          className="cursor-pointer"
                         >
                           <Trans id="diff.select.all" />
                         </Button>
@@ -494,6 +495,7 @@ export const DiffModal: FC<DiffModalProps> = ({
                           variant="ghost"
                           onClick={handleDeselectAll}
                           disabled={commitMutation.isPending}
+                          className="cursor-pointer"
                         >
                           <Trans id="diff.deselect.all" />
                         </Button>
@@ -553,7 +555,7 @@ export const DiffModal: FC<DiffModalProps> = ({
                       <Button
                         onClick={handleCommit}
                         disabled={isCommitDisabled}
-                        className="w-full sm:w-auto"
+                        className="w-full sm:w-auto cursor-pointer"
                       >
                         {commitMutation.isPending ? (
                           <>
@@ -568,7 +570,7 @@ export const DiffModal: FC<DiffModalProps> = ({
                         onClick={handlePush}
                         disabled={pushMutation.isPending}
                         variant="outline"
-                        className="w-full sm:w-auto"
+                        className="w-full sm:w-auto cursor-pointer"
                       >
                         {pushMutation.isPending ? (
                           <>
@@ -585,7 +587,7 @@ export const DiffModal: FC<DiffModalProps> = ({
                           isCommitDisabled || commitAndPushMutation.isPending
                         }
                         variant="secondary"
-                        className="w-full sm:w-auto"
+                        className="w-full sm:w-auto cursor-pointer"
                       >
                         {commitAndPushMutation.isPending ? (
                           <>

@@ -132,7 +132,7 @@ export const SessionsTab: FC<{
                   className={cn(
                     "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
                     "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                    "text-sidebar-foreground/70",
+                    "text-sidebar-foreground/70 cursor-pointer",
                   )}
                 >
                   <SearchIcon className="w-4 h-4" />
@@ -202,7 +202,7 @@ export const SessionsTab: FC<{
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute right-1 top-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="absolute right-1 top-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                 onClick={(e) => handleDeleteClick(e, session.id, title)}
               >
                 <TrashIcon className="w-3 h-3" />
@@ -258,7 +258,7 @@ export const SessionsTab: FC<{
               disabled={isFetchingNextPage}
               variant="outline"
               size="sm"
-              className="w-full"
+              className="w-full cursor-pointer"
             >
               {isFetchingNextPage ? (
                 <Trans id="common.loading" />

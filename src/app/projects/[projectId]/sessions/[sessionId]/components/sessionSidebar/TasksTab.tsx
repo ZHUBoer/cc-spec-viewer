@@ -42,7 +42,7 @@ const StatusIndicator: FC<{
       type="button"
       onClick={onClick}
       className={cn(
-        "flex items-center justify-center w-6 h-6 rounded-md shrink-0 transition-all duration-200",
+        "flex items-center justify-center w-6 h-6 rounded-md shrink-0 transition-all duration-200 cursor-pointer",
         "hover:scale-110 active:scale-95",
         status === "completed" &&
           "bg-green-500/20 text-green-600 dark:text-green-400 hover:bg-green-500/30",
@@ -255,7 +255,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 w-8 p-0 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                className="h-8 w-8 p-0 rounded-full hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
               >
                 <PlusIcon className="w-4 h-4" />
               </Button>
@@ -292,7 +292,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
                   <Button
                     type="submit"
                     disabled={createMutation.isPending || !subject.trim()}
-                    className="w-full sm:w-auto"
+                    className="w-full sm:w-auto cursor-pointer"
                   >
                     {createMutation.isPending ? (
                       <>

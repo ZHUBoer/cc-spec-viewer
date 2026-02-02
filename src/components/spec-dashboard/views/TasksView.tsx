@@ -229,7 +229,7 @@ export const TasksView: FC<TasksViewProps> = ({
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button
-                    className="flex-1"
+                    className="flex-1 cursor-pointer"
                     variant="outline"
                     onClick={handleRegenerateTasks}
                     disabled={isProcessing}
@@ -239,7 +239,7 @@ export const TasksView: FC<TasksViewProps> = ({
                   </Button>
 
                   <Button
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer"
                     onClick={handleConfirmAndStart}
                     disabled={isProcessing}
                   >
@@ -284,6 +284,7 @@ export const TasksView: FC<TasksViewProps> = ({
                   size="sm"
                   onClick={handleConfirmAndStart}
                   disabled={isProcessing}
+                  className="cursor-pointer"
                 >
                   <RefreshCw className="h-3 w-3 mr-2" />
                   重试实施
@@ -306,12 +307,13 @@ export const TasksView: FC<TasksViewProps> = ({
                   onClick={() => {
                     navigate({ to: "/projects" });
                   }}
+                  className="cursor-pointer"
                 >
                   查看项目列表
                 </Button>
 
                 <Button
-                  className="bg-gray-600 hover:bg-gray-700"
+                  className="bg-gray-600 hover:bg-gray-700 cursor-pointer"
                   onClick={async () => {
                     try {
                       const response = await honoClient.api.cc[

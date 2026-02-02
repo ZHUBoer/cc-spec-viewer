@@ -356,7 +356,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
                   .getElementById(item.id)
                   ?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="block text-sm py-1 px-2 rounded hover:bg-muted text-muted-foreground hover:text-foreground truncate transition-colors"
+              className="block text-sm py-1 px-2 rounded hover:bg-muted text-muted-foreground hover:text-foreground truncate transition-colors cursor-pointer"
               style={{ marginLeft: `${(item.level - 1) * 0.75}rem` }}
               title={item.text}
             >
@@ -509,7 +509,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
                       </div>
                       <Button
                         onClick={handleUnifiedConfirm}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
                       >
                         <CheckCircle2 className="w-4 h-4 mr-2" />
                         确认所有问题方案
@@ -537,7 +537,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Option 1: Regenerate Design (Always available now) */}
                 <Button
-                  className="flex-1"
+                  className="flex-1 cursor-pointer"
                   variant="outline"
                   onClick={handleRegenerateDesign}
                   disabled={isProcessing}
@@ -548,7 +548,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
 
                 {/* Option 2: Confirm Design and Generate Tasks */}
                 <Button
-                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  className="flex-1 bg-green-600 hover:bg-green-700 cursor-pointer"
                   onClick={handleConfirmDesignAndGenerateTasks}
                   disabled={isProcessing}
                 >

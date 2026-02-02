@@ -222,7 +222,7 @@ export const CommandCompletion = forwardRef<
                       variant="ghost"
                       size="sm"
                       className={cn(
-                        "w-full justify-start text-left font-mono text-sm h-auto min-h-9 px-3 py-2 min-w-0 transition-colors duration-150",
+                        "w-full justify-start text-left font-mono text-sm h-auto min-h-9 px-3 py-2 min-w-0 transition-colors duration-150 cursor-pointer",
                         index === selectedIndex
                           ? "bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-foreground border border-blue-500/20"
                           : "hover:bg-accent/50",

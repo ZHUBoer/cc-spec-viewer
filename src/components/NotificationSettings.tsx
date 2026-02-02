@@ -85,7 +85,7 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
               variant="outline"
               size="sm"
               onClick={handleTestSound}
-              className="px-3"
+              className="px-3 cursor-pointer"
             >
               <Trans id="notification.test" />
             </Button>

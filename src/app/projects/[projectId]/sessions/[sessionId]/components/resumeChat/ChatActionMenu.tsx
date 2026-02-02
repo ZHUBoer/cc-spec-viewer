@@ -61,7 +61,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
             size="sm"
             onClick={onOpenDiffModal}
             disabled={isPending}
-            className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40"
+            className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40 cursor-pointer"
             title={i18n._({
               id: "control.open_git_dialog",
               message: "Open Git Dialog",
@@ -79,7 +79,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
           size="sm"
           onClick={() => openBrowser("about:blank")}
           disabled={isPending}
-          className="h-7 px-2 text-xs bg-muted/20 rounded-lg border border-border/40"
+          className="h-7 px-2 text-xs bg-muted/20 rounded-lg border border-border/40 cursor-pointer"
           title={i18n._({
             id: "control.open_browser",
             message: "Open Browser",
@@ -92,7 +92,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
           variant="ghost"
           size="sm"
           disabled={isPending || isNewChat}
-          className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40"
+          className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40 cursor-pointer"
           onClick={handleStartNewChat}
           title={i18n._({
             id: "control.new_chat",
@@ -111,7 +111,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
             size="sm"
             onClick={onScrollToTop}
             disabled={isPending}
-            className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40"
+            className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40 cursor-pointer"
             title={i18n._({
               id: "control.scroll_to_top",
               message: "Scroll to Top",
@@ -127,7 +127,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
             size="sm"
             onClick={onScrollToBottom}
             disabled={isPending}
-            className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40"
+            className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40 cursor-pointer"
             title={i18n._({
               id: "control.scroll_to_bottom",
               message: "Scroll to Bottom",
@@ -145,7 +145,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
               abortTask?.mutate(sessionProcess.id);
             }}
             disabled={!abortTask || abortTask.isPending || isPending}
-            className="h-7 px-2 gap-1.5 text-xs rounded-lg"
+            className="h-7 px-2 gap-1.5 text-xs rounded-lg cursor-pointer"
           >
             {abortTask?.isPending ? (
               <LoaderIcon className="w-3.5 h-3.5 animate-spin" />

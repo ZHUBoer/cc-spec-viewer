@@ -129,7 +129,7 @@ export const TaskModal: FC<TaskModalProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className="h-auto py-1.5 px-3 text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-none flex items-center gap-1"
+          className="h-auto py-1.5 px-3 text-xs hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-none flex items-center gap-1 cursor-pointer"
           data-testid="task-modal-button"
         >
           <Eye className="h-3 w-3" />
@@ -188,7 +188,12 @@ export const TaskModal: FC<TaskModalProps> = ({
               <p className="text-sm text-destructive">
                 <Trans id="assistant.tool.error_loading_task" />
               </p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <Button
+                className="cursor-pointer"
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+              >
                 <Trans id="assistant.tool.retry" />
               </Button>
             </div>

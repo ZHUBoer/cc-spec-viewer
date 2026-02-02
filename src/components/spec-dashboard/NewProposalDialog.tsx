@@ -46,7 +46,12 @@ export const NewProposalDialog: FC<NewProposalDialogProps> = ({
               className="pl-9 font-mono bg-muted/50"
             />
           </div>
-          <Button type="submit" size="sm" className="px-3" onClick={handleCopy}>
+          <Button
+            type="submit"
+            size="sm"
+            className="px-3 cursor-pointer"
+            onClick={handleCopy}
+          >
             <span className="sr-only">Copy</span>
             {copied ? (
               <Check className="h-4 w-4 text-green-500" />

@@ -185,7 +185,7 @@ export const SchedulerTab: FC<{ projectId: string; sessionId: string }> = ({
               }}
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0"
+              className="h-7 w-7 p-0 cursor-pointer"
               title={i18n._({
                 id: "scheduler.create_job",
                 message: "Create Job",
@@ -253,7 +253,7 @@ export const SchedulerTab: FC<{ projectId: string; sessionId: string }> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0"
+                      className="h-6 w-6 p-0 cursor-pointer"
                       onClick={() => handleEditClick(job)}
                     >
                       <EditIcon className="w-3 h-3" />
@@ -261,7 +261,7 @@ export const SchedulerTab: FC<{ projectId: string; sessionId: string }> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                      className="h-6 w-6 p-0 text-destructive hover:text-destructive cursor-pointer"
                       onClick={() => handleDeleteClick(job.id)}
                     >
                       <TrashIcon className="w-3 h-3" />
@@ -330,6 +330,7 @@ export const SchedulerTab: FC<{ projectId: string; sessionId: string }> = ({
                 setDeletingJobId(null);
               }}
               disabled={deleteJob.isPending}
+              className="cursor-pointer"
             >
               <Trans id="common.cancel" />
             </Button>
@@ -337,6 +338,7 @@ export const SchedulerTab: FC<{ projectId: string; sessionId: string }> = ({
               variant="destructive"
               onClick={handleDeleteConfirm}
               disabled={deleteJob.isPending}
+              className="cursor-pointer"
             >
               {deleteJob.isPending ? (
                 <Trans id="common.deleting" />

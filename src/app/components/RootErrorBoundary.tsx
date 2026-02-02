@@ -53,11 +53,16 @@ export const RootErrorBoundary: FC<PropsWithChildren> = ({ children }) => {
                 </Alert>
 
                 <div className="flex gap-2">
-                  <Button onClick={resetErrorBoundary} variant="default">
+                  <Button
+                    className="cursor-pointer"
+                    onClick={resetErrorBoundary}
+                    variant="default"
+                  >
                     <RefreshCw />
                     Try Again
                   </Button>
                   <Button
+                    className="cursor-pointer"
                     onClick={() => {
                       window.location.href = "/";
                     }}

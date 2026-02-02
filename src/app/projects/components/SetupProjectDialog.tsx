@@ -60,7 +60,7 @@ export const SetupProjectDialog: FC = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button data-testid="new-project-button">
+        <Button data-testid="new-project-button" className="cursor-pointer">
           <Plus className="w-4 h-4 mr-2" />
           <Trans id="project.new" />
         </Button>
@@ -83,10 +83,15 @@ export const SetupProjectDialog: FC = () => {
           <DirectoryPicker onPathChange={setSelectedPath} />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button
+            className="cursor-pointer"
+            variant="outline"
+            onClick={() => setOpen(false)}
+          >
             <Trans id="common.action.cancel" />
           </Button>
           <Button
+            className="cursor-pointer"
             onClick={async () => await setupProjectMutation.mutateAsync()}
             disabled={!selectedPath || setupProjectMutation.isPending}
           >

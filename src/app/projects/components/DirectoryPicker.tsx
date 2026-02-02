@@ -72,7 +72,7 @@ export const DirectoryPicker: FC<DirectoryPickerProps> = ({ onPathChange }) => {
                   key={entry.path}
                   type="button"
                   onClick={() => handleNavigate(entry.path)}
-                  className="w-full px-3 py-2 flex items-center gap-2 hover:bg-muted/50 transition-colors text-left"
+                  className="w-full px-3 py-2 flex items-center gap-2 hover:bg-muted/50 transition-colors text-left cursor-pointer"
                 >
                   {entry.name === ".." ? (
                     <ChevronRight className="w-4 h-4 rotate-180" />

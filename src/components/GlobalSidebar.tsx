@@ -168,7 +168,7 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
                     className={cn(
                       "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      "text-sidebar-foreground/70",
+                      "text-sidebar-foreground/70 cursor-pointer",
                     )}
                     data-testid="search-button"
                   >
@@ -193,7 +193,7 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
                       type="button"
                       onClick={() => handleTabClick(tab.id)}
                       className={cn(
-                        "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
+                        "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
                         "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                         activeTab === tab.id && isExpanded
                           ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
@@ -220,7 +220,7 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
                     type="button"
                     onClick={handleLogout}
                     className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
+                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
                       "hover:bg-destructive/10 hover:text-destructive",
                       "text-sidebar-foreground/70",
                     )}

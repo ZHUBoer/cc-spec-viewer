@@ -251,7 +251,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/TaskModal.tsx",
-        199
+        204
       ]
     ],
     "translation": "assistant.tool.no_task_data"
@@ -262,7 +262,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/TaskModal.tsx",
-        202
+        207
       ]
     ],
     "translation": "assistant.tool.no_task_data_description"
@@ -284,7 +284,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/TaskModal.tsx",
-        192
+        197
       ]
     ],
     "translation": "assistant.tool.retry"
@@ -604,7 +604,7 @@
     "origin": [
       [
         "src/app/projects/components/SetupProjectDialog.tsx",
-        87
+        91
       ]
     ],
     "translation": "Cancel"
@@ -615,15 +615,15 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/scheduler/SchedulerJobDialog.tsx",
-        348
+        349
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/DeleteSessionDialog.tsx",
-        88
+        89
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SchedulerTab.tsx",
-        334
+        335
       ]
     ],
     "translation": "Cancel"
@@ -634,7 +634,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/scheduler/SchedulerJobDialog.tsx",
-        359
+        361
       ]
     ],
     "translation": "Create"
@@ -645,11 +645,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/DeleteSessionDialog.tsx",
-        98
+        100
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SchedulerTab.tsx",
-        344
+        346
       ]
     ],
     "translation": "Delete"
@@ -660,11 +660,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/DeleteSessionDialog.tsx",
-        96
+        98
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SchedulerTab.tsx",
-        342
+        344
       ]
     ],
     "translation": "Deleting..."
@@ -717,7 +717,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/scheduler/SchedulerJobDialog.tsx",
-        355
+        357
       ]
     ],
     "translation": "Saving..."
@@ -728,7 +728,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/scheduler/SchedulerJobDialog.tsx",
-        357
+        359
       ]
     ],
     "translation": "Update"
@@ -1145,7 +1145,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        564
+        566
       ]
     ],
     "translation": "Commit"
@@ -1167,7 +1167,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        538
+        540
       ]
     ],
     "translation": "Commit Message"
@@ -1178,7 +1178,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        596
+        598
       ]
     ],
     "translation": "Commit & Push"
@@ -1189,7 +1189,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        561
+        563
       ]
     ],
     "translation": "Committing..."
@@ -1200,7 +1200,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        593
+        595
       ]
     ],
     "translation": "Committing & Pushing..."
@@ -1211,7 +1211,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        498
+        500
       ]
     ],
     "translation": "Deselect All"
@@ -1222,7 +1222,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        606
+        608
       ]
     ],
     "translation": "Please enter a commit message"
@@ -1255,7 +1255,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        642
+        644
       ]
     ],
     "translation": "Loading diff..."
@@ -1266,7 +1266,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        579
+        581
       ]
     ],
     "translation": "Push"
@@ -1277,7 +1277,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        576
+        578
       ]
     ],
     "translation": "Pushing..."
@@ -1288,7 +1288,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        490
+        491
       ]
     ],
     "translation": "Select All"
@@ -1299,7 +1299,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/diffModal/DiffModal.tsx",
-        604
+        606
       ]
     ],
     "translation": "Please select at least one file"
@@ -1391,7 +1391,7 @@
     "origin": [
       [
         "src/components/NotFound.tsx",
-        43
+        44
       ]
     ],
     "translation": "Go Home"
@@ -1534,7 +1534,7 @@
     "origin": [
       [
         "src/app/projects/components/SetupProjectDialog.tsx",
-        96
+        101
       ]
     ],
     "translation": "Setting up..."
@@ -1545,7 +1545,7 @@
     "origin": [
       [
         "src/app/projects/components/SetupProjectDialog.tsx",
-        99
+        104
       ]
     ],
     "translation": "Set Up Project"

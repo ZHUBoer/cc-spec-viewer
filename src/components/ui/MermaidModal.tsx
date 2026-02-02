@@ -42,7 +42,7 @@ export const MermaidModal: FC<MermaidModalProps> = ({
               variant="outline"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8 rounded-full bg-background/80 hover:bg-background backdrop-blur-sm shadow-sm"
+              className="h-8 w-8 rounded-full bg-background/80 hover:bg-background backdrop-blur-sm shadow-sm cursor-pointer"
               aria-label="Close"
             >
               <XIcon className="h-4 w-4" />
@@ -66,7 +66,7 @@ export const MermaidModal: FC<MermaidModalProps> = ({
                       variant="outline"
                       size="icon"
                       onClick={() => zoomIn()}
-                      className="h-8 w-8 rounded-full bg-background/80 hover:bg-background backdrop-blur-sm shadow-sm"
+                      className="h-8 w-8 rounded-full bg-background/80 hover:bg-background backdrop-blur-sm shadow-sm cursor-pointer"
                     >
                       <ZoomInIcon className="h-4 w-4" />
                     </Button>
@@ -74,7 +74,7 @@ export const MermaidModal: FC<MermaidModalProps> = ({
                       variant="outline"
                       size="icon"
                       onClick={() => zoomOut()}
-                      className="h-8 w-8 rounded-full bg-background/80 hover:bg-background backdrop-blur-sm shadow-sm"
+                      className="h-8 w-8 rounded-full bg-background/80 hover:bg-background backdrop-blur-sm shadow-sm cursor-pointer"
                     >
                       <ZoomOutIcon className="h-4 w-4" />
                     </Button>
@@ -82,7 +82,7 @@ export const MermaidModal: FC<MermaidModalProps> = ({
                       variant="outline"
                       size="icon"
                       onClick={() => resetTransform()}
-                      className="h-8 w-8 rounded-full bg-background/80 hover:bg-background backdrop-blur-sm shadow-sm"
+                      className="h-8 w-8 rounded-full bg-background/80 hover:bg-background backdrop-blur-sm shadow-sm cursor-pointer"
                     >
                       <MaximizeIcon className="h-4 w-4" />
                     </Button>

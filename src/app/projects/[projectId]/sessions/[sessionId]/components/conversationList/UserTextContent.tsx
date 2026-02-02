@@ -48,7 +48,11 @@ export const UserTextContent: FC<{ text: string; id?: string }> = ({
                       Details
                     </span>
                     <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 cursor-pointer"
+                      >
                         <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
                         <span className="sr-only">Toggle</span>
                       </Button>

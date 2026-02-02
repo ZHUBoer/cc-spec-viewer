@@ -150,7 +150,7 @@ export const SettingsControls: FC<SettingsControlsProps> = ({
         {showLabels && (
           <label
             htmlFor={checkboxId}
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
             <Trans id="settings.session.hide_no_user_message" />
           </label>
@@ -171,7 +171,7 @@ export const SettingsControls: FC<SettingsControlsProps> = ({
         {showLabels && (
           <label
             htmlFor={`${checkboxId}-unify`}
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
             <Trans id="settings.session.unify_same_title" />
           </label>
@@ -192,7 +192,7 @@ export const SettingsControls: FC<SettingsControlsProps> = ({
         {showLabels && (
           <label
             htmlFor={`${checkboxId}-auto-schedule-continue`}
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
             <Trans id="settings.session.auto_schedule_continue_on_rate_limit" />
           </label>

@@ -275,7 +275,7 @@ export const WorkspacePanelProvider: FC<WorkspacePanelProviderProps> = ({
                 <button
                   type="button"
                   onClick={reloadBrowser}
-                  className="p-1.5 hover:bg-muted rounded transition-colors"
+                  className="p-1.5 hover:bg-muted rounded transition-colors cursor-pointer"
                   aria-label="Reload"
                 >
                   <svg
@@ -306,7 +306,7 @@ export const WorkspacePanelProvider: FC<WorkspacePanelProviderProps> = ({
                 <button
                   type="button"
                   onClick={closePanel}
-                  className="p-1.5 hover:bg-muted rounded transition-colors"
+                  className="p-1.5 hover:bg-muted rounded transition-colors cursor-pointer"
                   aria-label="Close"
                 >
                   <svg
@@ -345,7 +345,7 @@ export const WorkspacePanelProvider: FC<WorkspacePanelProviderProps> = ({
                 <button
                   type="button"
                   onClick={closePanel}
-                  className="p-1.5 hover:bg-muted rounded transition-colors bg-background border shadow-sm"
+                  className="p-1.5 hover:bg-muted rounded transition-colors bg-background border shadow-sm cursor-pointer"
                   aria-label="Close"
                 >
                   <svg

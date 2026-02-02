@@ -82,7 +82,7 @@ export const PermissionDialog = ({
             variant="ghost"
             size="sm"
             onClick={() => copyToClipboard(formattedValue)}
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 cursor-pointer"
           >
             <Copy className="h-3 w-3" />
           </Button>
@@ -181,14 +181,14 @@ export const PermissionDialog = ({
             variant="outline"
             onClick={() => handleResponse("deny")}
             disabled={isResponding}
-            className="min-w-20"
+            className="min-w-20 cursor-pointer"
           >
             Deny
           </Button>
           <Button
             onClick={() => handleResponse("allow")}
             disabled={isResponding}
-            className="min-w-20"
+            className="min-w-20 cursor-pointer"
           >
             Allow
           </Button>

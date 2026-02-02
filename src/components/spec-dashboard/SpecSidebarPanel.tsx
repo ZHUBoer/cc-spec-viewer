@@ -92,7 +92,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
         </div>
         <button
           type="button"
-          className="p-1 hover:bg-sidebar-accent rounded-md transition-colors"
+          className="p-1 hover:bg-sidebar-accent rounded-md transition-colors cursor-pointer"
           title="New Proposal"
           onClick={() => setNewProposalOpen(true)}
         >
@@ -138,7 +138,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
         <div className="pt-4 border-t border-sidebar-border mt-4">
           <button
             type="button"
-            className="flex items-center justify-between w-full px-2 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 rounded-md transition-colors"
+            className="flex items-center justify-between w-full px-2 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 rounded-md transition-colors cursor-pointer"
             onClick={toggleArchived}
           >
             <div className="flex items-center gap-2">

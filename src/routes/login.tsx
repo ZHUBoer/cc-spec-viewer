@@ -97,7 +97,7 @@ function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -117,7 +117,7 @@ function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 text-base font-medium"
+              className="w-full h-11 text-base font-medium cursor-pointer"
               disabled={!password || isSubmitting}
             >
               {isSubmitting ? (

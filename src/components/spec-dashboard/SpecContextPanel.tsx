@@ -231,7 +231,7 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
                   setActiveStage(stage.id as Stage);
                   refetch();
                 }}
-                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
                   isActive
                     ? "border-primary text-primary bg-primary/5"
                     : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"

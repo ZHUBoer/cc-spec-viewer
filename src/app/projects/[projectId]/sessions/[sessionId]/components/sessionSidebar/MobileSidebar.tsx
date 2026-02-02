@@ -143,7 +143,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
       {/* Backdrop */}
       <button
         type="button"
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-default"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-pointer"
         onClick={handleBackdropClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -186,7 +186,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                     type="button"
                     onClick={() => handleTabClick("sessions")}
                     className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
+                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       activeTab === "sessions"
                         ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
@@ -210,7 +210,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                     type="button"
                     onClick={() => handleTabClick("mcp")}
                     className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
+                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       activeTab === "mcp"
                         ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
@@ -234,7 +234,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                     type="button"
                     onClick={() => handleTabClick("settings")}
                     className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
+                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       activeTab === "settings"
                         ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
@@ -256,7 +256,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                     type="button"
                     onClick={() => handleTabClick("system-info")}
                     className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
+                      "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
                       "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       activeTab === "system-info"
                         ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
@@ -284,7 +284,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-8 w-8 p-0 hover:bg-sidebar-accent/50"
+              className="h-8 w-8 p-0 hover:bg-sidebar-accent/50 cursor-pointer"
             >
               <XIcon className="w-4 h-4" />
             </Button>

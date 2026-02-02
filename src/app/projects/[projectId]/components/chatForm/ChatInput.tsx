@@ -430,7 +430,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveFile(id)}
-                    className="text-muted-foreground hover:text-red-500 transition-colors bg-transparent rounded-full p-0.5 hover:bg-muted"
+                    className="text-muted-foreground hover:text-red-500 transition-colors bg-transparent rounded-full p-0.5 hover:bg-muted cursor-pointer"
                     disabled={isPending}
                   >
                     <XIcon className="w-3.5 h-3.5" />
@@ -500,7 +500,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isPending || disabled}
-                  className="gap-2 px-2 hover:bg-background/80 hover:text-foreground text-muted-foreground transition-all duration-200 h-8 rounded-lg"
+                  className="gap-2 px-2 hover:bg-background/80 hover:text-foreground text-muted-foreground transition-all duration-200 h-8 rounded-lg cursor-pointer"
                 >
                   <PaperclipIcon className="w-4 h-4" />
                   <span className="text-xs font-medium hidden sm:inline">
@@ -558,7 +558,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                     size="sm"
                     onClick={() => setSendMode("scheduled")}
                     disabled={isPending || disabled}
-                    className="sm:hidden gap-1.5 h-9"
+                    className="sm:hidden gap-1.5 h-9 cursor-pointer"
                   >
                     <span className="text-xs font-medium">
                       <Trans id="chat.send_mode.scheduled" />
@@ -574,7 +574,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                     disabled
                   }
                   size={buttonSize}
-                  className="gap-2 px-4 sm:px-6 h-9 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 disabled:from-muted disabled:to-muted disabled:shadow-none bg-[length:200%_auto] hover:bg-[position:right_center]"
+                  className="gap-2 px-4 sm:px-6 h-9 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 disabled:from-muted disabled:to-muted disabled:shadow-none bg-[length:200%_auto] hover:bg-[position:right_center] cursor-pointer"
                 >
                   {isPending ? (
                     <>

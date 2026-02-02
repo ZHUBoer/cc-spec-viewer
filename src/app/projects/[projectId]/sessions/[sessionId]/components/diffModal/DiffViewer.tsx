@@ -133,7 +133,7 @@ const FileHeader: FC<FileHeaderProps> = ({
   return (
     <Button
       onClick={onToggleCollapse}
-      className="w-full bg-gray-50 dark:bg-gray-800 px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors sticky top-0 z-20"
+      className="w-full bg-gray-50 dark:bg-gray-800 px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors sticky top-0 z-20 cursor-pointer"
     >
       <div className="w-full flex items-center gap-2">
         {isCollapsed ? (
@@ -163,7 +163,7 @@ const FileHeader: FC<FileHeaderProps> = ({
           onClick={handleCopyFilename}
           variant="ghost"
           size="sm"
-          className="flex-shrink-0 p-1 h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-600"
+          className="flex-shrink-0 p-1 h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
         >
           <CopyIcon className="w-3 h-3 text-gray-500 dark:text-gray-400" />
         </Button>

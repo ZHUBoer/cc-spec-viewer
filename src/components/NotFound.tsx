@@ -34,6 +34,7 @@ export const NotFound: FC<NotFoundProps> = ({
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Button
+              className="cursor-pointer"
               onClick={() => {
                 window.location.href = "/";
               }}

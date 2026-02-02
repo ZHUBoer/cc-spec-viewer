@@ -84,6 +84,7 @@ export const DeleteSessionDialog: FC<DeleteSessionDialogProps> = ({
             variant="outline"
             onClick={handleCancel}
             disabled={deleteSession.isPending}
+            className="cursor-pointer"
           >
             <Trans id="common.cancel" />
           </Button>
@@ -91,6 +92,7 @@ export const DeleteSessionDialog: FC<DeleteSessionDialogProps> = ({
             variant="destructive"
             onClick={handleDelete}
             disabled={deleteSession.isPending}
+            className="cursor-pointer"
           >
             {deleteSession.isPending ? (
               <Trans id="common.deleting" />

@@ -229,7 +229,7 @@ const SessionPageMainContent: FC<
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden flex-shrink-0"
+              className="md:hidden flex-shrink-0 cursor-pointer"
               onClick={() => setIsMobileSidebarOpen(true)}
               data-testid="mobile-sidebar-toggle-button"
             >
@@ -312,7 +312,7 @@ const SessionPageMainContent: FC<
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="flex-shrink-0 h-6 w-6"
+                    className="flex-shrink-0 h-6 w-6 cursor-pointer"
                     onClick={() =>
                       exportSession.mutate({ projectId, sessionId })
                     }
@@ -332,7 +332,7 @@ const SessionPageMainContent: FC<
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="flex-shrink-0 h-6 w-6"
+                  className="flex-shrink-0 h-6 w-6 cursor-pointer"
                   aria-label="Session metadata"
                 >
                   <InfoIcon className="w-3.5 h-3.5" />
@@ -453,7 +453,7 @@ const SessionPageMainContent: FC<
                       <Button
                         variant="destructive"
                         size="sm"
-                        className="w-full"
+                        className="w-full cursor-pointer"
                         onClick={() => setIsDeleteDialogOpen(true)}
                       >
                         <TrashIcon className="w-4 h-4 mr-2" />
