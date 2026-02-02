@@ -3032,7 +3032,6 @@
     "translation": "SpecForge Viewer"
   },
   "tasks.action.create_failed": {
-    "translation": "Failed to create task",
     "message": "Failed to create task",
     "placeholders": {},
     "comments": [],
@@ -3041,10 +3040,10 @@
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
         217
       ]
-    ]
+    ],
+    "translation": "Failed to create task"
   },
   "tasks.action.created": {
-    "translation": "Task created",
     "message": "Task created",
     "placeholders": {},
     "comments": [],
@@ -3053,10 +3052,10 @@
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
         212
       ]
-    ]
+    ],
+    "translation": "Task created"
   },
   "tasks.action.update_failed": {
-    "translation": "Failed to update task",
     "message": "Failed to update task",
     "placeholders": {},
     "comments": [],
@@ -3065,7 +3064,8 @@
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/TasksTab.tsx",
         234
       ]
-    ]
+    ],
+    "translation": "Failed to update task"
   },
   "user.content.document.pdf": {
     "placeholders": {},

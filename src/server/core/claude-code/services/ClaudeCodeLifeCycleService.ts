@@ -292,6 +292,8 @@ const LayerImpl = Effect.gen(function* () {
                 resume: task.def.baseSessionId,
                 cwd: sessionProcess.def.cwd,
                 abortController: sessionProcess.def.abortController,
+                // biome-ignore lint/style/noProcessEnv: Claude Code SDK requires full env for MCP server configs
+                env: process.env,
                 ...permissionOptions,
               });
             }),
