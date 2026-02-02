@@ -409,28 +409,13 @@ const SessionPageMainContent: FC<
                             <Trans id="session.cost.label" />
                           </span>
                           <div className="space-y-1.5">
-                            <Badge
-                              variant="secondary"
-                              className="h-7 text-xs flex items-center w-fit font-semibold"
-                            >
-                              <Trans id="session.cost.total" />: $
-                              {sessionData.session.meta.cost.totalUsd.toFixed(
-                                3,
-                              )}
-                            </Badge>
                             <div className="text-xs space-y-1 pl-2">
                               <div className="flex justify-between gap-4">
                                 <span className="text-muted-foreground">
                                   <Trans id="session.cost.input_tokens" />:
                                 </span>
                                 <span>
-                                  $
-                                  {sessionData.session.meta.cost.breakdown.inputTokensUsd.toFixed(
-                                    3,
-                                  )}{" "}
-                                  (
                                   {sessionData.session.meta.cost.tokenUsage.inputTokens.toLocaleString()}
-                                  )
                                 </span>
                               </div>
                               <div className="flex justify-between gap-4">
@@ -438,13 +423,7 @@ const SessionPageMainContent: FC<
                                   <Trans id="session.cost.output_tokens" />:
                                 </span>
                                 <span>
-                                  $
-                                  {sessionData.session.meta.cost.breakdown.outputTokensUsd.toFixed(
-                                    3,
-                                  )}{" "}
-                                  (
                                   {sessionData.session.meta.cost.tokenUsage.outputTokens.toLocaleString()}
-                                  )
                                 </span>
                               </div>
                               <div className="flex justify-between gap-4">
@@ -452,13 +431,7 @@ const SessionPageMainContent: FC<
                                   <Trans id="session.cost.cache_creation" />:
                                 </span>
                                 <span>
-                                  $
-                                  {sessionData.session.meta.cost.breakdown.cacheCreationUsd.toFixed(
-                                    3,
-                                  )}{" "}
-                                  (
                                   {sessionData.session.meta.cost.tokenUsage.cacheCreationTokens.toLocaleString()}
-                                  )
                                 </span>
                               </div>
                               <div className="flex justify-between gap-4">
@@ -466,13 +439,7 @@ const SessionPageMainContent: FC<
                                   <Trans id="session.cost.cache_read" />:
                                 </span>
                                 <span>
-                                  $
-                                  {sessionData.session.meta.cost.breakdown.cacheReadUsd.toFixed(
-                                    3,
-                                  )}{" "}
-                                  (
                                   {sessionData.session.meta.cost.tokenUsage.cacheReadTokens.toLocaleString()}
-                                  )
                                 </span>
                               </div>
                             </div>

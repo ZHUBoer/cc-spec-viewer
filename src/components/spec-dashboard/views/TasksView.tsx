@@ -188,7 +188,7 @@ export const TasksView: FC<TasksViewProps> = ({
             📋 任务规划确认
           </h4>
           <p className="text-sm mb-3 text-muted-foreground">
-            请仔细审查任务列表。确认后将清空上下文并开始实施。
+            请仔细审查任务列表。点击确认后，将开始实施。
           </p>
           <Button
             onClick={handleConfirmTasks}

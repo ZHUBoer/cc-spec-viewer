@@ -2,7 +2,6 @@ import { Trans } from "@lingui/react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useAtomValue } from "jotai";
 import {
-  CoinsIcon,
   MessageSquareIcon,
   PlusIcon,
   SearchIcon,
@@ -235,10 +234,6 @@ export const SessionsTab: FC<{
                     <div className="flex items-center gap-1">
                       <MessageSquareIcon className="w-3 h-3" />
                       <span>{session.meta.messageCount}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <CoinsIcon className="w-3 h-3" />
-                      <span>${session.meta.cost.totalUsd.toFixed(2)}</span>
                     </div>
                   </div>
                   {session.lastModifiedAt && (

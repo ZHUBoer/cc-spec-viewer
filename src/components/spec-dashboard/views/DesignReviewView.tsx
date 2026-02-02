@@ -384,7 +384,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto min-h-0 relative mb-42">
+      <div className="flex-1 overflow-y-auto min-h-0 relative mb-40">
         <div className="p-6 max-w-4xl mx-auto space-y-4">
           {/* Header */}
           <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
@@ -407,13 +407,6 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
                   <span className="text-muted-foreground">待处理：</span>
                   <span className="font-semibold text-yellow-600 dark:text-yellow-500">
                     {blockStats.pending}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-blue-500" />
-                  <span className="text-muted-foreground">已添加意见：</span>
-                  <span className="font-semibold text-blue-600 dark:text-blue-500">
-                    {blockStats.commented}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
