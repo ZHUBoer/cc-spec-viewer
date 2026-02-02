@@ -181,11 +181,6 @@ export const TasksView: FC<TasksViewProps> = ({
           {(isImplementing || isCompleted) && (
             <Card className="p-4">
               <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                {isCompleted ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                ) : (
-                  <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                )}
                 实施进度
               </h4>
               <Progress value={progress.percent} className="mb-2 h-2" />

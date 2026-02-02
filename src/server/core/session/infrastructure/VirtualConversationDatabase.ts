@@ -72,13 +72,13 @@ export class VirtualConversationDatabase extends Context.Tag(
       ) =>
         Effect.gen(function* () {
           yield* Ref.update(storageRef, (conversations) => {
-            const existingRecord = conversations.find(
+            const existingIndex = conversations.findIndex(
               (record) =>
                 record.projectId === projectId &&
                 record.sessionId === sessionId,
             );
 
-            if (existingRecord === undefined) {
+            if (existingIndex === -1) {
               return [
                 ...conversations,
                 {
@@ -89,8 +89,18 @@ export class VirtualConversationDatabase extends Context.Tag(
               ];
             }
 
-            existingRecord.conversations.push(...createConversations);
-            return conversations;
+            // 创建新数组，不修改现有对象，确保不可变性
+            return conversations.map((record, index) =>
+              index === existingIndex
+                ? {
+                    ...record,
+                    conversations: [
+                      ...record.conversations,
+                      ...createConversations,
+                    ],
+                  }
+                : record,
+            );
           });
         });
 

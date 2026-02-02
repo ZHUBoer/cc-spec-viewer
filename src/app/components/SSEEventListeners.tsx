@@ -7,40 +7,68 @@ export const SSEEventListeners: FC<PropsWithChildren> = ({ children }) => {
   const queryClient = useQueryClient();
 
   useServerEventListener("sessionListChanged", async (event) => {
-    await queryClient.invalidateQueries({
-      queryKey: projectDetailQuery(event.projectId).queryKey,
-    });
+    try {
+      await queryClient.invalidateQueries({
+        queryKey: projectDetailQuery(event.projectId).queryKey,
+      });
+    } catch (error) {
+      console.error(
+        "[SSEEventListeners] Failed to invalidate project queries:",
+        error,
+      );
+    }
   });
 
   useServerEventListener("sessionChanged", async (event) => {
-    await queryClient.invalidateQueries({
-      queryKey: sessionDetailQuery(event.projectId, event.sessionId).queryKey,
-    });
+    try {
+      await queryClient.invalidateQueries({
+        queryKey: sessionDetailQuery(event.projectId, event.sessionId).queryKey,
+      });
+    } catch (error) {
+      console.error(
+        "[SSEEventListeners] Failed to invalidate session queries:",
+        error,
+      );
+    }
   });
 
   useServerEventListener("agentSessionChanged", async (event) => {
-    // Invalidate the specific agent-session query for this agentSessionId
-    // New query key pattern: ["projects", projectId, "agent-sessions", agentId]
-    await queryClient.invalidateQueries({
-      predicate: (query) => {
-        const queryKey = query.queryKey;
-        return (
-          Array.isArray(queryKey) &&
-          queryKey[0] === "projects" &&
-          queryKey[1] === event.projectId &&
-          queryKey[2] === "agent-sessions" &&
-          queryKey[3] === event.agentSessionId
-        );
-      },
-    });
+    try {
+      // Invalidate the specific agent-session query for this agentSessionId
+      // New query key pattern: ["projects", projectId, "agent-sessions", agentId]
+      await queryClient.invalidateQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            Array.isArray(queryKey) &&
+            queryKey[0] === "projects" &&
+            queryKey[1] === event.projectId &&
+            queryKey[2] === "agent-sessions" &&
+            queryKey[3] === event.agentSessionId
+          );
+        },
+      });
+    } catch (error) {
+      console.error(
+        "[SSEEventListeners] Failed to invalidate agent session queries:",
+        error,
+      );
+    }
   });
 
   // Listen for virtual conversation updates - triggers before file watcher debounce
   // This reduces perceived latency by refreshing session data as soon as new assistant message is received
   useServerEventListener("virtualConversationUpdated", async (event) => {
-    await queryClient.invalidateQueries({
-      queryKey: sessionDetailQuery(event.projectId, event.sessionId).queryKey,
-    });
+    try {
+      await queryClient.invalidateQueries({
+        queryKey: sessionDetailQuery(event.projectId, event.sessionId).queryKey,
+      });
+    } catch (error) {
+      console.error(
+        "[SSEEventListeners] Failed to invalidate virtual conversation queries:",
+        error,
+      );
+    }
   });
 
   return <>{children}</>;

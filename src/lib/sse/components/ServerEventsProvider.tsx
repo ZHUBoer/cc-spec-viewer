@@ -28,6 +28,11 @@ export const ServerEventsProvider: FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     const sse = callSSE({
       onOpen: async () => {
+        // 连接成功，更新状态
+        setSSEState({
+          isConnected: true,
+        });
+
         // Cannot subscribe to events during reconnection
         // So invalidate uniformly when connection opens
         await queryClient.invalidateQueries({
@@ -46,14 +51,16 @@ export const ServerEventsProvider: FC<PropsWithChildren> = ({ children }) => {
           },
         });
       },
+      onError: () => {
+        // 连接错误，更新状态
+        setSSEState({
+          isConnected: false,
+        });
+      },
     });
     sseRef.current = sse;
 
     const { removeEventListener } = sse.addEventListener("connect", (event) => {
-      setSSEState({
-        isConnected: true,
-      });
-
       console.log("SSE connected", event);
     });
 

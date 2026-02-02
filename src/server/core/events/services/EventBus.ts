@@ -28,11 +28,40 @@ const layerImpl = Effect.gen(function* () {
     Effect.gen(function* () {
       const listeners = getListeners(event);
 
-      void Promise.allSettled(
-        Array.from(listeners).map(async (listener) => {
-          await listener(data);
+      // 等待所有监听器执行完成，并记录失败的监听器
+      const results = yield* Effect.tryPromise({
+        try: () =>
+          Promise.allSettled(
+            Array.from(listeners).map(async (listener) => {
+              await listener(data);
+            }),
+          ),
+        catch: (error) => {
+          console.error(
+            `[EventBus] Failed to execute listeners for event "${String(event)}":`,
+            error,
+          );
+          return new Error(String(error));
+        },
+      }).pipe(
+        Effect.catchAll(() => {
+          // 即使 Promise.allSettled 失败，也不应该影响主流程
+          return Effect.succeed([] as PromiseSettledResult<void>[]);
         }),
       );
+
+      // 检查是否有失败的监听器
+      const failures = results.filter(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+
+      if (failures.length > 0) {
+        console.error(
+          `[EventBus] ${failures.length} listener(s) failed for event "${String(event)}":`,
+          failures.map((f) => f.reason),
+        );
+      }
     });
 
   const on = <EventName extends keyof InternalEventDeclaration>(

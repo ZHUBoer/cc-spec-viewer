@@ -4,7 +4,7 @@ import type { InferEffect } from "../../../lib/effect/types";
 import { parseJsonl } from "../../claude-code/functions/parseJsonl";
 import { parseUserMessage } from "../../claude-code/functions/parseUserMessage";
 import { decodeProjectId } from "../../project/functions/id";
-import type { Session, SessionDetail } from "../../types";
+import type { Session, SessionDetail, SessionMeta } from "../../types";
 import { decodeSessionId, encodeSessionId } from "../functions/id";
 import { isRegularSessionFile } from "../functions/isRegularSessionFile";
 import { VirtualConversationDatabase } from "../infrastructure/VirtualConversationDatabase";
@@ -15,6 +15,28 @@ const LayerImpl = Effect.gen(function* () {
   const path = yield* Path.Path;
   const sessionMetaService = yield* SessionMetaService;
   const virtualConversationDatabase = yield* VirtualConversationDatabase;
+
+  // 创建默认的 SessionMeta，用于错误处理时的降级
+  const createDefaultSessionMeta = (): SessionMeta => ({
+    messageCount: 0,
+    firstUserMessage: null,
+    cost: {
+      totalUsd: 0,
+      breakdown: {
+        inputTokensUsd: 0,
+        outputTokensUsd: 0,
+        cacheCreationUsd: 0,
+        cacheReadUsd: 0,
+      },
+      tokenUsage: {
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheCreationTokens: 0,
+        cacheReadTokens: 0,
+      },
+    },
+    modelName: null,
+  });
 
   const getSession = (projectId: string, sessionId: string) =>
     Effect.gen(function* () {
@@ -39,10 +61,17 @@ const LayerImpl = Effect.gen(function* () {
             const stat = yield* fs.stat(sessionPath);
 
             // Get session metadata
-            const meta = yield* sessionMetaService.getSessionMeta(
-              projectId,
-              sessionId,
-            );
+            const meta = yield* sessionMetaService
+              .getSessionMeta(projectId, sessionId)
+              .pipe(
+                Effect.catchAll((error) => {
+                  console.error(
+                    `[SessionRepository] Failed to get meta for session ${sessionId}:`,
+                    error,
+                  );
+                  return Effect.succeed(createDefaultSessionMeta());
+                }),
+              );
 
             const mergedConversations = [
               ...conversations,
@@ -191,7 +220,7 @@ const LayerImpl = Effect.gen(function* () {
 
       // Execute all effects in parallel and filter out nulls
       const sessionsWithNulls = yield* Effect.all(sessionEffects, {
-        concurrency: "unbounded",
+        concurrency: 10,
       });
       const sessions = sessionsWithNulls
         .filter((s): s is NonNullable<typeof s> => s !== null)
@@ -217,17 +246,24 @@ const LayerImpl = Effect.gen(function* () {
         const sessionsWithMeta = yield* Effect.all(
           sessionsToReturn.map((item) =>
             Effect.gen(function* () {
-              const meta = yield* sessionMetaService.getSessionMeta(
-                projectId,
-                item.id,
-              );
+              const meta = yield* sessionMetaService
+                .getSessionMeta(projectId, item.id)
+                .pipe(
+                  Effect.catchAll((error) => {
+                    console.error(
+                      `[SessionRepository] Failed to get meta for session ${item.id}:`,
+                      error,
+                    );
+                    return Effect.succeed(createDefaultSessionMeta());
+                  }),
+                );
               return {
                 ...item,
                 meta,
               };
             }),
           ),
-          { concurrency: "unbounded" },
+          { concurrency: 10 },
         );
 
         return {
@@ -310,17 +346,24 @@ const LayerImpl = Effect.gen(function* () {
       const sessionsWithMeta: Session[] = yield* Effect.all(
         sessionsToReturn.map((item) =>
           Effect.gen(function* () {
-            const meta = yield* sessionMetaService.getSessionMeta(
-              projectId,
-              item.id,
-            );
+            const meta = yield* sessionMetaService
+              .getSessionMeta(projectId, item.id)
+              .pipe(
+                Effect.catchAll((error) => {
+                  console.error(
+                    `[SessionRepository] Failed to get meta for session ${item.id}:`,
+                    error,
+                  );
+                  return Effect.succeed(createDefaultSessionMeta());
+                }),
+              );
             return {
               ...item,
               meta,
             };
           }),
         ),
-        { concurrency: "unbounded" },
+        { concurrency: 10 },
       );
 
       return {
