@@ -19,7 +19,14 @@ class OpenSpecDirectoryNotFoundError extends Data.TaggedError(
 
 export interface OpenSpecChangeItem {
   name: string;
-  status: "draft" | "ready" | "implementing" | "review" | "archived";
+  status:
+    | "draft"
+    | "designing"
+    | "design-confirmed"
+    | "task-planning"
+    | "implementing"
+    | "completed"
+    | "archived";
   description?: string;
   updatedAt: string;
 }
@@ -37,10 +44,56 @@ const LayerImpl = Effect.gen(function* () {
   const projectRepository = yield* ProjectRepository;
   const fs = yield* FileSystem.FileSystem;
 
-  const inferStatus = (existsTasks: boolean): OpenSpecChangeItem["status"] => {
-    if (existsTasks) {
-      return "implementing";
+  /**
+   * 检查 tasks.md 中的所有任务是否已完成
+   */
+  const checkAllTasksCompleted = (tasksContent: string): boolean => {
+    const checkboxes = tasksContent.match(/- \[(x| )\]/g);
+    if (!checkboxes || checkboxes.length === 0) {
+      return false;
     }
+    return checkboxes.every((cb) => cb.includes("x"));
+  };
+
+  /**
+   * 推断 Change 的状态
+   */
+  const inferStatus = (
+    designContent: string | undefined,
+    tasksContent: string | undefined,
+  ): OpenSpecChangeItem["status"] => {
+    // 1. 实施阶段检测
+    if (tasksContent) {
+      const tasksConfirmed = tasksContent.includes(
+        "<!-- TASKS_CONFIRMED: true -->",
+      );
+      const allTasksComplete = checkAllTasksCompleted(tasksContent);
+
+      if (allTasksComplete) {
+        return "completed";
+      }
+
+      if (tasksConfirmed) {
+        return "implementing";
+      }
+
+      return "task-planning";
+    }
+
+    // 2. 设计阶段检测
+    if (designContent) {
+      const designFinalConfirmed = designContent.includes(
+        "<!-- DESIGN_FINAL_CONFIRMATION: true -->",
+      );
+
+      if (designFinalConfirmed) {
+        return "design-confirmed";
+      }
+
+      return "designing";
+    }
+
+    // 3. 初始阶段
     return "draft";
   };
 
@@ -72,10 +125,6 @@ const LayerImpl = Effect.gen(function* () {
         const stat = yield* fs.stat(entryPath);
 
         if (stat.type === "Directory") {
-          const tasksExists = yield* fs.exists(
-            path.join(entryPath, "tasks.md"),
-          );
-
           // Try to extract description from proposal.md
           let description = "";
           const proposalPath = path.join(entryPath, "proposal.md");
@@ -95,9 +144,27 @@ const LayerImpl = Effect.gen(function* () {
             }
           }
 
+          // Read design content for status inference
+          const designPath = path.join(entryPath, "design.md");
+          const architecturePath = path.join(entryPath, "architecture.md");
+          let designContent: string | undefined;
+
+          if (yield* fs.exists(architecturePath)) {
+            designContent = yield* fs.readFileString(architecturePath);
+          } else if (yield* fs.exists(designPath)) {
+            designContent = yield* fs.readFileString(designPath);
+          }
+
+          // Read tasks content for status inference
+          const tasksPath = path.join(entryPath, "tasks.md");
+          let tasksContent: string | undefined;
+          if (yield* fs.exists(tasksPath)) {
+            tasksContent = yield* fs.readFileString(tasksPath);
+          }
+
           changes.push({
             name: entry,
-            status: inferStatus(tasksExists),
+            status: inferStatus(designContent, tasksContent),
             updatedAt: Option.getOrElse(
               stat.mtime,
               () => new Date(),
@@ -301,7 +368,9 @@ const LayerImpl = Effect.gen(function* () {
 
       return {
         name: changeId,
-        status: isArchived ? "archived" : inferStatus(tasksExists),
+        status: isArchived
+          ? "archived"
+          : inferStatus(designContent, tasksContent),
         updatedAt: Option.getOrElse(stat.mtime, () => new Date()).toISOString(),
         description: description,
         proposalContent,

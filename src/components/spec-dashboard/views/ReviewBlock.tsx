@@ -19,6 +19,7 @@ interface ReviewBlockProps {
   initialContent: string;
   onConfirm: () => void;
   onUpdate: (content: string) => void;
+  onAddComment: (comment: string) => void; // 新增：添加评论回调
   isReadOnly?: boolean;
   hideConfirm?: boolean;
 }
@@ -29,6 +30,7 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
   initialContent,
   onConfirm,
   onUpdate,
+  onAddComment,
   isReadOnly = false,
   hideConfirm = false,
 }) => {
@@ -41,7 +43,9 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
   };
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isAddingComment, setIsAddingComment] = useState(false); // 新增：添加评论模式
   const [comment, setComment] = useState(() => cleanContent(initialContent));
+  const [userComment, setUserComment] = useState(""); // 新增：用户评论
 
   // Status derived from content analysis in parent, passed down
   const status = initialStatus;
@@ -56,6 +60,13 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
   const handleSave = () => {
     onUpdate(comment);
     setIsEditing(false);
+  };
+
+  const handleSubmitComment = () => {
+    if (!userComment.trim()) return;
+    onAddComment(userComment.trim());
+    setUserComment("");
+    setIsAddingComment(false);
   };
 
   const handleCheckboxChange = (lineIndex: number, checked: boolean) => {
@@ -205,6 +216,15 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => setIsAddingComment(true)}
+                  className="h-8"
+                >
+                  <MessageSquarePlus className="w-4 h-4 mr-1" />
+                  添加意见
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setIsEditing(true)}
                   className="h-8"
                 >
@@ -229,6 +249,41 @@ export const ReviewBlock: FC<ReviewBlockProps> = ({
           <div className="text-sm text-foreground/90 pl-1">
             {renderContentWithCheckboxes(initialContent)}
           </div>
+
+          {/* Comment Input */}
+          {isAddingComment && (
+            <div className="mt-3 space-y-2 pt-3 border-t">
+              <div className="text-sm font-medium text-muted-foreground">
+                添加你的意见或建议：
+              </div>
+              <Textarea
+                value={userComment}
+                onChange={(e) => setUserComment(e.target.value)}
+                placeholder="描述你对这部分设计的意见或修改建议..."
+                className="min-h-[100px] bg-background text-sm"
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsAddingComment(false);
+                    setUserComment("");
+                  }}
+                >
+                  取消
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSubmitComment}
+                  disabled={!userComment.trim()}
+                >
+                  提交意见
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

@@ -5,7 +5,14 @@ const client = hc<RouteType>("/");
 
 export interface OpenSpecChange {
   name: string;
-  status: "draft" | "ready" | "implementing" | "review" | "archived";
+  status:
+    | "draft"
+    | "designing"
+    | "design-confirmed"
+    | "task-planning"
+    | "implementing"
+    | "completed"
+    | "archived";
   description?: string;
   updatedAt: string;
   proposalContent?: string;

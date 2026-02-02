@@ -20,11 +20,13 @@ const StatusIcon = ({ status }: { status: OpenSpecChange["status"] }) => {
   switch (status) {
     case "draft":
       return <FileText className="w-4 h-4 text-slate-400" />;
-    case "ready":
+    case "designing":
+    case "design-confirmed":
+    case "task-planning":
       return <CircleDashed className="w-4 h-4 text-blue-500" />;
     case "implementing":
       return <Clock className="w-4 h-4 text-yellow-500" />;
-    case "review":
+    case "completed":
       return <CheckCircle2 className="w-4 h-4 text-purple-500" />;
     case "archived":
       return <CheckCircle2 className="w-4 h-4 text-green-500" />;

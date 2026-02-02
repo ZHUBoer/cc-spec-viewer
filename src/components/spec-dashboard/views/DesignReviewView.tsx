@@ -1,10 +1,22 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, List, MessageSquarePlus } from "lucide-react";
-import { type FC, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Info,
+  List,
+  MessageSquarePlus,
+  RefreshCw,
+} from "lucide-react";
+import { type FC, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { MarkdownContent } from "@/app/components/MarkdownContent";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { honoClient } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 
 import { specDashboardService } from "../SpecDashboardService";
 import { ReviewBlock, type ReviewStatus } from "./ReviewBlock";
@@ -13,7 +25,6 @@ interface DesignReviewViewProps {
   projectId: string;
   changeId: string;
   content: string;
-  onApprove?: () => void;
   onRefine?: () => void;
   readonly?: boolean;
 }
@@ -41,11 +52,12 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   projectId,
   changeId,
   content,
-  onApprove,
   onRefine,
   readonly = false,
 }) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Extract ToC
   const toc = useMemo(() => {
@@ -68,7 +80,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   }, [content]);
 
   // Parse content and detect question blocks
-  const { parts, questionBlockIds, allConfirmed } = useMemo(() => {
+  const { parts, questionBlockIds, blockStats } = useMemo(() => {
     const partsArray: {
       type: "text" | "block";
       content: string | React.ReactNode;
@@ -77,9 +89,16 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
     }[] = [];
     const qIds: string[] = [];
 
+    // 统计块状态
+    const stats = {
+      total: 0,
+      pending: 0,
+      commented: 0,
+      confirmed: 0,
+    };
+
     let lastIndex = 0;
     let match: RegExpExecArray | null;
-    let allBlocksConfirmed = true;
 
     // Reset regex lastIndex
     BLOCK_REGEX.lastIndex = 0;
@@ -98,6 +117,8 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
 
       if (!id) continue;
 
+      stats.total++;
+
       // Detect if this is a "Question/Decision" block
       const isQuestion =
         /\[\s*\]|\[x\]/i.test(blockContent) ||
@@ -106,14 +127,21 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
         qIds.push(id);
       }
 
-      // Check status for Global Approve
-      // Robust check: Metadata tag OR legacy visual tag
+      // Check status for statistics
       const isConfirmed =
         blockContent.includes("<!-- STATUS: CONFIRMED -->") ||
         blockContent.includes("✅");
-      // If neither confirmed nor seemingly addressed (simple heuristic), block global approve
-      if (!isConfirmed && !blockContent.includes("已修改") && !readonly) {
-        allBlocksConfirmed = false;
+      const hasComment = blockContent.includes("**用户意见**");
+
+      if (isConfirmed) {
+        stats.confirmed++;
+      } else if (
+        hasComment ||
+        (!blockContent.includes("(待确认") && blockContent.trim())
+      ) {
+        stats.commented++;
+      } else {
+        stats.pending++;
       }
 
       partsArray.push({
@@ -133,9 +161,13 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
     return {
       parts: partsArray,
       questionBlockIds: qIds,
-      allConfirmed: allBlocksConfirmed,
+      blockStats: stats,
     };
-  }, [content, readonly]);
+  }, [content]);
+
+  // 计算是否所有块都已处理（confirmed 或 commented）
+  const allBlocksProcessed = blockStats.pending === 0 && blockStats.total > 0;
+  const hasComments = blockStats.commented > 0;
 
   const handleUpdateContent = async (id: string, newBlockContent: string) => {
     try {
@@ -222,6 +254,107 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
     }
   };
 
+  // 重新生成设计
+  const handleRegenerateDesign = async () => {
+    try {
+      setIsProcessing(true);
+      const message = `我已经在 design.md 中添加了一些意见和修改建议。请仔细阅读我的评论，理解我的意图，然后重新生成 design.md。
+
+重点关注标记为 "**用户意见**" 的部分，确保新的设计充分考虑了这些反馈。`;
+
+      const response = await honoClient.api.cc["session-processes"].$post({
+        json: {
+          projectId,
+          input: { text: message },
+        },
+      });
+
+      const data = await response.json();
+
+      if ("error" in data) {
+        throw new Error(data.error);
+      }
+
+      toast.success("正在重新生成设计文档...");
+
+      // 导航到会话页面
+      navigate({
+        to: "/projects/$projectId/session",
+        params: {
+          projectId,
+        },
+        search: {
+          sessionId: data.sessionProcess.sessionId,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to regenerate design", error);
+      toast.error("重新生成设计失败");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // 确认设计并生成任务
+  const handleConfirmDesignAndGenerateTasks = async () => {
+    try {
+      setIsProcessing(true);
+
+      // 1. 添加最终确认标记
+      const updatedContent =
+        content +
+        "\n\n<!-- DESIGN_FINAL_CONFIRMATION: true -->" +
+        "\n<!-- CONFIRMED_AT: " +
+        new Date().toISOString() +
+        " -->";
+
+      await specDashboardService.updateChangeFile(
+        projectId,
+        changeId,
+        "design.md",
+        updatedContent,
+      );
+
+      // 2. 生成任务列表
+      const message = `设计已确认。请根据 design.md 生成详细的实现任务列表（tasks.md）。`;
+
+      const response = await honoClient.api.cc["session-processes"].$post({
+        json: {
+          projectId,
+          input: { text: message },
+        },
+      });
+
+      const data = await response.json();
+
+      if ("error" in data) {
+        throw new Error(data.error);
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: ["openspec", "change", projectId, changeId],
+      });
+
+      toast.success("设计已确认，正在生成任务列表...");
+
+      // 导航到会话页面
+      navigate({
+        to: "/projects/$projectId/session",
+        params: {
+          projectId,
+        },
+        search: {
+          sessionId: data.sessionProcess.sessionId,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to confirm design", error);
+      toast.error("确认设计失败");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="flex h-full bg-background animate-in fade-in duration-300 relative">
       {/* ToC Sidebar */}
@@ -251,8 +384,8 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto min-h-0 relative">
-        <div className="p-6 max-w-4xl mx-auto space-y-4 pb-24">
+      <div className="flex-1 overflow-y-auto min-h-0 relative mb-42">
+        <div className="p-6 max-w-4xl mx-auto space-y-4">
           {/* Header */}
           <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
             <h4 className="flex items-center gap-2 font-semibold text-primary mb-2">
@@ -263,6 +396,44 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
               请确认每一项内容。待决策问题请统一确认。所有段落确认后方可完成评审。
             </p>
           </div>
+
+          {/* Progress Statistics */}
+          {blockStats.total > 0 && (
+            <Card className="p-4">
+              <h4 className="text-sm font-medium mb-3">评审进度</h4>
+              <div className="flex gap-6 text-sm mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-yellow-500" />
+                  <span className="text-muted-foreground">待处理：</span>
+                  <span className="font-semibold text-yellow-600 dark:text-yellow-500">
+                    {blockStats.pending}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-blue-500" />
+                  <span className="text-muted-foreground">已添加意见：</span>
+                  <span className="font-semibold text-blue-600 dark:text-blue-500">
+                    {blockStats.commented}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-green-500" />
+                  <span className="text-muted-foreground">已确认：</span>
+                  <span className="font-semibold text-green-600 dark:text-green-500">
+                    {blockStats.confirmed}
+                  </span>
+                </div>
+              </div>
+              <Progress
+                value={
+                  ((blockStats.confirmed + blockStats.commented) /
+                    blockStats.total) *
+                  100
+                }
+                className="h-2"
+              />
+            </Card>
+          )}
 
           {parts.map((part, idx) => {
             if (part.type === "text") {
@@ -290,6 +461,9 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
               blockContent.includes("✅")
             ) {
               status = "confirmed";
+            } else if (blockContent.includes("**用户意见**")) {
+              // 如果包含用户意见标记，说明已添加评论
+              status = "commented";
             } else if (blockContent.match(/\[x\]/i)) {
               status = "pending"; // Checkboxes interaction kept pending until explicit confirm
             } else if (blockContent && !blockContent.includes("(待确认")) {
@@ -326,6 +500,16 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
                   onUpdate={(newContent) => {
                     handleUpdateContent(id, newContent);
                   }}
+                  onAddComment={(comment) => {
+                    // 在块内容后追加用户意见
+                    const cleanContent = blockContent
+                      .replace(/\(待确认：请审查上方内容\)/g, "")
+                      .trim();
+                    const newBlock = cleanContent
+                      ? `${cleanContent}\n\n**用户意见**：${comment}`
+                      : `**用户意见**：${comment}`;
+                    handleUpdateContent(id, newBlock);
+                  }}
                 />
                 {/* Insert Unified Confirm Button after the LAST question block */}
                 {isQuestion &&
@@ -360,41 +544,90 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
 
       {/* Footer / Global Actions */}
       {!readonly && (
-        <div className="absolute bottom-0 left-0 right-0 lg:left-64 p-4 border-t border-border bg-background/80 backdrop-blur-sm z-10 transition-all">
-          <div className="flex justify-between items-center max-w-4xl mx-auto">
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                Review Status
-              </span>
-              <span
-                className={`text-sm font-bold ${
-                  allConfirmed ? "text-green-500" : "text-yellow-500"
-                }`}
-              >
-                {allConfirmed ? "Ready to Complete" : "Pending Confirmations"}
-              </span>
+        <>
+          {/* Pending state: show progress bar */}
+          {!allBlocksProcessed && (
+            <div className="absolute bottom-0 left-0 right-0 lg:left-64 p-4 border-t border-border bg-background/80 backdrop-blur-sm z-10 transition-all">
+              <div className="flex justify-between items-center max-w-4xl mx-auto">
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Review Status
+                  </span>
+                  <span className="text-sm font-bold text-yellow-500">
+                    {blockStats.pending} 个块待处理
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={onRefine}>
+                    <MessageSquarePlus className="w-4 h-4 mr-2" />
+                    Discuss
+                  </Button>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={onRefine}>
-                <MessageSquarePlus className="w-4 h-4 mr-2" />
-                Discuss
-              </Button>
-              <Button
-                size="sm"
-                onClick={onApprove}
-                disabled={!allConfirmed}
-                className={
-                  allConfirmed
-                    ? "bg-green-600 hover:bg-green-700"
-                    : "opacity-50 cursor-not-allowed"
-                }
-              >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Complete Review
-              </Button>
+          )}
+
+          {/* Completed state: show decision point */}
+          {allBlocksProcessed && (
+            <div className="absolute bottom-0 left-48 right-0 p-4 border-t border-border bg-background shadow-lg z-10">
+              <div className="max-w-4xl mx-auto">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="text-lg">🎯</span>
+                  <h4 className="font-semibold text-base">
+                    设计评审完成 - 请选择下一步
+                  </h4>
+                </div>
+
+                {hasComments && (
+                  <div className="mb-3 text-sm text-blue-600 dark:text-blue-400 flex items-start gap-2">
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <span>
+                      检测到 {blockStats.commented} 个意见，可以让 Claude
+                      根据反馈重新生成设计
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {/* Option 1: Regenerate Design (only if has comments) */}
+                  {hasComments && (
+                    <Button
+                      className="flex-1"
+                      variant="outline"
+                      onClick={handleRegenerateDesign}
+                      disabled={isProcessing}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      {isProcessing ? "处理中..." : "🔄 根据意见重新生成"}
+                    </Button>
+                  )}
+
+                  {/* Option 2: Confirm Design and Generate Tasks */}
+                  <Button
+                    className={cn(
+                      "flex-1 bg-green-600 hover:bg-green-700",
+                      !hasComments && "sm:max-w-md sm:mx-auto",
+                    )}
+                    onClick={handleConfirmDesignAndGenerateTasks}
+                    disabled={isProcessing}
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    {isProcessing ? "处理中..." : "✅ 设计无误，生成任务"}
+                  </Button>
+                </div>
+
+                {/* Hint */}
+                <div className="mt-3 text-xs text-muted-foreground flex items-start gap-1">
+                  <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                  <span>
+                    design.md 是与 Claude
+                    对齐认知的关键环节。如有疑问或需调整，建议选择"重新生成设计"进行迭代。
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -17,8 +17,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { specDashboardService } from "./SpecDashboardService";
+import { StatusBadge } from "./StatusBadge";
 import { DesignReviewView } from "./views/DesignReviewView";
 import { SpecContentView } from "./views/SpecContentView";
+import { TasksView } from "./views/TasksView";
 
 // Context payload passed from Sidebar
 export interface SpecPanelContext {
@@ -54,6 +56,9 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
       return specDashboardService.getChangeDetails(ctx.projectId, ctx.changeId);
     },
     enabled: isValidContext,
+    // 在 implementing 状态时每 2 秒刷新一次
+    refetchInterval: (query) =>
+      query.state.data?.status === "implementing" ? 2000 : false,
   });
 
   if (!isValidContext) {
@@ -174,9 +179,11 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
         );
       case "tasks":
         return (
-          <SpecContentView
-            content={change.tasksContent}
-            emptyMessage="No tasks content available"
+          <TasksView
+            projectId={ctx.projectId}
+            changeId={ctx.changeId}
+            content={change.tasksContent || "*No tasks content*"}
+            status={change.status}
           />
         );
       case "tests":
@@ -193,12 +200,15 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     <div className="flex flex-col h-full bg-background">
       {/* Header with Stage Navigation */}
       <div className="flex flex-col border-b border-border bg-muted/20">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex flex-col min-w-0">
+        <div className="px-4 py-3 flex items-center gap-3">
+          <div className="flex flex-col min-w-0 flex-1">
             <h3 className="font-semibold text-sm truncate">{change.name}</h3>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-              {change.status} • {activeStage}
+            <span className="text-[10px] text-muted-foreground tracking-wider font-medium">
+              {activeStage}
             </span>
+          </div>
+          <div className="flex-shrink-0 pr-10">
+            <StatusBadge status={change.status} />
           </div>
         </div>
 
