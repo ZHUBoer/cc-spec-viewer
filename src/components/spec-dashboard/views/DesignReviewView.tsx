@@ -1,13 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Info,
-  List,
-  MessageSquarePlus,
-  RefreshCw,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, List, RefreshCw } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -175,10 +168,6 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       blockStats: stats,
     };
   }, [content]);
-
-  // 计算是否所有块都已处理（confirmed 或 commented）
-  const allBlocksProcessed = blockStats.pending === 0 && blockStats.total > 0;
-  const hasComments = blockStats.commented > 0 || blockStats.withOpinion > 0;
 
   const handleUpdateContent = async (id: string, newBlockContent: string) => {
     try {
@@ -560,87 +549,49 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       {/* Footer / Global Actions */}
       {!readonly && (
         <>
-          {/* Pending state: show progress bar */}
-          {!allBlocksProcessed && (
-            <div className="absolute bottom-0 left-0 right-0 lg:left-64 p-4 border-t border-border bg-background/80 backdrop-blur-sm z-10 transition-all">
-              <div className="flex justify-between items-center max-w-4xl mx-auto">
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                    Review Status
-                  </span>
-                  <span className="text-sm font-bold text-yellow-500">
-                    {blockStats.pending} 个块待处理
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={onRefine}>
-                    <MessageSquarePlus className="w-4 h-4 mr-2" />
-                    Discuss
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Completed state: show decision point */}
-          {allBlocksProcessed && (
-            <div className="absolute bottom-0 left-48 right-0 p-4 border-t border-border bg-background shadow-lg z-10">
-              <div className="max-w-4xl mx-auto">
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="text-lg">🎯</span>
-                  <h4 className="font-semibold text-base">
-                    设计评审完成 - 请选择下一步
-                  </h4>
-                </div>
+          <div className="absolute bottom-0 left-48 right-0 p-4 border-t border-border bg-background shadow-lg z-10">
+            <div className="max-w-4xl mx-auto">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-lg">🎯</span>
+                <h4 className="font-semibold text-base">
+                  设计评审完成 - 请选择下一步
+                </h4>
+              </div>
 
-                {hasComments && (
-                  <div className="mb-3 text-sm text-blue-600 dark:text-blue-400 flex items-start gap-2">
-                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <span>
-                      检测到您添加了意见或修改，可以让 Claude
-                      根据反馈重新生成设计
-                    </span>
-                  </div>
-                )}
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Option 1: Regenerate Design (Always available now) */}
+                <Button
+                  className="flex-1"
+                  variant="outline"
+                  onClick={handleRegenerateDesign}
+                  disabled={isProcessing}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {isProcessing ? "处理中..." : "🔄 重新生成设计"}
+                </Button>
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                  {/* Option 1: Regenerate Design (Always available now) */}
-                  <Button
-                    className="flex-1"
-                    variant="outline"
-                    onClick={handleRegenerateDesign}
-                    disabled={isProcessing}
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    {isProcessing
-                      ? "处理中..."
-                      : hasComments
-                        ? "🔄 根据意见重新生成"
-                        : "🔄 重新生成设计"}
-                  </Button>
+                {/* Option 2: Confirm Design and Generate Tasks */}
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={handleConfirmDesignAndGenerateTasks}
+                  disabled={isProcessing}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  {isProcessing ? "处理中..." : "✅ 设计无误，生成任务"}
+                </Button>
+              </div>
 
-                  {/* Option 2: Confirm Design and Generate Tasks */}
-                  <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    onClick={handleConfirmDesignAndGenerateTasks}
-                    disabled={isProcessing}
-                  >
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    {isProcessing ? "处理中..." : "✅ 设计无误，生成任务"}
-                  </Button>
-                </div>
-
-                {/* Hint */}
-                <div className="mt-3 text-xs text-muted-foreground flex items-start gap-1">
-                  <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                  <span>
-                    design.md 是与 Claude
-                    对齐认知的关键环节。如有疑问或需调整，建议选择"重新生成设计"进行迭代。
-                  </span>
-                </div>
+              {/* Hint */}
+              <div className="mt-3 text-xs text-muted-foreground flex items-start gap-1">
+                <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                <span>
+                  design.md 是与 Claude
+                  对齐认知的关键环节。如有疑问或需调整，建议选择"重新生成设计"进行迭代。
+                </span>
               </div>
             </div>
-          )}
+          </div>
         </>
       )}
     </div>
