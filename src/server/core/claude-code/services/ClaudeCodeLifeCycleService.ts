@@ -278,27 +278,27 @@ const LayerImpl = Effect.gen(function* () {
         });
 
       const handleSessionProcessDaemon = async () => {
-        const messageIter = await Runtime.runPromise(runtime)(
-          Effect.gen(function* () {
-            const permissionOptions =
-              yield* permissionService.createCanUseToolRelatedOptions({
-                taskId: task.def.taskId,
-                userConfig,
-                sessionId: task.def.baseSessionId,
-              });
-
-            return yield* ClaudeCode.query(generateMessages(), {
-              resume: task.def.baseSessionId,
-              cwd: sessionProcess.def.cwd,
-              abortController: sessionProcess.def.abortController,
-              ...permissionOptions,
-            });
-          }),
-        );
-
-        setNextMessage(input);
-
         try {
+          const messageIter = await Runtime.runPromise(runtime)(
+            Effect.gen(function* () {
+              const permissionOptions =
+                yield* permissionService.createCanUseToolRelatedOptions({
+                  taskId: task.def.taskId,
+                  userConfig,
+                  sessionId: task.def.baseSessionId,
+                });
+
+              return yield* ClaudeCode.query(generateMessages(), {
+                resume: task.def.baseSessionId,
+                cwd: sessionProcess.def.cwd,
+                abortController: sessionProcess.def.abortController,
+                ...permissionOptions,
+              });
+            }),
+          );
+
+          setNextMessage(input);
+
           for await (const message of messageIter) {
             // Check abort signal before processing message
             if (sessionProcess.def.abortController.signal.aborted) {
@@ -371,7 +371,7 @@ const LayerImpl = Effect.gen(function* () {
           if (sessionFileCreatedPromise.status === "pending") {
             sessionFileCreatedPromise.reject(error);
           }
-          throw error;
+          // throw error; // Prevent crash on abort
         })
         .finally(() => {
           Effect.runFork(
