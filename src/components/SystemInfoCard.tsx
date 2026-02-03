@@ -80,7 +80,7 @@ export const SystemInfoCard: FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="border-b border-sidebar-border p-4">
+      <div className="border-sidebar-border p-4">
         <h2 className="font-semibold text-lg">
           <Trans id="system_info.title" />
         </h2>

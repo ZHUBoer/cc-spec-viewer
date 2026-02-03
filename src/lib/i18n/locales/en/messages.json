@@ -2162,7 +2162,6 @@
     "translation": "Abort"
   },
   "session.conversation.aborting": {
-    "translation": "Aborting...",
     "message": "Aborting...",
     "placeholders": {},
     "comments": [],
@@ -2171,7 +2170,8 @@
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
         164
       ]
-    ]
+    ],
+    "translation": "Aborting..."
   },
   "session.conversation.paused": {
     "placeholders": {},

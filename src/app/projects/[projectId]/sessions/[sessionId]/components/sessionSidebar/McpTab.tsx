@@ -37,7 +37,7 @@ export const McpTab: FC<{ projectId: string }> = ({ projectId }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b border-sidebar-border">
+      <div className="p-3 border-sidebar-border">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-sidebar-foreground">
             <Trans id="mcp.title" />

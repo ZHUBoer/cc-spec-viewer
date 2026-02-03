@@ -160,7 +160,7 @@ export const SchedulerTab: FC<{ projectId: string; sessionId: string }> = ({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b border-sidebar-border">
+      <div className="p-3 border-sidebar-border">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-sidebar-foreground">
             <Trans id="scheduler.title" />

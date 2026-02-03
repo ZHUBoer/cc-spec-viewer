@@ -264,7 +264,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
   return (
     <div className="h-full flex flex-col">
       {/* Header - matching SessionsTab style */}
-      <div className="border-b border-sidebar-border p-4">
+      <div className="border-sidebar-border p-4">
         <div className="flex items-center justify-between mb-2">
           <h2 className="font-semibold text-lg">Tasks</h2>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

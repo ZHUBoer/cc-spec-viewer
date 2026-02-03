@@ -63,7 +63,7 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
     title: <Trans id="settings.tab.title" />,
     content: (
       <div className="h-full flex flex-col">
-        <div className="border-b border-sidebar-border p-4">
+        <div className="border-sidebar-border p-4">
           <h2 className="font-semibold text-lg">
             <Trans id="settings.title" />
           </h2>
@@ -148,12 +148,12 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
     <div
       className={cn(
         "h-full border-r border-sidebar-border transition-all duration-300 ease-in-out flex bg-sidebar text-sidebar-foreground",
-        isExpanded ? "w-80 lg:w-80" : "w-12",
+        isExpanded ? "w-80 lg:w-80" : "w-14",
         className,
       )}
     >
       {/* Vertical Icon Menu - Always Visible */}
-      <div className="w-12 flex flex-col border-r border-sidebar-border bg-sidebar/50">
+      <div className="w-14 flex flex-col border-r border-sidebar-border bg-sidebar/50">
         <TooltipProvider>
           {headerButton && (
             <div className="border-b border-sidebar-border">{headerButton}</div>
@@ -193,7 +193,7 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
                       type="button"
                       onClick={() => handleTabClick(tab.id)}
                       className={cn(
-                        "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
+                        "w-10 h-10 flex items-center justify-center rounded-md transition-colors cursor-pointer",
                         "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                         activeTab === tab.id && isExpanded
                           ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"

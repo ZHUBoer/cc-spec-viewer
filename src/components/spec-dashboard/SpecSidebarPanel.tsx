@@ -83,7 +83,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="border-b border-sidebar-border p-4 flex items-center justify-between">
+      <div className="border-sidebar-border p-4 flex items-center justify-between">
         <div>
           <h2 className="font-semibold text-lg">Spec Dashboard</h2>
           <p className="text-xs text-sidebar-foreground/70">
@@ -135,7 +135,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
           ))
         )}
 
-        <div className="pt-4 border-t border-sidebar-border mt-4">
+        <div className="pt-4 border-t border-sidebar-border mt-2">
           <button
             type="button"
             className="flex items-center justify-between w-full px-2 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 rounded-md transition-colors cursor-pointer"
