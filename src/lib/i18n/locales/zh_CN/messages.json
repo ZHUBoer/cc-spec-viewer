@@ -5,10 +5,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        410
+        373
       ]
     ],
-    "translation": ""
+    "translation": "要附加的额外指令..."
   },
   "Available commands": {
     "placeholders": {},
@@ -71,21 +71,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        222
+        213
       ]
     ],
-    "translation": ""
-  },
-  "Enter custom system prompt...": {
-    "placeholders": {},
-    "comments": [],
-    "origin": [
-      [
-        "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        411
-      ]
-    ],
-    "translation": ""
+    "translation": "自定义工具名称..."
   },
   "Failed to commit": {
     "placeholders": {},
@@ -126,10 +115,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        114
+        105
       ]
     ],
-    "translation": ""
+    "translation": "键"
   },
   "Message input with completion support": {
     "placeholders": {},
@@ -137,7 +126,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        434
+        425
       ]
     ],
     "translation": "带补全支持的消息输入"
@@ -236,10 +225,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        122
+        113
       ]
     ],
-    "translation": ""
+    "translation": "值"
   },
   "assistant.thinking": {
     "placeholders": {},
@@ -508,7 +497,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        530
+        521
       ]
     ],
     "translation": "附加"
@@ -530,7 +519,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        398
+        389
       ]
     ],
     "translation": "发送消息失败。请重试。"
@@ -702,11 +691,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        487
+        478
       ],
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        577
+        568
       ]
     ],
     "translation": "立即发送"
@@ -717,11 +706,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        470
+        461
       ],
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        560
+        551
       ]
     ],
     "translation": "发送模式"
@@ -732,15 +721,15 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        490
+        481
       ],
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        580
+        571
       ],
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        597
+        588
       ]
     ],
     "translation": "定时发送"
@@ -751,7 +740,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        497
+        488
       ]
     ],
     "translation": "定时发送时间"
@@ -763,10 +752,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        712
+        692
       ]
     ],
-    "translation": ""
+    "translation": "设置"
   },
   "chat.status.processing": {
     "placeholders": {},
@@ -774,7 +763,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        616
+        607
       ]
     ],
     "translation": "处理中..."
@@ -1535,10 +1524,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        664
+        646
       ]
     ],
-    "translation": ""
+    "translation": "例如: 1.00"
   },
   "e.g., 10": {
     "placeholders": {},
@@ -1546,10 +1535,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        613
+        595
       ]
     ],
-    "translation": ""
+    "translation": "例如: 10"
   },
   "e.g., 10000": {
     "placeholders": {},
@@ -1557,10 +1546,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        638
+        619
       ]
     ],
-    "translation": ""
+    "translation": "例如: 10000"
   },
   "e.g., api.example.com, cdn.example.com": {
     "placeholders": {},
@@ -1568,10 +1557,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        535
+        513
       ]
     ],
-    "translation": ""
+    "translation": "例如: api.example.com, cdn.example.com"
   },
   "e.g., claude-sonnet-4-5-20250929": {
     "placeholders": {},
@@ -1579,10 +1568,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        356
+        300
       ]
     ],
-    "translation": ""
+    "translation": "例如: claude-sonnet-4-5-20250929"
   },
   "mcp.error.load_failed": {
     "placeholders": {
@@ -2543,10 +2532,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        548
+        529
       ]
     ],
-    "translation": ""
+    "translation": "高级设置"
   },
   "settings.description": {
     "placeholders": {},
@@ -2565,10 +2554,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        365
+        312
       ]
     ],
-    "translation": ""
+    "translation": "禁用的工具"
   },
   "settings.env.add": {
     "placeholders": {},
@@ -2576,10 +2565,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        147
+        138
       ]
     ],
-    "translation": ""
+    "translation": "添加环境变量"
   },
   "settings.env.label": {
     "message": "Environment Variables",
@@ -2588,10 +2577,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        422
+        389
       ]
     ],
-    "translation": ""
+    "translation": "环境变量"
   },
   "settings.forkSession": {
     "placeholders": {},
@@ -2599,10 +2588,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        341
+        286
       ]
     ],
-    "translation": ""
+    "translation": "分叉会话"
   },
   "settings.input.enter_key_behavior": {
     "placeholders": {},
@@ -2769,10 +2758,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        647
+        633
       ]
     ],
-    "translation": ""
+    "translation": "最大预算 (USD)"
   },
   "settings.maxThinkingTokens.label": {
     "message": "Max Thinking Tokens",
@@ -2781,10 +2770,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        622
+        607
       ]
     ],
-    "translation": ""
+    "translation": "最大思考令牌数"
   },
   "settings.maxTurns.label": {
     "message": "Max Turns",
@@ -2793,10 +2782,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        600
+        586
       ]
     ],
-    "translation": ""
+    "translation": "最大轮次"
   },
   "settings.model.label": {
     "placeholders": {},
@@ -2804,10 +2793,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        350
+        295
       ]
     ],
-    "translation": ""
+    "translation": "模型"
   },
   "settings.notifications": {
     "placeholders": {},
@@ -2904,10 +2893,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        481
+        454
       ]
     ],
-    "translation": ""
+    "translation": "允许非沙盒命令"
   },
   "settings.sandbox.autoAllowBash": {
     "message": "Auto-allow Bash if sandboxed",
@@ -2916,10 +2905,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        461
+        434
       ]
     ],
-    "translation": ""
+    "translation": "沙盒化时自动允许 Bash"
   },
   "settings.sandbox.label": {
     "message": "Sandbox",
@@ -2928,10 +2917,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        435
+        405
       ]
     ],
-    "translation": ""
+    "translation": "沙盒"
   },
   "settings.sandbox.network.allowLocalBinding": {
     "message": "Allow local binding",
@@ -2940,10 +2929,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        507
+        488
       ]
     ],
-    "translation": ""
+    "translation": "允许本地绑定"
   },
   "settings.sandbox.network.allowedDomains": {
     "message": "Allowed Domains (comma-separated)",
@@ -2952,10 +2941,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        516
+        497
       ]
     ],
-    "translation": ""
+    "translation": "允许的域名 (逗号分隔)"
   },
   "settings.sandbox.network.label": {
     "message": "Network Settings",
@@ -2964,10 +2953,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        491
+        464
       ]
     ],
-    "translation": ""
+    "translation": "网络设置"
   },
   "settings.section.notifications": {
     "placeholders": {},
@@ -3086,10 +3075,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        554
+        535
       ]
     ],
-    "translation": ""
+    "translation": "设置来源"
   },
   "settings.systemPrompt.additional": {
     "message": "Additional System Prompt",
@@ -3098,22 +3087,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        393
+        355
       ]
     ],
-    "translation": ""
-  },
-  "settings.systemPrompt.custom": {
-    "message": "Custom System Prompt",
-    "placeholders": {},
-    "comments": [],
-    "origin": [
-      [
-        "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        398
-      ]
-    ],
-    "translation": ""
+    "translation": "附加系统提示词"
   },
   "settings.systemPrompt.usePreset": {
     "placeholders": {},
@@ -3121,10 +3098,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        386
+        348
       ]
     ],
-    "translation": ""
+    "translation": "使用 Claude Code 标准系统提示"
   },
   "settings.tab.title": {
     "placeholders": {},
@@ -3203,7 +3180,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ClaudeCodeSettingsForm.tsx",
-        727
+        707
       ],
       [
         "src/components/GlobalSidebar.tsx",

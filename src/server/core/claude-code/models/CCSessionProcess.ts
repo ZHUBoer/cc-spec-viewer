@@ -3,7 +3,7 @@ import type { UserEntry } from "../../../../lib/conversation-schema/entry/UserEn
 import type { UserMessageInput } from "../functions/createMessageGenerator";
 import type { InitMessageContext } from "../types";
 import * as ClaudeCode from "./ClaudeCode";
-import type * as CCTask from "./ClaudeCodeTask";
+import type * as CCTurn from "./ClaudeCodeTurn";
 import * as ClaudeCodeVersion from "./ClaudeCodeVersion";
 
 export type CCSessionProcessDef = {
@@ -16,26 +16,26 @@ export type CCSessionProcessDef = {
 
 type CCSessionProcessStateBase = {
   def: CCSessionProcessDef;
-  tasks: CCTask.ClaudeCodeTaskState[];
+  tasks: CCTurn.ClaudeCodeTurnState[];
 };
 
 export type CCSessionProcessPendingState = CCSessionProcessStateBase & {
   type: "pending" /* Message not yet resolved state */;
   sessionId?: undefined;
-  currentTask: CCTask.PendingClaudeCodeTaskState;
+  currentTask: CCTurn.PendingClaudeCodeTurnState;
 };
 
 export type CCSessionProcessNotInitializedState = CCSessionProcessStateBase & {
   type: "not_initialized" /* Message resolved but init message not yet received */;
   sessionId?: undefined;
-  currentTask: CCTask.RunningClaudeCodeTaskState;
+  currentTask: CCTurn.RunningClaudeCodeTurnState;
   rawUserMessage: string;
 };
 
 export type CCSessionProcessInitializedState = CCSessionProcessStateBase & {
   type: "initialized" /* State after receiving init message */;
   sessionId: string;
-  currentTask: CCTask.RunningClaudeCodeTaskState;
+  currentTask: CCTurn.RunningClaudeCodeTurnState;
   rawUserMessage: string;
   initContext: InitMessageContext;
 };
@@ -43,7 +43,7 @@ export type CCSessionProcessInitializedState = CCSessionProcessStateBase & {
 export type CCSessionProcessFileCreatedState = CCSessionProcessStateBase & {
   type: "file_created" /* State after file has been created */;
   sessionId: string;
-  currentTask: CCTask.RunningClaudeCodeTaskState;
+  currentTask: CCTurn.RunningClaudeCodeTurnState;
   rawUserMessage: string;
   initContext: InitMessageContext;
 };
@@ -81,7 +81,7 @@ export const isPublic = (
 
 export const getAliveTasks = (
   process: CCSessionProcessState,
-): CCTask.AliveClaudeCodeTaskState[] => {
+): CCTurn.AliveClaudeCodeTurnState[] => {
   return process.tasks.filter(
     (task) => task.status === "pending" || task.status === "running",
   );
