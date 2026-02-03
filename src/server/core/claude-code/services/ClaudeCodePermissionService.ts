@@ -111,7 +111,7 @@ const LayerImpl = Effect.gen(function* () {
         if (response.decision === "allow") {
           return {
             behavior: "allow" as const,
-            updatedInput: toolInput,
+            updatedInput: response.updatedInput ?? toolInput,
           };
         } else {
           return {

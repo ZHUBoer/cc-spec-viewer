@@ -132,6 +132,7 @@ const SchemaErrorDisplay: FC<{ errorLine: string }> = ({ errorLine }) => {
 type ConversationListProps = {
   conversations: (Conversation | ErrorJsonl)[];
   getToolResult: (toolUseId: string) => ToolResultContent | undefined;
+  getToolUseResult: (toolUseId: string) => unknown;
   projectId: string;
   sessionId: string;
   scheduledJobs: SchedulerJob[];
@@ -140,6 +141,7 @@ type ConversationListProps = {
 export const ConversationList: FC<ConversationListProps> = ({
   conversations,
   getToolResult,
+  getToolUseResult,
   projectId,
   sessionId,
   scheduledJobs,
@@ -393,6 +395,7 @@ export const ConversationList: FC<ConversationListProps> = ({
                 key={getConversationKey(conversation)}
                 conversation={conversation}
                 getToolResult={getToolResult}
+                getToolUseResult={getToolUseResult}
                 getAgentIdForToolUse={getAgentIdForToolUse}
                 getTurnDuration={getTurnDuration}
                 isRootSidechain={isRootSidechain}

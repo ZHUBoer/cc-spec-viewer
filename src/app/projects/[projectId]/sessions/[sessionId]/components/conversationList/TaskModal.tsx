@@ -240,6 +240,7 @@ export const TaskModal: FC<TaskModalProps> = ({
                 })),
               ]}
               getToolResult={getToolResult}
+              getToolUseResult={() => undefined}
               projectId={projectId}
               sessionId={sessionId}
               scheduledJobs={[]}

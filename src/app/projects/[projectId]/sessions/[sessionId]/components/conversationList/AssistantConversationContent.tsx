@@ -18,16 +18,59 @@ import type { AssistantMessageContent } from "@/lib/conversation-schema/message/
 import { useTheme } from "../../../../../../../hooks/useTheme";
 import type { SidechainConversation } from "../../../../../../../lib/conversation-schema";
 import { MarkdownContent } from "../../../../../../components/MarkdownContent";
+import { AskUserQuestionCard } from "./AskUserQuestionCard";
 import { TaskModal } from "./TaskModal";
 import { ToolInputOneLine } from "./ToolInputOneLine";
 
-export const taskToolInputSchema = z.object({
-  prompt: z.string(),
+export const taskToolInputSchema = z
+  .object({
+    prompt: z.string(),
+    description: z.string().optional(),
+    subagent_type: z.string().optional(),
+    model: z.string().optional(),
+    max_turns: z.number().optional(),
+    run_in_background: z.boolean().optional(),
+    resume: z.string().optional(),
+  })
+  .passthrough(); // Allow unknown fields for future compatibility
+
+export const askUserQuestionInputSchema = z.object({
+  questions: z.array(
+    z.object({
+      question: z.string(),
+      header: z.string(),
+      options: z.array(
+        z.object({
+          label: z.string(),
+          description: z.string(),
+        }),
+      ),
+      multiSelect: z.boolean(),
+    }),
+  ),
+});
+
+export const askUserQuestionToolUseResultSchema = z.object({
+  questions: z.array(
+    z.object({
+      question: z.string(),
+      header: z.string(),
+      options: z.array(
+        z.object({
+          label: z.string(),
+          description: z.string(),
+        }),
+      ),
+      multiSelect: z.boolean(),
+    }),
+  ),
+  answers: z.record(z.string(), z.string()), // question -> answer
 });
 
 export const AssistantConversationContent: FC<{
   content: AssistantMessageContent;
   getToolResult: (toolUseId: string) => ToolResultContent | undefined;
+  getToolUseResult: (toolUseId: string) => unknown;
   getAgentIdForToolUse: (toolUseId: string) => string | undefined;
   getSidechainConversationByAgentId: (
     agentId: string,
@@ -41,6 +84,7 @@ export const AssistantConversationContent: FC<{
 }> = ({
   content,
   getToolResult,
+  getToolUseResult,
   getAgentIdForToolUse,
   getSidechainConversationByAgentId,
   getSidechainConversationByPrompt,
@@ -88,10 +132,77 @@ export const AssistantConversationContent: FC<{
   if (content.type === "tool_use") {
     const toolResult = getToolResult(content.id);
 
+    // 特殊处理：AskUserQuestion
+    if (content.name === "AskUserQuestion") {
+      const parseResult = askUserQuestionInputSchema.safeParse(content.input);
+
+      if (!parseResult.success) {
+        console.warn(
+          "AskUserQuestion schema parse failed:",
+          content.input,
+          parseResult.error,
+        );
+        return null;
+      }
+
+      const askInput = parseResult.data;
+
+      // 从 toolUseResult 获取 answers（如果存在）
+      const rawToolUseResult = getToolUseResult(content.id);
+      const toolUseResultParse = rawToolUseResult
+        ? askUserQuestionToolUseResultSchema.safeParse(rawToolUseResult)
+        : undefined;
+
+      if (rawToolUseResult && !toolUseResultParse?.success) {
+        console.warn(
+          "AskUserQuestion toolUseResult parse failed:",
+          rawToolUseResult,
+          toolUseResultParse?.error,
+        );
+      }
+
+      const answers = toolUseResultParse?.success
+        ? toolUseResultParse.data.answers
+        : undefined;
+
+      // 获取 tool_result 的确认消息
+      const toolResultContent = toolResult?.content;
+      const toolResultText =
+        typeof toolResultContent === "string"
+          ? toolResultContent
+          : toolResultContent?.find((item) => item.type === "text")?.text;
+
+      return (
+        <Card className="border-purple-200 bg-purple-50/50 dark:border-purple-800 dark:bg-purple-950/20 mb-2 p-0 overflow-hidden">
+          <Collapsible defaultOpen>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-purple-100/50 dark:hover:bg-purple-900/20 transition-all duration-200 py-3 px-4 group">
+                <div className="flex items-center gap-2">
+                  <Wrench className="h-4 w-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                  <CardTitle className="text-sm font-medium group-hover:text-foreground transition-colors">
+                    <Trans id="assistant.tool.ask_user_question.title" />
+                  </CardTitle>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 flex-shrink-0" />
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-4 pb-4">
+                <AskUserQuestionCard
+                  input={askInput}
+                  answers={answers}
+                  toolResult={toolResultText}
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+      );
+    }
+
     const taskModal = (() => {
-      // 注意：如果 taskToolInputSchema 包含 prompt 以外的字段（如 description、subagent_type 等），可能会导致解析失败
-      // z.object({ prompt: z.string() }) 会去除 unknown keys，所以应该能成功解析
-      // 但为了保险起见，仍需检查 safeParse 的结果
+      // Task tool 包含 prompt、description、subagent_type 等字段
+      // taskToolInputSchema 使用 .passthrough() 允许额外字段通过
       const taskInput =
         content.name === "Task"
           ? taskToolInputSchema.safeParse(content.input)

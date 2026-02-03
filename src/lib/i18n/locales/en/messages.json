@@ -192,10 +192,124 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        70
+        114
       ]
     ],
     "translation": "Thinking"
+  },
+  "assistant.tool.ask_user_question.custom_answer": {
+    "translation": "assistant.tool.ask_user_question.custom_answer",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AskUserQuestionCard.tsx",
+        129
+      ]
+    ]
+  },
+  "assistant.tool.ask_user_question.hint_multi": {
+    "translation": "assistant.tool.ask_user_question.hint_multi",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/AskUserQuestionInteractive.tsx",
+        129
+      ]
+    ]
+  },
+  "assistant.tool.ask_user_question.hint_single": {
+    "translation": "assistant.tool.ask_user_question.hint_single",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/AskUserQuestionInteractive.tsx",
+        131
+      ]
+    ]
+  },
+  "assistant.tool.ask_user_question.multi_select": {
+    "translation": "assistant.tool.ask_user_question.multi_select",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AskUserQuestionCard.tsx",
+        65
+      ],
+      [
+        "src/components/AskUserQuestionInteractive.tsx",
+        116
+      ]
+    ]
+  },
+  "assistant.tool.ask_user_question.other_option": {
+    "translation": "assistant.tool.ask_user_question.other_option",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/AskUserQuestionInteractive.tsx",
+        187
+      ]
+    ]
+  },
+  "assistant.tool.ask_user_question.other_placeholder": {
+    "translation": "assistant.tool.ask_user_question.other_placeholder",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/AskUserQuestionInteractive.tsx",
+        197
+      ]
+    ]
+  },
+  "assistant.tool.ask_user_question.submit": {
+    "translation": "assistant.tool.ask_user_question.submit",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/AskUserQuestionInteractive.tsx",
+        219
+      ]
+    ]
+  },
+  "assistant.tool.ask_user_question.submitting": {
+    "translation": "assistant.tool.ask_user_question.submitting",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/AskUserQuestionInteractive.tsx",
+        217
+      ]
+    ]
+  },
+  "assistant.tool.ask_user_question.title": {
+    "translation": "assistant.tool.ask_user_question.title",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
+        183
+      ]
+    ]
+  },
+  "assistant.tool.ask_user_question.user_selected": {
+    "translation": "assistant.tool.ask_user_question.user_selected",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AskUserQuestionCard.tsx",
+        117
+      ]
+    ]
   },
   "assistant.tool.error_loading_task": {
     "placeholders": {},
@@ -214,7 +328,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        161
+        272
       ]
     ],
     "translation": "Input Parameters"
@@ -273,7 +387,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        175
+        286
       ]
     ],
     "translation": "Tool Result"
@@ -306,7 +420,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        153
+        264
       ]
     ],
     "translation": "Tool ID"
@@ -372,11 +486,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        219
+        221
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        490
+        493
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
@@ -739,11 +853,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        271
+        273
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        369
+        371
       ]
     ],
     "translation": "Branch"
@@ -765,7 +879,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        345
+        347
       ]
     ],
     "translation": "Metadata"
@@ -776,7 +890,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        396
+        398
       ]
     ],
     "translation": "Model"
@@ -834,7 +948,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        351
+        353
       ]
     ],
     "translation": "Project Path"
@@ -869,11 +983,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        286
+        288
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        383
+        385
       ]
     ],
     "translation": "Session ID"
@@ -2053,7 +2167,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        306
+        308
       ]
     ],
     "translation": "Paused"
@@ -2064,7 +2178,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        297
+        299
       ]
     ],
     "translation": "Running"
@@ -2075,7 +2189,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        431
+        433
       ]
     ],
     "translation": "Cache creation"
@@ -2086,7 +2200,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        439
+        441
       ]
     ],
     "translation": "Cache read"
@@ -2097,7 +2211,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        415
+        417
       ]
     ],
     "translation": "Input tokens"
@@ -2108,7 +2222,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        409
+        411
       ]
     ],
     "translation": "Session Cost"
@@ -2119,7 +2233,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        423
+        425
       ]
     ],
     "translation": "Output tokens"
@@ -2169,7 +2283,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        460
+        462
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/DeleteSessionDialog.tsx",
@@ -2184,7 +2298,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        493
+        496
       ]
     ],
     "translation": "session.empty_state.description"
@@ -2195,7 +2309,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        507
+        510
       ]
     ],
     "translation": "Claude Code is processing..."

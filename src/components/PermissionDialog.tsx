@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight, Copy } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,24 @@ import type {
 } from "@/types/permissions";
 import { useConfig } from "../app/hooks/useConfig";
 import { formatLocaleDate } from "../lib/date/formatLocaleDate";
+import { AskUserQuestionInteractive } from "./AskUserQuestionInteractive";
+
+// Schema for AskUserQuestion tool input
+const askUserQuestionInputSchema = z.object({
+  questions: z.array(
+    z.object({
+      question: z.string(),
+      header: z.string(),
+      options: z.array(
+        z.object({
+          label: z.string(),
+          description: z.string(),
+        }),
+      ),
+      multiSelect: z.boolean(),
+    }),
+  ),
+});
 
 interface PermissionDialogProps {
   permissionRequest: PermissionRequest | null;
@@ -38,12 +57,16 @@ export const PermissionDialog = ({
 
   if (!permissionRequest) return null;
 
-  const handleResponse = async (decision: "allow" | "deny") => {
+  const handleResponse = async (
+    decision: "allow" | "deny",
+    updatedInput?: Record<string, unknown>,
+  ) => {
     setIsResponding(true);
 
     const response: PermissionResponse = {
       permissionRequestId: permissionRequest.id,
       decision,
+      updatedInput,
     };
 
     try {
@@ -101,6 +124,24 @@ export const PermissionDialog = ({
   const parameterEntries = Object.entries(permissionRequest.toolInput);
   const hasParameters = parameterEntries.length > 0;
 
+  // Check if this is an AskUserQuestion tool
+  const isAskUserQuestion = permissionRequest.toolName === "AskUserQuestion";
+  const askUserQuestionInput = isAskUserQuestion
+    ? askUserQuestionInputSchema.safeParse(permissionRequest.toolInput)
+    : undefined;
+
+  // Handler for AskUserQuestion submission
+  const handleAskUserQuestionSubmit = (answers: Record<string, string>) => {
+    if (!askUserQuestionInput?.success) return;
+
+    const updatedInput = {
+      questions: askUserQuestionInput.data.questions,
+      answers,
+    };
+
+    handleResponse("allow", updatedInput);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={() => !isResponding}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
@@ -133,8 +174,17 @@ export const PermissionDialog = ({
             </div>
           </div>
 
-          {/* Parameters Section */}
-          {hasParameters && (
+          {/* AskUserQuestion Interactive UI */}
+          {isAskUserQuestion && askUserQuestionInput?.success && (
+            <AskUserQuestionInteractive
+              questions={askUserQuestionInput.data.questions}
+              onSubmit={handleAskUserQuestionSubmit}
+              isSubmitting={isResponding}
+            />
+          )}
+
+          {/* Regular Parameters Section (for non-AskUserQuestion tools) */}
+          {!isAskUserQuestion && hasParameters && (
             <div className="rounded-lg border">
               <Collapsible
                 open={isParametersExpanded}
@@ -168,31 +218,33 @@ export const PermissionDialog = ({
             </div>
           )}
 
-          {!hasParameters && (
+          {!isAskUserQuestion && !hasParameters && (
             <div className="rounded-lg border p-4 text-center text-muted-foreground">
               This tool has no parameters.
             </div>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex-shrink-0 flex gap-3 justify-end pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={() => handleResponse("deny")}
-            disabled={isResponding}
-            className="min-w-20 cursor-pointer"
-          >
-            Deny
-          </Button>
-          <Button
-            onClick={() => handleResponse("allow")}
-            disabled={isResponding}
-            className="min-w-20 cursor-pointer"
-          >
-            Allow
-          </Button>
-        </div>
+        {/* Action Buttons - Only show for non-AskUserQuestion tools */}
+        {!isAskUserQuestion && (
+          <div className="flex-shrink-0 flex gap-3 justify-end pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => handleResponse("deny")}
+              disabled={isResponding}
+              className="min-w-20 cursor-pointer"
+            >
+              Deny
+            </Button>
+            <Button
+              onClick={() => handleResponse("allow")}
+              disabled={isResponding}
+              className="min-w-20 cursor-pointer"
+            >
+              Allow
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

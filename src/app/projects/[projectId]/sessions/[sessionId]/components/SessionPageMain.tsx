@@ -104,7 +104,9 @@ const SessionPageMainContent: FC<
   const navigate = useNavigate();
   const conversations = sessionData?.conversations ?? [];
   const emptyToolResult: SessionData["getToolResult"] = () => undefined;
+  const emptyToolUseResult: SessionData["getToolUseResult"] = () => undefined;
   const getToolResult = sessionData?.getToolResult ?? emptyToolResult;
+  const getToolUseResult = sessionData?.getToolUseResult ?? emptyToolUseResult;
   const isExistingSession =
     Boolean(sessionId) && sessionData !== null && sessionData !== undefined;
   const { currentPermissionRequest, isDialogOpen, onPermissionResponse } =
@@ -476,6 +478,7 @@ const SessionPageMainContent: FC<
             <ConversationList
               conversations={isExistingSession ? conversations : []}
               getToolResult={getToolResult}
+              getToolUseResult={getToolUseResult}
               projectId={projectId}
               sessionId={sessionId ?? ""}
               scheduledJobs={sessionScheduledJobs}
