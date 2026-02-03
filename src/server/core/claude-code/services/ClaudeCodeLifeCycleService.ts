@@ -288,12 +288,34 @@ const LayerImpl = Effect.gen(function* () {
                   sessionId: task.def.baseSessionId,
                 });
 
+              // Normalize environment variables for Claude Code SDK
+              // If ANTHROPIC_AUTH_TOKEN is set but ANTHROPIC_API_KEY is not,
+              // use ANTHROPIC_AUTH_TOKEN as ANTHROPIC_API_KEY (for custom proxy services)
+              // biome-ignore lint/style/noProcessEnv: Claude Code SDK requires full env for MCP server configs
+              const normalizedEnv = { ...process.env };
+              if (
+                !normalizedEnv.ANTHROPIC_API_KEY &&
+                normalizedEnv.ANTHROPIC_AUTH_TOKEN
+              ) {
+                normalizedEnv.ANTHROPIC_API_KEY =
+                  normalizedEnv.ANTHROPIC_AUTH_TOKEN;
+                console.log(
+                  "[SpecForge] Using ANTHROPIC_AUTH_TOKEN as ANTHROPIC_API_KEY for custom proxy service",
+                );
+              }
+
+              // Log authentication configuration for debugging
+              const hasApiKey = !!normalizedEnv.ANTHROPIC_API_KEY;
+              const baseUrl = normalizedEnv.ANTHROPIC_BASE_URL;
+              console.log(
+                `[SpecForge] Claude Code SDK authentication: ${hasApiKey ? "API key configured" : "No API key"}, Base URL: ${baseUrl || "default"}`,
+              );
+
               return yield* ClaudeCode.query(generateMessages(), {
                 resume: task.def.baseSessionId,
                 cwd: sessionProcess.def.cwd,
                 abortController: sessionProcess.def.abortController,
-                // biome-ignore lint/style/noProcessEnv: Claude Code SDK requires full env for MCP server configs
-                env: process.env,
+                env: normalizedEnv,
                 ...permissionOptions,
               });
             }),

@@ -532,7 +532,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
             <div className="max-w-4xl mx-auto">
               <div className="mb-3 flex items-center gap-2">
                 <h4 className="font-semibold text-base">
-                  设计评审完成 - 请选择下一步
+                  若完成设计评审，请选择下一步
                 </h4>
               </div>
 

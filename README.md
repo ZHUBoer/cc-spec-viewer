@@ -142,6 +142,39 @@ The application reads Claude Code conversation logs from:
 
 **NODE_ENV Consideration**: If you have `NODE_ENV=development` set in your environment (from other projects or system configuration), the application may not work correctly. Either set `NODE_ENV=production` or leave it unset when running SpecForge Viewer.
 
+**Anthropic API Configuration**: When using SpecForge Viewer to create new Claude Code sessions, you need to configure authentication with Anthropic's API. SpecForge Viewer supports both standard and custom proxy configurations:
+
+| Environment Variable | Description | Required |
+| --- | --- | --- |
+| `ANTHROPIC_API_KEY` | Your Anthropic API key for authentication. This is the standard variable used by Anthropic SDK. | Yes (unless using custom proxy) |
+| `ANTHROPIC_AUTH_TOKEN` | Alternative authentication token, typically used with custom proxy services. If `ANTHROPIC_API_KEY` is not set, this will be used automatically. | No |
+| `ANTHROPIC_BASE_URL` | Custom API endpoint URL. Use this when routing requests through a proxy service or custom deployment. | No (defaults to Anthropic's official endpoint) |
+
+**Authentication Setup**:
+
+1. **Standard Anthropic API** (recommended for most users):
+   ```bash
+   export ANTHROPIC_API_KEY="your-api-key-here"
+   ```
+
+2. **Custom Proxy Service** (e.g., corporate proxy):
+   ```bash
+   export ANTHROPIC_BASE_URL="http://your-proxy-url"
+   export ANTHROPIC_AUTH_TOKEN="your-proxy-auth-token"
+   # ANTHROPIC_AUTH_TOKEN will be automatically used as ANTHROPIC_API_KEY
+   ```
+
+3. **Verify Configuration**:
+   After setting environment variables, restart SpecForge Viewer. Check the console output for:
+   ```
+   [SpecForge] Claude Code SDK authentication: API key configured, Base URL: ...
+   ```
+
+**Important**: These environment variables must be set before starting SpecForge Viewer. If you see "Invalid API key" errors when creating sessions, verify that:
+- Environment variables are exported (use `export` command)
+- SpecForge Viewer was started after setting the variables
+- The API key/token is valid and not expired
+
 ## Configuration
 
 ### Command-Line Options and Environment Variables
