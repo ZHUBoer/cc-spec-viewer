@@ -211,7 +211,7 @@ export const AskUserQuestionInteractive: FC<
         <Button
           onClick={handleSubmit}
           disabled={!allAnswered || isSubmitting}
-          className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600"
+          className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 cursor-pointer"
         >
           {isSubmitting ? (
             <Trans id="assistant.tool.ask_user_question.submitting" />

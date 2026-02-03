@@ -80,7 +80,7 @@ export const AskUserQuestionCard: FC<AskUserQuestionCardProps> = ({
                   return (
                     <div
                       key={`${option.label}-${optIdx}`}
-                      className={`rounded-lg border p-3 transition-colors ${
+                      className={`rounded-lg border p-3 transition-colors cursor-pointer ${
                         isSelected
                           ? "border-purple-500 bg-purple-100/50 dark:border-purple-500 dark:bg-purple-900/30"
                           : "border-purple-200 bg-white dark:border-purple-800 dark:bg-purple-950/10"

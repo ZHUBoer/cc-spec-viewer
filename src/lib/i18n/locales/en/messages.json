@@ -198,7 +198,6 @@
     "translation": "Thinking"
   },
   "assistant.tool.ask_user_question.custom_answer": {
-    "translation": "assistant.tool.ask_user_question.custom_answer",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -206,10 +205,10 @@
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AskUserQuestionCard.tsx",
         129
       ]
-    ]
+    ],
+    "translation": "assistant.tool.ask_user_question.custom_answer"
   },
   "assistant.tool.ask_user_question.hint_multi": {
-    "translation": "assistant.tool.ask_user_question.hint_multi",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -217,10 +216,10 @@
         "src/components/AskUserQuestionInteractive.tsx",
         129
       ]
-    ]
+    ],
+    "translation": "assistant.tool.ask_user_question.hint_multi"
   },
   "assistant.tool.ask_user_question.hint_single": {
-    "translation": "assistant.tool.ask_user_question.hint_single",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -228,10 +227,10 @@
         "src/components/AskUserQuestionInteractive.tsx",
         131
       ]
-    ]
+    ],
+    "translation": "assistant.tool.ask_user_question.hint_single"
   },
   "assistant.tool.ask_user_question.multi_select": {
-    "translation": "assistant.tool.ask_user_question.multi_select",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -243,10 +242,10 @@
         "src/components/AskUserQuestionInteractive.tsx",
         116
       ]
-    ]
+    ],
+    "translation": "assistant.tool.ask_user_question.multi_select"
   },
   "assistant.tool.ask_user_question.other_option": {
-    "translation": "assistant.tool.ask_user_question.other_option",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -254,10 +253,10 @@
         "src/components/AskUserQuestionInteractive.tsx",
         187
       ]
-    ]
+    ],
+    "translation": "assistant.tool.ask_user_question.other_option"
   },
   "assistant.tool.ask_user_question.other_placeholder": {
-    "translation": "assistant.tool.ask_user_question.other_placeholder",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -265,10 +264,10 @@
         "src/components/AskUserQuestionInteractive.tsx",
         197
       ]
-    ]
+    ],
+    "translation": "assistant.tool.ask_user_question.other_placeholder"
   },
   "assistant.tool.ask_user_question.submit": {
-    "translation": "assistant.tool.ask_user_question.submit",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -276,10 +275,10 @@
         "src/components/AskUserQuestionInteractive.tsx",
         219
       ]
-    ]
+    ],
+    "translation": "assistant.tool.ask_user_question.submit"
   },
   "assistant.tool.ask_user_question.submitting": {
-    "translation": "assistant.tool.ask_user_question.submitting",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -287,10 +286,10 @@
         "src/components/AskUserQuestionInteractive.tsx",
         217
       ]
-    ]
+    ],
+    "translation": "assistant.tool.ask_user_question.submitting"
   },
   "assistant.tool.ask_user_question.title": {
-    "translation": "assistant.tool.ask_user_question.title",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -298,10 +297,10 @@
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
         183
       ]
-    ]
+    ],
+    "translation": "assistant.tool.ask_user_question.title"
   },
   "assistant.tool.ask_user_question.user_selected": {
-    "translation": "assistant.tool.ask_user_question.user_selected",
     "placeholders": {},
     "comments": [],
     "origin": [
@@ -309,7 +308,8 @@
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AskUserQuestionCard.tsx",
         117
       ]
-    ]
+    ],
+    "translation": "assistant.tool.ask_user_question.user_selected"
   },
   "assistant.tool.error_loading_task": {
     "placeholders": {},
