@@ -19,7 +19,6 @@ import {
   createMessageGenerator,
   type UserMessageInput,
 } from "../functions/createMessageGenerator";
-import { fallbackSdkMessage } from "../functions/fallbackSdkMessage";
 import * as CCSessionProcess from "../models/CCSessionProcess";
 import * as ClaudeCode from "../models/ClaudeCode";
 import { ClaudeCodePermissionService } from "./ClaudeCodePermissionService";
@@ -329,10 +328,8 @@ const LayerImpl = Effect.gen(function* () {
               break;
             }
 
-            const fallbackMessage = fallbackSdkMessage(message);
-
             const result = await Runtime.runPromise(runtime)(
-              handleMessage(fallbackMessage),
+              handleMessage(message),
             ).catch((error) => {
               // If the iter itself hasn't crashed, we want to continue, so swallow the error
               Effect.runFork(
