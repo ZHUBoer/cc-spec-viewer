@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react";
-import type { FC } from "react";
+import { type FC, useState } from "react";
 import { useConfig } from "../../../../../../hooks/useConfig";
 import {
   ChatInput,
@@ -12,8 +12,15 @@ export const StartNewChat: FC<{ projectId: string }> = ({ projectId }) => {
   const createSessionProcess = useCreateSessionProcessMutation(projectId);
   const { config } = useConfig();
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (input: MessageInput) => {
-    await createSessionProcess.mutateAsync({ input });
+    setIsSubmitting(true);
+    try {
+      await createSessionProcess.mutateAsync({ input });
+    } catch {
+      setIsSubmitting(false);
+    }
   };
 
   const getPlaceholder = () => {
@@ -44,7 +51,7 @@ export const StartNewChat: FC<{ projectId: string }> = ({ projectId }) => {
       <ChatInput
         projectId={projectId}
         onSubmit={handleSubmit}
-        isPending={createSessionProcess.isPending}
+        isPending={createSessionProcess.isPending || isSubmitting}
         error={createSessionProcess.error}
         placeholder={getPlaceholder()}
         buttonText={<Trans id="chat.button.start" />}

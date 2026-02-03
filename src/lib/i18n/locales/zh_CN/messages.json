@@ -464,7 +464,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        50
+        57
       ]
     ],
     "translation": "开始对话"
@@ -510,7 +510,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        29
+        36
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Command+Enter 发送)"
@@ -526,7 +526,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        22
+        29
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Enter 发送)"
@@ -542,7 +542,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        35
+        42
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Shift+Enter 发送)"
@@ -868,7 +868,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        72
+        75
       ]
     ],
     "translation": "Git"
@@ -901,7 +901,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        104
+        111
       ]
     ],
     "translation": "新建"
@@ -913,7 +913,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        97
+        100
       ]
     ],
     "translation": "新建对话"
@@ -925,7 +925,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        83
+        86
       ]
     ],
     "translation": "在浏览器中打开"
@@ -937,7 +937,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        65
+        68
       ]
     ],
     "translation": "打开 Git 对话框"
@@ -960,7 +960,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        131
+        138
       ]
     ],
     "translation": "滚动到底部"
@@ -972,7 +972,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        115
+        122
       ]
     ],
     "translation": "滚动到顶部"
@@ -2156,10 +2156,22 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        156
+        169
       ]
     ],
     "translation": "中止"
+  },
+  "session.conversation.aborting": {
+    "translation": "",
+    "message": "Aborting...",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
+        164
+      ]
+    ]
   },
   "session.conversation.paused": {
     "placeholders": {},

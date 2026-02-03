@@ -464,7 +464,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        50
+        57
       ]
     ],
     "translation": "Start Chat"
@@ -510,7 +510,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        29
+        36
       ]
     ],
     "translation": "Type your message... (Start with / for commands, @ for files, Command+Enter to send)"
@@ -526,7 +526,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        22
+        29
       ]
     ],
     "translation": "Type your message... (Start with / for commands, @ for files, Enter to send)"
@@ -542,7 +542,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        35
+        42
       ]
     ],
     "translation": "Type your message... (Start with / for commands, @ for files, Shift+Enter to send)"
@@ -868,7 +868,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        72
+        75
       ]
     ],
     "translation": "Git"
@@ -901,7 +901,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        104
+        111
       ]
     ],
     "translation": "New"
@@ -913,7 +913,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        97
+        100
       ]
     ],
     "translation": "New Chat"
@@ -925,7 +925,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        83
+        86
       ]
     ],
     "translation": "Open Browser"
@@ -937,7 +937,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        65
+        68
       ]
     ],
     "translation": "Open Git Dialog"
@@ -960,7 +960,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        131
+        138
       ]
     ],
     "translation": "Scroll to Bottom"
@@ -972,7 +972,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        115
+        122
       ]
     ],
     "translation": "Scroll to Top"
@@ -2156,10 +2156,22 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        156
+        169
       ]
     ],
     "translation": "Abort"
+  },
+  "session.conversation.aborting": {
+    "translation": "Aborting...",
+    "message": "Aborting...",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
+        164
+      ]
+    ]
   },
   "session.conversation.paused": {
     "placeholders": {},

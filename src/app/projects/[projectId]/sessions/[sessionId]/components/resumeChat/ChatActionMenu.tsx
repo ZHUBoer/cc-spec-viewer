@@ -10,7 +10,7 @@ import {
   PlusIcon,
   XIcon,
 } from "lucide-react";
-import type { FC } from "react";
+import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWorkspacePanel } from "../../../../../../../hooks/useWorkspacePanel";
 import type { PublicSessionProcess } from "../../../../../../../types/session-process";
@@ -40,7 +40,10 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
   const navigate = useNavigate();
   const { openBrowser } = useWorkspacePanel();
 
+  const [isNavigatingToNewChat, setIsNavigatingToNewChat] = useState(false);
+
   const handleStartNewChat = () => {
+    setIsNavigatingToNewChat(true);
     navigate({
       to: "/projects/$projectId/session",
       params: { projectId },
@@ -91,7 +94,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
           type="button"
           variant="ghost"
           size="sm"
-          disabled={isPending || isNewChat}
+          disabled={isPending || isNewChat || isNavigatingToNewChat}
           className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40 cursor-pointer"
           onClick={handleStartNewChat}
           title={i18n._({
@@ -99,7 +102,11 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
             message: "New Chat",
           })}
         >
-          <PlusIcon className="w-3.5 h-3.5" />
+          {isNavigatingToNewChat ? (
+            <LoaderIcon className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <PlusIcon className="w-3.5 h-3.5" />
+          )}
           <span>
             <Trans id="control.new" />
           </span>
@@ -153,7 +160,14 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
               <XIcon className="w-3.5 h-3.5" />
             )}
             <span>
-              <Trans id="session.conversation.abort" />
+              {abortTask?.isPending ? (
+                <Trans
+                  id="session.conversation.aborting"
+                  message="Aborting..."
+                />
+              ) : (
+                <Trans id="session.conversation.abort" />
+              )}
             </span>
           </Button>
         )}
