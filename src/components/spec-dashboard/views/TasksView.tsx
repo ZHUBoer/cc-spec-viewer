@@ -213,7 +213,7 @@ export const TasksView: FC<TasksViewProps> = ({
       </div>
 
       {/* Footer / Global Actions (Persistent) */}
-      {!readonly && (
+      {!readonly && (isPlanning || isImplementing || isCompleted) && (
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-background shadow-lg z-10 transition-transform">
           <div className="max-w-4xl mx-auto">
             {/* Planning State Actions */}
