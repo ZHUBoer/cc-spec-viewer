@@ -337,114 +337,120 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
             </p>
           </div>
 
-          {parts.map((part, idx) => {
-            if (part.type === "text") {
-              // Create a relatively stable key using index and partial content hash/length
-              const textKey = `text-${idx}-${(part.content as string).length}`;
+          {!content || content.trim() === "" ? (
+            <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground italic">
+              <MarkdownContent content="*No design content*" />
+            </div>
+          ) : (
+            parts.map((part, idx) => {
+              if (part.type === "text") {
+                // Create a relatively stable key using index and partial content hash/length
+                const textKey = `text-${idx}-${(part.content as string).length}`;
+                return (
+                  <div
+                    key={textKey}
+                    className="prose prose-sm dark:prose-invert max-w-none"
+                  >
+                    <MarkdownContent content={part.content as string} />
+                  </div>
+                );
+              }
+
+              // Interactive Block
+              // Ensure ID is defined, otherwise fallback (should not happen due to previous logic)
+              const id = part.id || `unknown-${idx}`;
+              const blockContent = part.blockContent as string;
+
+              // Status inference logic
+              let status: ReviewStatus = "pending";
+              if (
+                blockContent.includes("<!-- STATUS: CONFIRMED -->") ||
+                blockContent.includes("✅")
+              ) {
+                status = "confirmed";
+              } else if (
+                blockContent.includes("**用户意见**") ||
+                (blockContent.trim() &&
+                  !blockContent.includes("(待确认：请审查上方内容)") &&
+                  !blockContent.includes("(待确认)") &&
+                  blockContent.replace(/\s+/g, "") !== "")
+              ) {
+                // 用户已添加内容或意见
+                status = "commented";
+              } else if (blockContent.match(/\[x\]/i)) {
+                // 复选框勾选也算作用户交互，但仍是 pending 直到显式确认
+                status = "pending";
+              }
+
+              const isQuestion = questionBlockIds.includes(id);
+
               return (
-                <div
-                  key={textKey}
-                  className="prose prose-sm dark:prose-invert max-w-none"
-                >
-                  <MarkdownContent content={part.content as string} />
+                <div key={id}>
+                  <ReviewBlock
+                    id={id}
+                    initialStatus={status}
+                    initialContent={blockContent}
+                    isReadOnly={readonly}
+                    hideConfirm={isQuestion}
+                    onConfirm={() => {
+                      const timestamp = new Date().toLocaleString();
+                      // Strip the placeholder text if present
+                      const cleanContent = blockContent
+                        .replace(/\(待确认：请审查上方内容\)/g, "")
+                        .trim();
+
+                      // If content becomes empty after strip, we just have the tag.
+                      // If there was user content, we keep it.
+                      // Append metadata tag
+                      const newBlock = cleanContent
+                        ? `${cleanContent}\n\n✅ 逻辑已确认 (${timestamp})\n<!-- STATUS: CONFIRMED -->`
+                        : `✅ 逻辑已确认 (${timestamp})\n<!-- STATUS: CONFIRMED -->`;
+
+                      handleUpdateContent(id, newBlock);
+                    }}
+                    onUpdate={(newContent) => {
+                      handleUpdateContent(id, newContent);
+                    }}
+                    onAddComment={(comment) => {
+                      // 在块内容后追加用户意见
+                      const cleanContent = blockContent
+                        .replace(/\(待确认：请审查上方内容\)/g, "")
+                        .trim();
+                      const newBlock = cleanContent
+                        ? `${cleanContent}\n\n**用户意见**：${comment}`
+                        : `**用户意见**：${comment}`;
+                      handleUpdateContent(id, newBlock);
+                    }}
+                  />
+                  {/* Insert Unified Confirm Button after the LAST question block */}
+                  {isQuestion &&
+                    questionBlockIds.length > 0 &&
+                    questionBlockIds[questionBlockIds.length - 1] === id && (
+                      <div className="my-6 p-4 border border-dashed border-primary/30 rounded-lg bg-primary/5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">✨</span>
+                          <div>
+                            <p className="text-sm font-medium">
+                              所有问题决策完毕？
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              确认后将锁定上述问题方案
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={handleUnifiedConfirm}
+                          className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          确认所有问题方案
+                        </Button>
+                      </div>
+                    )}
                 </div>
               );
-            }
-
-            // Interactive Block
-            // Ensure ID is defined, otherwise fallback (should not happen due to previous logic)
-            const id = part.id || `unknown-${idx}`;
-            const blockContent = part.blockContent as string;
-
-            // Status inference logic
-            let status: ReviewStatus = "pending";
-            if (
-              blockContent.includes("<!-- STATUS: CONFIRMED -->") ||
-              blockContent.includes("✅")
-            ) {
-              status = "confirmed";
-            } else if (
-              blockContent.includes("**用户意见**") ||
-              (blockContent.trim() &&
-                !blockContent.includes("(待确认：请审查上方内容)") &&
-                !blockContent.includes("(待确认)") &&
-                blockContent.replace(/\s+/g, "") !== "")
-            ) {
-              // 用户已添加内容或意见
-              status = "commented";
-            } else if (blockContent.match(/\[x\]/i)) {
-              // 复选框勾选也算作用户交互，但仍是 pending 直到显式确认
-              status = "pending";
-            }
-
-            const isQuestion = questionBlockIds.includes(id);
-
-            return (
-              <div key={id}>
-                <ReviewBlock
-                  id={id}
-                  initialStatus={status}
-                  initialContent={blockContent}
-                  isReadOnly={readonly}
-                  hideConfirm={isQuestion}
-                  onConfirm={() => {
-                    const timestamp = new Date().toLocaleString();
-                    // Strip the placeholder text if present
-                    const cleanContent = blockContent
-                      .replace(/\(待确认：请审查上方内容\)/g, "")
-                      .trim();
-
-                    // If content becomes empty after strip, we just have the tag.
-                    // If there was user content, we keep it.
-                    // Append metadata tag
-                    const newBlock = cleanContent
-                      ? `${cleanContent}\n\n✅ 逻辑已确认 (${timestamp})\n<!-- STATUS: CONFIRMED -->`
-                      : `✅ 逻辑已确认 (${timestamp})\n<!-- STATUS: CONFIRMED -->`;
-
-                    handleUpdateContent(id, newBlock);
-                  }}
-                  onUpdate={(newContent) => {
-                    handleUpdateContent(id, newContent);
-                  }}
-                  onAddComment={(comment) => {
-                    // 在块内容后追加用户意见
-                    const cleanContent = blockContent
-                      .replace(/\(待确认：请审查上方内容\)/g, "")
-                      .trim();
-                    const newBlock = cleanContent
-                      ? `${cleanContent}\n\n**用户意见**：${comment}`
-                      : `**用户意见**：${comment}`;
-                    handleUpdateContent(id, newBlock);
-                  }}
-                />
-                {/* Insert Unified Confirm Button after the LAST question block */}
-                {isQuestion &&
-                  questionBlockIds.length > 0 &&
-                  questionBlockIds[questionBlockIds.length - 1] === id && (
-                    <div className="my-6 p-4 border border-dashed border-primary/30 rounded-lg bg-primary/5 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">✨</span>
-                        <div>
-                          <p className="text-sm font-medium">
-                            所有问题决策完毕？
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            确认后将锁定上述问题方案
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={handleUnifiedConfirm}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
-                      >
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                        确认所有问题方案
-                      </Button>
-                    </div>
-                  )}
-              </div>
-            );
-          })}
+            })
+          )}
         </div>
       </div>
 
