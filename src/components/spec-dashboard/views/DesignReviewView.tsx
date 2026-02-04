@@ -5,8 +5,6 @@ import { toast } from "sonner";
 
 import { MarkdownContent } from "@/app/components/MarkdownContent";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 
 import { specDashboardService } from "../SpecDashboardService";
 import { ReviewBlock, type ReviewStatus } from "./ReviewBlock";
@@ -68,7 +66,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   }, [content]);
 
   // Parse content and detect question blocks
-  const { parts, questionBlockIds, blockStats } = useMemo(() => {
+  const { parts, questionBlockIds } = useMemo(() => {
     const partsArray: {
       type: "text" | "block";
       content: string | React.ReactNode;
@@ -76,15 +74,6 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       blockContent?: string;
     }[] = [];
     const qIds: string[] = [];
-
-    // 统计块状态
-    const stats = {
-      total: 0,
-      pending: 0,
-      commented: 0,
-      confirmed: 0,
-      withOpinion: 0,
-    };
 
     let lastIndex = 0;
     let match: RegExpExecArray | null;
@@ -106,42 +95,12 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
 
       if (!id) continue;
 
-      stats.total++;
-
       // Detect if this is a "Question/Decision" block
       const isQuestion =
         /\[\s*\]|\[x\]/i.test(blockContent) ||
         blockContent.includes("待决策问题");
       if (isQuestion) {
         qIds.push(id);
-      }
-
-      // Check status for statistics
-      const isConfirmed =
-        blockContent.includes("<!-- STATUS: CONFIRMED -->") ||
-        blockContent.includes("✅");
-
-      // 判断是否是用户添加了意见或修改：
-      // 1. 包含用户意见标记
-      // 2. 或者内容不为空，且不是占位符文本
-      const hasOpinionMark = blockContent.includes("**用户意见**");
-      if (hasOpinionMark) {
-        stats.withOpinion++;
-      }
-
-      const hasUserContent =
-        hasOpinionMark ||
-        (blockContent.trim() &&
-          !blockContent.includes("(待确认：请审查上方内容)") &&
-          !blockContent.includes("(待确认)") &&
-          blockContent.replace(/\s+/g, "") !== ""); // 不是纯空白
-
-      if (isConfirmed) {
-        stats.confirmed++;
-      } else if (hasUserContent) {
-        stats.commented++;
-      } else {
-        stats.pending++;
       }
 
       partsArray.push({
@@ -161,7 +120,6 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
     return {
       parts: partsArray,
       questionBlockIds: qIds,
-      blockStats: stats,
     };
   }, [content]);
 
@@ -251,7 +209,6 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   };
 
   // 重新生成设计
-  // 重新生成设计
   const handleRegenerateDesign = async () => {
     if (isProcessingRef.current) return;
     try {
@@ -274,13 +231,11 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   };
 
   // 确认设计并生成任务
-  // 确认设计并生成任务
   const handleConfirmDesignAndGenerateTasks = async () => {
     if (isProcessingRef.current) return;
     try {
       isProcessingRef.current = true;
 
-      // 1. 添加最终确认标记
       // 1. 添加或更新最终确认标记
       const confirmationTag = "<!-- DESIGN_FINAL_CONFIRMATION: true -->";
       const timeTagPrefix = "<!-- CONFIRMED_AT: ";
@@ -381,37 +336,6 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
               请确认每一项内容。待决策问题请统一确认。所有段落确认后方可完成评审。
             </p>
           </div>
-
-          {/* Progress Statistics */}
-          {blockStats.total > 0 && (
-            <Card className="p-4">
-              <h4 className="text-sm font-medium mb-3">评审进度</h4>
-              <div className="flex gap-6 text-sm mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <span className="text-muted-foreground">待处理：</span>
-                  <span className="font-semibold text-yellow-600 dark:text-yellow-500">
-                    {blockStats.pending}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-green-500" />
-                  <span className="text-muted-foreground">已确认：</span>
-                  <span className="font-semibold text-green-600 dark:text-green-500">
-                    {blockStats.confirmed}
-                  </span>
-                </div>
-              </div>
-              <Progress
-                value={
-                  ((blockStats.confirmed + blockStats.commented) /
-                    blockStats.total) *
-                  100
-                }
-                className="h-2"
-              />
-            </Card>
-          )}
 
           {parts.map((part, idx) => {
             if (part.type === "text") {
@@ -525,7 +449,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       </div>
 
       {/* Footer / Global Actions */}
-      {!readonly && (
+      {!readonly && content && content.trim().length > 0 && (
         <>
           {/* Completed state: show decision point */}
           <div className="absolute bottom-0 left-48 right-0 p-4 border-t border-border bg-background shadow-lg z-10">
