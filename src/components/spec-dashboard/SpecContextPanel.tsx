@@ -9,7 +9,7 @@ import {
   Loader2,
   PenTool,
 } from "lucide-react";
-import { type FC, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { MarkdownContent } from "@/app/components/MarkdownContent";
 import {
   Collapsible,
@@ -60,6 +60,24 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     refetchInterval: (query) =>
       query.state.data?.status === "implementing" ? 2000 : false,
   });
+
+  // Effect: Reset active stage if current stage becomes invalid (e.g. specs/tests removed)
+  // This prevents being stuck on a hidden tab when switching changes
+  useEffect(() => {
+    if (!change) return;
+
+    const hasSpecs = !!(
+      change.specsContent ||
+      (change.specFiles && change.specFiles.length > 0)
+    );
+    const hasTests = !!change.testsContent;
+
+    if (activeStage === "specs" && !hasSpecs) {
+      setActiveStage("design");
+    } else if (activeStage === "tests" && !hasTests) {
+      setActiveStage("design");
+    }
+  }, [change, activeStage]);
 
   if (!isValidContext) {
     return (
@@ -220,28 +238,41 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
             { id: "design", icon: PenTool, label: "Design" },
             { id: "tasks", icon: ListTodo, label: "Tasks" },
             { id: "tests", icon: CheckCircle2, label: "Tests" },
-          ].map((stage) => {
-            const Icon = stage.icon;
-            const isActive = activeStage === stage.id;
-            return (
-              <button
-                key={stage.id}
-                type="button"
-                onClick={() => {
-                  setActiveStage(stage.id as Stage);
-                  refetch();
-                }}
-                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? "border-primary text-primary bg-primary/5"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {stage.label}
-              </button>
-            );
-          })}
+          ]
+            .filter((stage) => {
+              if (stage.id === "specs") {
+                return !!(
+                  change.specsContent ||
+                  (change.specFiles && change.specFiles.length > 0)
+                );
+              }
+              if (stage.id === "tests") {
+                return !!change.testsContent;
+              }
+              return true;
+            })
+            .map((stage) => {
+              const Icon = stage.icon;
+              const isActive = activeStage === stage.id;
+              return (
+                <button
+                  key={stage.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveStage(stage.id as Stage);
+                    refetch();
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? "border-primary text-primary bg-primary/5"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {stage.label}
+                </button>
+              );
+            })}
         </div>
       </div>
 
