@@ -207,7 +207,7 @@ export const TasksTab: FC<TasksTabProps> = ({ projectId, sessionId }) => {
       setIsCreateOpen(false);
       setSubject("");
       setDescription("");
-      setDescription("");
+
       toast.success(
         i18n._({ id: "tasks.action.created", message: "Task created" }),
       );
