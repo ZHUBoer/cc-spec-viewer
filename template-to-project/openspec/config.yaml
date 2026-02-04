@@ -1,0 +1,79 @@
+schema: specforge-enhanced
+
+context: |
+  Tech stack: React + NFES + Xtaro-ZX
+  Package manager: npm
+  Framework: React
+    
+  ## Fact-Based Development
+  - 所有设计决策必须基于事实（PRD 原文、MCP 查询结果、现有代码）
+  - 严禁编造不存在的能力、组件或接口
+  - 不确定的内容标记为 MISSING，生成问题让用户明确
+  
+  ## Contract-First
+  - 后端接口必须先查询契约，获取完整的入参表和返回值表
+  - 未调用契约查询 = 禁止生成「外部依赖与接口」章节
+  
+  ## Priority Waterfall
+  - L1 Explicit: PRD 明确 → 直接确认
+  - L2 Pattern: 符合惯例 → 用户无异议即确认
+  - L3 Ambiguous: 有歧义 → 必须生成问题
+  
+  ## 使用的 Skills
+  - design-generation: 设计文档生成与评审
+  - querying-infra-catalog: 查询组件/API 规格
+  - zx-h5-develop-experience: H5 开发规范
+  - task-planning: 任务规划
+
+rules:
+  proposal:
+    - 聚焦"为何"而非"如何"
+    - 功能模块必须明确，构成与 specs 阶段的契约
+    - 影响范围需考虑跨团队影响
+
+  design:
+    - MUST 遵循 design-generation skill 的执行流程
+    - MUST 使用 querying-infra-catalog skill 来获取基建知识
+    - MUST 遵循 zx-h5-develop-experience skill 的开发规范
+
+    # Task-Tracked Workflow (CRITICAL!)
+    - MUST 使用 TaskCreate/TaskUpdate/TaskList 工具追踪设计流程
+    - MUST 每次更新任务状态的时候，多思考一下这个任务应该如何执行。
+    - MUST 不要在乎时间和 token的限制，慢慢做，直到做到完美。
+    - |
+      设计生成阶段: 创建 8 个任务，按需求理解→认知建立→实现验证的顺序执行
+      - D-1.1: proposal 需求解析（先知道要做什么）
+      - D-1.2: 技术框架概览（针对需求了解技术）
+      - D-1.3: H5 开发规范查询 (BLOCKING)（学习相关规范）
+      - D-1.4: 代码库最佳实践探索（寻找类似实现）
+      - D-1.5: 基建能力查询与验证（含 MCP-源码对比）
+      - D-2: 后端接口契约查询 (BLOCKING)
+      - D-3: 差距分析与问题生成
+      - D-4: 文档构建与输出
+    - |
+      冲突处理规则（D-1.5）:
+      若 MCP 查询结果与源码不一致 → 参考开发规范或最佳实践 → 仍有歧义则标记为待用户确认
+    - 设计评审阶段 (R-1~R-5): 创建 5 个任务追踪验证和迭代
+    - 每个任务开始前设为 in_progress，完成后设为 completed
+    - 阶段完成后调用 TaskList 确认所有任务状态
+
+    # Fact-Based Development
+    - 每个字段、组件引用必须有事实依据（PRD原文/MCP查询结果/现有代码实现）
+    - 严禁编造 pageId、serviceCode、组件名或参数
+    - 查不到的内容标记为 MISSING
+
+    # Contract-First
+    - 后端接口必须先调用契约查询
+    - 入参表必须包含：字段路径、类型、必填、来源、示例值、置信度状态
+    - 返回值表必须完整展开嵌套结构
+
+    # Problem Generation
+    - L2 字段不生成问题，用户无异议即确认
+    - 问题按功能块聚类，禁止碎片化提问
+
+  tasks:
+    - MUST 遵循 task-planning skill 的任务边界划分原则
+    - 每个任务必须是完整的工作单元
+    - 任务规模控制在单次 session 内完成
+    - 禁止生成独立的"测试"任务（除非用户明确要求）
+    - 按依赖关系排序任务
