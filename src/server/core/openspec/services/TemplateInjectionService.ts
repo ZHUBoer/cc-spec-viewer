@@ -152,7 +152,11 @@ const LayerImpl = Effect.gen(function* () {
               schemasTemplateDir,
               schemasTargetDir,
               variables,
-              { skipExisting: true }, // 只添加 SpecForge schemas，不覆盖已有的
+              {
+                skipExisting: false, // SpecForge schemas 可覆盖更新
+                filter: (relativePath) =>
+                  relativePath.startsWith("specforge-enhanced/"),
+              },
             );
           result.created.push(
             ...schemasResult.created.map((f) => `openspec/schemas/${f}`),
@@ -233,7 +237,7 @@ const LayerImpl = Effect.gen(function* () {
           skillsTargetDir,
           variables,
           {
-            skipExisting: isIncrementalScenario,
+            skipExisting: false, // SpecForge skills 可覆盖更新
             filter: (relativePath) => {
               // 只处理 SpecForge 管理的 skills
               const skillName = relativePath.split("/")[0];
@@ -275,7 +279,7 @@ const LayerImpl = Effect.gen(function* () {
           agentsTargetDir,
           variables,
           {
-            skipExisting: true, // agents 永不覆盖
+            skipExisting: false, // SpecForge agents 可覆盖更新
             filter: (relativePath) => !relativePath.includes(".DS_Store"),
           },
         );
@@ -477,7 +481,11 @@ const LayerImpl = Effect.gen(function* () {
               schemasTemplateDir,
               schemasTargetDir,
               variables,
-              { skipExisting: true }, // 只添加 SpecForge schemas，不覆盖 openspec init 创建的标准 schemas
+              {
+                skipExisting: false, // SpecForge schemas 可覆盖更新
+                filter: (relativePath) =>
+                  relativePath.startsWith("specforge-enhanced/"),
+              },
             );
           result.created.push(
             ...schemasResult.created.map((f) => `openspec/schemas/${f}`),
@@ -535,7 +543,7 @@ const LayerImpl = Effect.gen(function* () {
               skillsTargetDir,
               variables,
               {
-                skipExisting: true, // 不覆盖已存在的 skills
+                skipExisting: false, // SpecForge skills 可覆盖更新
                 filter: (relativePath) => {
                   // 只处理 SpecForge 管理的 skills
                   const skillName = relativePath.split("/")[0];
@@ -572,7 +580,7 @@ const LayerImpl = Effect.gen(function* () {
               agentsTargetDir,
               variables,
               {
-                skipExisting: true, // agents 永不覆盖
+                skipExisting: false, // SpecForge agents 可覆盖更新
                 filter: (relativePath) => !relativePath.includes(".DS_Store"),
               },
             );
