@@ -633,65 +633,69 @@ const LayerImpl = Effect.gen(function* () {
         return result;
       }
 
-      // S1_NEW 场景: 先执行 openspec init 创建标准结构
-      if (scenario === "S1_NEW") {
-        // 检查 CLI 是否安装
-        const envStatus = yield* environmentService.checkEnvironment(projectId);
+      // 所有场景（除 S5）都需要先执行 openspec init
+      // 这确保了 openspec 目录结构的完整性，即使用户已经执行过 init，
+      // openspec CLI 的 --force 参数会妥善处理升级问题
 
-        if (!envStatus.cliInstalled) {
+      // 1. 检查 CLI 是否安装
+      const envStatus = yield* environmentService.checkEnvironment(projectId);
+
+      if (!envStatus.cliInstalled) {
+        result.success = false;
+        result.errors.push({
+          file: "openspec-init",
+          error: "OpenSpec CLI 未安装。请先安装 CLI 后再执行初始化操作。",
+        });
+        return result;
+      }
+
+      // 2. 执行 openspec init
+      try {
+        const initResult =
+          yield* environmentService.initializeOpenspec(projectId);
+
+        if (!initResult.success) {
           result.success = false;
           result.errors.push({
             file: "openspec-init",
-            error: "OpenSpec CLI 未安装。请先安装 CLI 后再执行初始化操作。",
+            error:
+              initResult.error || "执行 openspec init 失败，请检查项目配置。",
           });
           return result;
         }
 
-        // 执行 openspec init
-        try {
-          const initResult =
-            yield* environmentService.initializeOpenspec(projectId);
+        // 标记 openspec init 创建/更新的文件
+        result.created.push(
+          "openspec/config.yaml (by openspec init)",
+          "openspec/specs/ (by openspec init)",
+          "openspec/changes/ (by openspec init)",
+          ".claude/skills/openspec-* (by openspec init)",
+        );
+      } catch (error) {
+        result.success = false;
+        result.errors.push({
+          file: "openspec-init",
+          error: `执行 openspec init 时发生错误: ${error instanceof Error ? error.message : String(error)}`,
+        });
+        return result;
+      }
 
-          if (!initResult.success) {
-            result.success = false;
-            result.errors.push({
-              file: "openspec-init",
-              error:
-                initResult.error || "执行 openspec init 失败，请检查项目配置。",
-            });
-            return result;
-          }
+      // 3. 备份原始 config.yaml 为 config.origin.yaml
+      // 只在 config.yaml 不包含 _specforge: 标记时备份（说明是纯 OpenSpec 配置）
+      try {
+        const configPath = path.join(projectPath, "openspec", "config.yaml");
+        const originConfigPath = path.join(
+          projectPath,
+          "openspec",
+          "config.origin.yaml",
+        );
 
-          // 标记 openspec init 创建的文件
-          result.created.push(
-            "openspec/config.yaml (by openspec init)",
-            "openspec/specs/ (by openspec init)",
-            "openspec/changes/ (by openspec init)",
-            ".claude/skills/openspec-* (by openspec init)",
-          );
-        } catch (error) {
-          result.success = false;
-          result.errors.push({
-            file: "openspec-init",
-            error: `执行 openspec init 时发生错误: ${error instanceof Error ? error.message : String(error)}`,
-          });
-          return result;
-        }
+        const configExists = yield* fs.exists(configPath);
+        if (configExists) {
+          const originalContent = yield* fs.readFileString(configPath);
 
-        // 备份原始 config.yaml 为 config.origin.yaml
-        // 这样用户可以查看 OpenSpec 标准配置，对比 SpecForge 的增强修改
-        try {
-          const configPath = path.join(projectPath, "openspec", "config.yaml");
-          const originConfigPath = path.join(
-            projectPath,
-            "openspec",
-            "config.origin.yaml",
-          );
-
-          const configExists = yield* fs.exists(configPath);
-          if (configExists) {
-            const originalContent = yield* fs.readFileString(configPath);
-
+          // 只在没有 specforge 标记时才备份（避免重复备份）
+          if (!originalContent.includes("_specforge:")) {
             // 添加说明注释到备份文件开头
             const backupHeader = `# ============================================================================
 # OpenSpec 标准配置备份文件
@@ -705,7 +709,7 @@ const LayerImpl = Effect.gen(function* () {
 #   - 如需回退到标准配置，可以将此文件内容复制到 config.yaml
 #
 # 创建时间：${new Date().toISOString()}
-# 场景：S1_NEW (全新项目初始化)
+# 场景：${scenario}
 #
 # ============================================================================
 
@@ -717,13 +721,13 @@ const LayerImpl = Effect.gen(function* () {
               "openspec/config.origin.yaml (backup of original config)",
             );
           }
-        } catch (error) {
-          // 备份失败不应该中断整个流程，只记录警告
-          console.warn(
-            "备份 config.yaml 失败:",
-            error instanceof Error ? error.message : String(error),
-          );
         }
+      } catch (error) {
+        // 备份失败不应该中断整个流程，只记录警告
+        console.warn(
+          "备份 config.yaml 失败:",
+          error instanceof Error ? error.message : String(error),
+        );
       }
 
       try {
