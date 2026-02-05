@@ -233,6 +233,169 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           },
         )
 
+        // 新增：环境检测 API
+        .get("/api/projects/:projectId/openspec/environment", async (c) => {
+          const response = await effectToResponse(
+            c,
+            openSpecController
+              .getEnvironmentRoute({
+                projectId: c.req.param("projectId"),
+              })
+              .pipe(Effect.provide(runtime)),
+          );
+          return response;
+        })
+
+        // 新增：获取可用 Profile 列表
+        .get("/api/projects/:projectId/openspec/profiles", async (c) => {
+          const response = await effectToResponse(
+            c,
+            openSpecController
+              .getProfilesRoute({
+                projectId: c.req.param("projectId"),
+              })
+              .pipe(Effect.provide(runtime)),
+          );
+          return response;
+        })
+
+        // 新增：执行 SpecForge 初始化
+        .post(
+          "/api/projects/:projectId/openspec/initialize",
+          zValidator(
+            "json",
+            z.object({
+              scenario: z.enum([
+                "S1_NEW",
+                "S2_OPENSPEC_ONLY",
+                "S3_CLAUDE_ONLY",
+                "S4_BOTH_NON_SPECFORGE",
+                "S5_CONFIGURED",
+                "S6_PARTIAL",
+              ]),
+              profile: z.object({
+                displayName: z.string(),
+                description: z.string(),
+                infra_catalog: z.object({
+                  mcp_server_providers: z.record(
+                    z.string(),
+                    z.object({
+                      type: z.enum(["http", "sse", "stdio"]),
+                      url: z.string().optional(),
+                      command: z.string().optional(),
+                      args: z.array(z.string()).optional(),
+                    }),
+                  ),
+                  mcp_tool_definitions: z.object({
+                    overview: z.object({
+                      description: z.string(),
+                      tools: z.array(z.string()),
+                    }),
+                    search: z.object({
+                      description: z.string(),
+                      tools: z.array(z.string()),
+                    }),
+                    specifications: z.object({
+                      description: z.string(),
+                      tools: z.array(z.string()),
+                    }),
+                  }),
+                  skills: z.array(z.string()).optional(),
+                  develop_skills: z
+                    .object({
+                      description: z.string(),
+                      gitUrl: z.string().optional(),
+                      skills: z.array(z.string()),
+                    })
+                    .optional(),
+                  code_examples: z
+                    .object({
+                      examples: z.array(
+                        z.object({
+                          name: z.string(),
+                          description: z.string().optional(),
+                          paths: z.array(z.string()),
+                        }),
+                      ),
+                    })
+                    .optional(),
+                }),
+              }),
+            }),
+          ),
+          async (c) => {
+            const response = await effectToResponse(
+              c,
+              openSpecController
+                .initializeRoute({
+                  projectId: c.req.param("projectId"),
+                  ...c.req.valid("json"),
+                })
+                .pipe(Effect.provide(runtime)),
+            );
+            return response;
+          },
+        )
+
+        // 新增：全局安装 OpenSpec CLI
+        .post(
+          "/api/projects/:projectId/openspec/install-cli/global",
+          zValidator(
+            "json",
+            z.object({
+              initialize: z.boolean().optional(),
+            }),
+          ),
+          async (c) => {
+            const response = await effectToResponse(
+              c,
+              openSpecController
+                .installCliGlobalRoute({
+                  projectId: c.req.param("projectId"),
+                  initialize: c.req.valid("json").initialize,
+                })
+                .pipe(Effect.provide(runtime)),
+            );
+            return response;
+          },
+        )
+
+        // 新增：项目级安装 OpenSpec CLI
+        .post(
+          "/api/projects/:projectId/openspec/install-cli/project",
+          zValidator(
+            "json",
+            z.object({
+              initialize: z.boolean().optional(),
+            }),
+          ),
+          async (c) => {
+            const response = await effectToResponse(
+              c,
+              openSpecController
+                .installCliProjectRoute({
+                  projectId: c.req.param("projectId"),
+                  initialize: c.req.valid("json").initialize,
+                })
+                .pipe(Effect.provide(runtime)),
+            );
+            return response;
+          },
+        )
+
+        // 新增：执行 openspec init
+        .post("/api/projects/:projectId/openspec/run-init", async (c) => {
+          const response = await effectToResponse(
+            c,
+            openSpecController
+              .runOpenspecInitRoute({
+                projectId: c.req.param("projectId"),
+              })
+              .pipe(Effect.provide(runtime)),
+          );
+          return response;
+        })
+
         .get("/api/config", async (c) => {
           return c.json({
             config: c.get("userConfig"),

@@ -1,0 +1,55 @@
+{
+  "type": "prd-to-code",
+  "profile": "ctrip-prd-to-code-xtaro-zx",
+  "description": "当前默认 profile 为 ctrip-prd-to-code-xtaro-zx（Xtaro 技术栈）。你可以在 init 后直接编辑 /.specforge/config.json 以适配自身的业务基建能力。",
+  "infra_catalog": {
+    "mcp_server_providers": {
+      "xtaro-zx-library": {
+        "url": "http://xtaro-zx-mcp-function.fws.faas.qa.nt.ctripcorp.com/mcp",
+        "type": "http"
+      },
+      "ztrip-nfes-mcp": {
+        "url": "http://ztrip-nfes-mcp-function.fws.faas.qa.nt.ctripcorp.com/mcp",
+        "type": "http"
+      }
+    },
+    "mcp_tool_definitions": {
+      "overview": {
+        "description": "业务基建/框架全景认知能力。用于在任务开始时建立全局上下文，了解框架结构、核心规范与组件和 API 概览等开发指南。",
+        "tools": [
+          "mcp__xtaro-zx-library__xtaro-getting-started",
+          "mcp__ztrip-nfes-mcp__ztrip-nfes-getting-started"
+        ]
+      },
+      "search": {
+        "description": "探索与发现能力。用于在需求模糊或未知具体实现方案时，通过自然语言检索匹配最相关的文档内容、代码示例、解决方案和最佳实践。",
+        "tools": [
+          "mcp__xtaro-zx-library__xtaro-zx-search",
+          "mcp__ztrip-nfes-mcp__ztrip-nfes-search"
+        ]
+      },
+      "specifications": {
+        "description": "精准规格查阅能力。用于在已确定具体组件或 API 名称后，获取其详细的介绍、属性说明、使用方式和代码示例。",
+        "tools": [
+          "mcp__xtaro-zx-library__xtaro-zx-components-info",
+          "mcp__xtaro-zx-library__xtaro-zx-apis-info"
+        ]
+      }
+    },
+    "develop_skills": {
+      "description": "开发过程中 agent 需要的开发经验/知识，识别合适场景，按需使用。",
+      "gitUrl": "http://git.dev.sh.ctripcorp.com/ticket/specforge-develop-skills.git",
+      "skills": ["zx-fe-skills/*", "zx-fe-skills/zx-h5-develop-experience"]
+    },
+    "code_examples": {
+      "description": "仓库代码最佳实践示例。当 Agent 需要生成代码时，应优先参考这些示例，而非仓库中可能存在的过时代码。paths 支持文件或文件夹路径，相对于项目根目录。",
+      "examples": [
+        {
+          "name": "最佳实践页面",
+          "description": "展示项目中一个标准页面的开发规范和封装习惯，包括基建能力的使用规范。",
+          "paths": ["app/demo"]
+        }
+      ]
+    }
+  }
+}

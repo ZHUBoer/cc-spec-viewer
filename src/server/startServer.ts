@@ -20,7 +20,11 @@ import { FileSystemController } from "./core/file-system/presentation/FileSystem
 import { GitController } from "./core/git/presentation/GitController";
 import { GitService } from "./core/git/services/GitService";
 import { OpenSpecController } from "./core/openspec/presentation/OpenSpecController";
+import { OpenSpecEnvironmentService } from "./core/openspec/services/OpenSpecEnvironmentService";
 import { OpenSpecService } from "./core/openspec/services/OpenSpecService";
+import { ProfileConfigService } from "./core/openspec/services/ProfileConfigService";
+import { TemplateInjectionService } from "./core/openspec/services/TemplateInjectionService";
+import { TemplateProcessor } from "./core/openspec/services/TemplateProcessor";
 import type { CliOptions } from "./core/platform/services/CcvOptionsService";
 import { ProjectRepository } from "./core/project/infrastructure/ProjectRepository";
 import { ProjectController } from "./core/project/presentation/ProjectController";
@@ -123,8 +127,20 @@ const DomainBase = Layer.mergeAll(
   OpenSpecService.Live,
 );
 
+// OpenSpec 环境检测和注入服务层（有依赖顺序要求）
+const OpenSpecEnvBase = Layer.mergeAll(
+  OpenSpecEnvironmentService.Live,
+  ProfileConfigService.Live,
+  TemplateProcessor.Live,
+);
+
+const OpenSpecEnvLayer = TemplateInjectionService.Live.pipe(
+  Layer.provideMerge(OpenSpecEnvBase),
+);
+
 const DomainLayer = ClaudeCodeLifeCycleService.Live.pipe(
   Layer.provideMerge(DomainBase),
+  Layer.provideMerge(OpenSpecEnvLayer),
 );
 
 const AppServices = Layer.mergeAll(

@@ -7,10 +7,12 @@ import {
   Clock,
   FileText,
   PlusIcon,
+  Settings,
 } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
 import { useWorkspacePanel } from "@/hooks/useWorkspacePanel";
 import { NewProposalDialog } from "./NewProposalDialog";
+import { OpenSpecSetupPanel } from "./OpenSpecSetupPanel";
 import {
   type OpenSpecChange,
   specDashboardService,
@@ -41,6 +43,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
   const [loading, setLoading] = useState(true);
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [newProposalOpen, setNewProposalOpen] = useState(false);
   const { openSpec } = useWorkspacePanel();
 
@@ -90,15 +93,38 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
             Manage Spec changes
           </p>
         </div>
-        <button
-          type="button"
-          className="p-1 hover:bg-sidebar-accent rounded-md transition-colors cursor-pointer"
-          title="New Proposal"
-          onClick={() => setNewProposalOpen(true)}
-        >
-          <PlusIcon className="w-5 h-5 text-sidebar-foreground/70" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            className={`p-1 hover:bg-sidebar-accent rounded-md transition-colors cursor-pointer ${showSettings ? "bg-sidebar-accent" : ""}`}
+            title="SpecForge Settings"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Settings className="w-5 h-5 text-sidebar-foreground/70" />
+          </button>
+          <button
+            type="button"
+            className="p-1 hover:bg-sidebar-accent rounded-md transition-colors cursor-pointer"
+            title="New Proposal"
+            onClick={() => setNewProposalOpen(true)}
+          >
+            <PlusIcon className="w-5 h-5 text-sidebar-foreground/70" />
+          </button>
+        </div>
       </div>
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <div className="border-b border-sidebar-border">
+          <OpenSpecSetupPanel
+            projectId={projectId}
+            onSetupComplete={() => {
+              // 刷新 changes 列表
+              specDashboardService.getChanges(projectId).then(setChanges);
+            }}
+          />
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {loading ? (
