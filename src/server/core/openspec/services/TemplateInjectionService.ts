@@ -661,6 +661,33 @@ const LayerImpl = Effect.gen(function* () {
           });
           return result;
         }
+
+        // 备份原始 config.yaml 为 config.origin.yaml
+        // 这样用户可以查看 OpenSpec 标准配置，对比 SpecForge 的增强修改
+        try {
+          const configPath = path.join(projectPath, "openspec", "config.yaml");
+          const originConfigPath = path.join(
+            projectPath,
+            "openspec",
+            "config.origin.yaml",
+          );
+
+          const configExists = yield* fs.exists(configPath);
+          if (configExists) {
+            const originalContent = yield* fs.readFileString(configPath);
+            yield* fs.writeFileString(originConfigPath, originalContent);
+
+            result.created.push(
+              "openspec/config.origin.yaml (backup of original config)",
+            );
+          }
+        } catch (error) {
+          // 备份失败不应该中断整个流程，只记录警告
+          console.warn(
+            "备份 config.yaml 失败:",
+            error instanceof Error ? error.message : String(error),
+          );
+        }
       }
 
       try {
