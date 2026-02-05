@@ -665,71 +665,65 @@ const LayerImpl = Effect.gen(function* () {
 
       try {
         // 1. 注入 openspec 目录
-        if (scenario !== "S3_CLAUDE_ONLY") {
-          if (scenario === "S1_NEW") {
-            // S1_NEW 场景: 已执行 openspec init，只注入增强配置
-            const enhancementResult = yield* injectOpenspecEnhancements(
-              projectPath,
-              variables,
-            );
-            result.created.push(...enhancementResult.created);
-            result.updated.push(...enhancementResult.updated);
-            result.errors.push(
-              ...enhancementResult.errors.map((e) => ({
-                file: "openspec-enhancements",
-                error: e,
-              })),
-            );
-          } else {
-            // 其他场景: 完整注入 openspec 目录
-            const openspecResult = yield* injectOpenspecDir(
-              projectPath,
-              variables,
-              { scenario },
-            );
-            result.created.push(...openspecResult.created);
-            result.skipped.push(...openspecResult.skipped);
-            result.errors.push(
-              ...openspecResult.errors.map((e) => ({
-                file: "openspec",
-                error: e,
-              })),
-            );
-          }
+        if (scenario === "S1_NEW") {
+          // S1_NEW 场景: 已执行 openspec init，只注入增强配置
+          const enhancementResult = yield* injectOpenspecEnhancements(
+            projectPath,
+            variables,
+          );
+          result.created.push(...enhancementResult.created);
+          result.updated.push(...enhancementResult.updated);
+          result.errors.push(
+            ...enhancementResult.errors.map((e) => ({
+              file: "openspec-enhancements",
+              error: e,
+            })),
+          );
+        } else {
+          // 其他场景: 完整注入 openspec 目录
+          const openspecResult = yield* injectOpenspecDir(
+            projectPath,
+            variables,
+            { scenario },
+          );
+          result.created.push(...openspecResult.created);
+          result.skipped.push(...openspecResult.skipped);
+          result.errors.push(
+            ...openspecResult.errors.map((e) => ({
+              file: "openspec",
+              error: e,
+            })),
+          );
         }
 
         // 2. 注入 .claude 目录
-        if (scenario !== "S2_OPENSPEC_ONLY") {
-          if (scenario === "S1_NEW") {
-            // S1_NEW 场景: 已执行 openspec init，只注入增强配置
-            const claudeResult = yield* injectClaudeEnhancements(
-              projectPath,
-              variables,
-            );
-            result.created.push(...claudeResult.created);
-            result.skipped.push(...claudeResult.skipped);
-            result.errors.push(
-              ...claudeResult.errors.map((e) => ({
-                file: ".claude-enhancements",
-                error: e,
-              })),
-            );
-          } else {
-            // 其他场景: 完整注入 .claude 目录
-            const claudeResult = yield* injectClaudeDir(
-              projectPath,
-              variables,
-              { scenario },
-            );
-            result.created.push(...claudeResult.created);
-            result.skipped.push(...claudeResult.skipped);
-            result.errors.push(
-              ...claudeResult.errors.map((e) => ({
-                file: ".claude",
-                error: e,
-              })),
-            );
-          }
+        if (scenario === "S1_NEW") {
+          // S1_NEW 场景: 已执行 openspec init，只注入增强配置
+          const claudeResult = yield* injectClaudeEnhancements(
+            projectPath,
+            variables,
+          );
+          result.created.push(...claudeResult.created);
+          result.skipped.push(...claudeResult.skipped);
+          result.errors.push(
+            ...claudeResult.errors.map((e) => ({
+              file: ".claude-enhancements",
+              error: e,
+            })),
+          );
+        } else {
+          // 其他场景: 完整注入 .claude 目录
+          const claudeResult = yield* injectClaudeDir(projectPath, variables, {
+            scenario,
+          });
+          result.created.push(...claudeResult.created);
+          result.skipped.push(...claudeResult.skipped);
+          result.errors.push(
+            ...claudeResult.errors.map((e) => ({
+              file: ".claude",
+              error: e,
+            })),
+          );
         }
 
         // 3. 注入 specforge 标记
