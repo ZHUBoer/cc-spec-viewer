@@ -15,6 +15,7 @@ interface DesignReviewViewProps {
   content: string;
   onRefine?: () => void;
   readonly?: boolean;
+  mode?: "design" | "proposal";
 }
 
 interface ToCItem {
@@ -41,9 +42,16 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   changeId,
   content,
   readonly = false,
+  mode = "design",
 }) => {
   const queryClient = useQueryClient();
   const isProcessingRef = useRef(false);
+
+  const isProposal = mode === "proposal";
+  const fileName = isProposal ? "proposal.md" : "design.md";
+  const confirmTag = isProposal
+    ? "<!-- PROPOSAL_FINAL_CONFIRMATION: true -->"
+    : "<!-- DESIGN_FINAL_CONFIRMATION: true -->";
 
   // Extract ToC
   const toc = useMemo(() => {
@@ -145,7 +153,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       await specDashboardService.updateChangeFile(
         projectId,
         changeId,
-        "design.md",
+        fileName,
         newFileContent,
       );
 
@@ -153,7 +161,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       await queryClient.invalidateQueries({
         queryKey: ["openspec", "change", projectId, changeId],
       });
-      toast.success("Design updated");
+      toast.success(`${isProposal ? "Proposal" : "Design"} updated`);
     } catch (error) {
       console.error("Update failed", error);
       toast.error("Update failed");
@@ -192,7 +200,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
         await specDashboardService.updateChangeFile(
           projectId,
           changeId,
-          "design.md",
+          fileName,
           newFullContent,
         );
         await queryClient.invalidateQueries({
@@ -208,12 +216,13 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
     }
   };
 
-  // 重新生成设计
-  const handleRegenerateDesign = async () => {
+  // 重新生成
+  const handleRegenerate = async () => {
     if (isProcessingRef.current) return;
     try {
       isProcessingRef.current = true;
-      const message = `我已经在 design.md 中添加了一些意见和修改建议。必须仔细阅读我的意见，理解我的意图，然后重新生成 design.md。重点关注标记为 "**用户意见**" 的部分，确保新的设计充分考虑了这些反馈。直接修改 design.md 文件，不要创建新的文件。`;
+      const fileLabel = isProposal ? "proposal.md" : "design.md";
+      const message = `我已经在 ${fileLabel} 中添加了一些意见和修改建议。必须仔细阅读我的意见，理解我的意图，然后重新生成 ${fileLabel}。重点关注标记为 "**用户意见**" 的部分，确保新的内容充分考虑了这些反馈。直接修改 ${fileLabel} 文件，不要创建新的文件。`;
 
       await navigator.clipboard.writeText(message);
       toast.success(
@@ -230,22 +239,21 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
     }
   };
 
-  // 确认设计并生成任务
-  const handleConfirmDesignAndGenerateTasks = async () => {
+  // 确认并生成下一步
+  const handleConfirm = async () => {
     if (isProcessingRef.current) return;
     try {
       isProcessingRef.current = true;
 
       // 1. 添加或更新最终确认标记
-      const confirmationTag = "<!-- DESIGN_FINAL_CONFIRMATION: true -->";
       const timeTagPrefix = "<!-- CONFIRMED_AT: ";
 
       let updatedContent = content;
 
       // 移除旧的确认标记（如果有）
-      if (updatedContent.includes(confirmationTag)) {
+      if (updatedContent.includes(confirmTag)) {
         updatedContent = updatedContent.replace(
-          new RegExp(`${confirmationTag}\\s*`, "g"),
+          new RegExp(`${confirmTag}\\s*`, "g"),
           "",
         );
       }
@@ -260,7 +268,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       updatedContent =
         updatedContent.trim() +
         "\n\n" +
-        confirmationTag +
+        confirmTag +
         "\n" +
         timeTagPrefix +
         new Date().toISOString() +
@@ -269,12 +277,18 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       await specDashboardService.updateChangeFile(
         projectId,
         changeId,
-        "design.md",
+        fileName,
         updatedContent,
       );
 
       // 2. 复制提示词
-      const message = `设计已确认。按照 artifact 的构建要求，根据 design.md 生成 tasks.md。`;
+      let message = "";
+      if (isProposal) {
+        message = `Proposal 已确认。按照 artifact 的构建要求，根据 proposal.md 生成 design.md。`;
+      } else {
+        message = `设计已确认。按照 artifact 的构建要求，根据 design.md 生成 tasks.md。`;
+      }
+
       await navigator.clipboard.writeText(message);
 
       await queryClient.invalidateQueries({
@@ -282,14 +296,14 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
       });
 
       toast.success(
-        "设计已确认！提示词已复制。请前往左侧【会话列表】，选择刚才的会话，粘贴并发送以生成任务。",
+        `${isProposal ? "Proposal" : "设计"}已确认！提示词已复制。请前往左侧【会话列表】，选择刚才的会话，粘贴并发送以继续。`,
         {
           duration: 6000,
         },
       );
     } catch (error) {
-      console.error("Failed to confirm design", error);
-      toast.error("确认设计失败");
+      console.error("Failed to confirm", error);
+      toast.error("确认失败");
     } finally {
       isProcessingRef.current = false;
     }
@@ -330,7 +344,7 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
           <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
             <h4 className="flex items-center gap-2 font-semibold text-primary mb-2">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Design Review Mode
+              {isProposal ? "Proposal Review Mode" : "Design Review Mode"}
             </h4>
             <p className="text-sm text-foreground/80">
               请确认每一项内容。待决策问题请统一确认。所有段落确认后方可完成评审。
@@ -339,7 +353,9 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
 
           {!content || content.trim() === "" ? (
             <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground italic">
-              <MarkdownContent content="*No design content*" />
+              <MarkdownContent
+                content={`*No ${isProposal ? "proposal" : "design"} content*`}
+              />
             </div>
           ) : (
             parts.map((part, idx) => {
@@ -462,28 +478,31 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
             <div className="max-w-4xl mx-auto">
               <div className="mb-3 flex items-center gap-2">
                 <h4 className="font-semibold text-base">
-                  若完成设计评审，请选择下一步
+                  若完成{isProposal ? " Proposal " : " Design "}
+                  评审，请选择下一步
                 </h4>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Option 1: Regenerate Design (Always available now) */}
+                {/* Option 1: Regenerate (Always available now) */}
                 <Button
                   className="flex-1 cursor-pointer"
                   variant="outline"
-                  onClick={handleRegenerateDesign}
+                  onClick={handleRegenerate}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  重新生成设计
+                  重新生成{isProposal ? " Proposal" : " Design"}
                 </Button>
 
-                {/* Option 2: Confirm Design and Generate Tasks */}
+                {/* Option 2: Confirm and Generate Next Step */}
                 <Button
                   className="flex-1 bg-green-600 hover:bg-green-700 cursor-pointer"
-                  onClick={handleConfirmDesignAndGenerateTasks}
+                  onClick={handleConfirm}
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  设计无误，生成任务
+                  {isProposal
+                    ? "确认 proposal 并生成 design"
+                    : "设计无误，生成任务"}
                 </Button>
               </div>
 

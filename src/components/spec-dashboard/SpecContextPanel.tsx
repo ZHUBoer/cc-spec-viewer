@@ -110,9 +110,12 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     switch (activeStage) {
       case "proposal":
         return (
-          <SpecContentView
-            content={change.proposalContent}
-            emptyMessage="No proposal content available"
+          <DesignReviewView
+            projectId={ctx.projectId}
+            changeId={ctx.changeId}
+            content={change.proposalContent || ""}
+            readonly={change.status === "archived"}
+            mode="proposal"
           />
         );
       case "specs":
