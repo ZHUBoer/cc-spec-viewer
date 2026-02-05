@@ -18,7 +18,7 @@ interface StatusBadgeProps {
 export const STATUS_CONFIG = {
   draft: {
     color: "gray" as const,
-    label: "草稿",
+    label: "提案",
     icon: "📝",
     description: "提案阶段，等待生成设计文档",
   },
