@@ -4,32 +4,12 @@ context: |
   Tech stack: React + NFES + Xtaro-ZX
   Package manager: npm
   Framework: React
-    
-  ## Fact-Based Development
-  - 所有设计决策必须基于事实（PRD 原文、MCP 查询结果、现有代码）
-  - 严禁编造不存在的能力、组件或接口
-  - 不确定的内容标记为 MISSING，生成问题让用户明确
-  
-  ## Contract-First
-  - 后端接口必须先查询契约，获取完整的入参表和返回值表
-  - 未调用契约查询 = 禁止生成「外部依赖与接口」章节
-  
-  ## Priority Waterfall
-  - L1 Explicit: PRD 明确 → 直接确认
-  - L2 Pattern: 符合惯例 → 用户无异议即确认
-  - L3 Ambiguous: 有歧义 → 必须生成问题
-  
-  ## 使用的 Skills
-  - design-generation: 设计文档生成与评审
-  - querying-infra-catalog: 查询组件/API 规格
-  - zx-h5-develop-experience: H5 开发规范
-  - task-planning: 任务规划
 
 rules:
   proposal:
-    - 聚焦"为何"而非"如何"
-    - 功能模块必须明确，构成与 specs 阶段的契约
-    - 影响范围需考虑跨团队影响
+    - MUST 严禁出现代码变量名、API 路径、数据库字段。使用中文业务术语
+    - MUST 严格校验“登录前、登录中、登录后”的状态切换逻辑
+    - MUST 在评审阶段，等待用户提供信息后再重新完善
 
   design:
     - MUST 遵循 design-generation skill 的执行流程
@@ -42,9 +22,9 @@ rules:
     - MUST 不要在乎时间和 token的限制，慢慢做，直到做到完美。
     - |
       设计生成阶段: 创建 8 个任务，按需求理解→认知建立→实现验证的顺序执行
-      - D-1.1: proposal 需求解析（先知道要做什么）
-      - D-1.2: 技术框架概览（针对需求了解技术）
-      - D-1.3: H5 开发规范查询 (BLOCKING)（学习相关规范）
+      - D-1.1: 技术框架概览（针对需求了解技术）
+      - D-1.2: H5 开发规范查询 (BLOCKING)（学习相关规范）
+      - D-1.3: proposal 需求解析（先知道要做什么）
       - D-1.4: 代码库最佳实践探索（寻找类似实现）
       - D-1.5: 基建能力查询与验证（含 MCP-源码对比）
       - D-2: 后端接口契约查询 (BLOCKING)
