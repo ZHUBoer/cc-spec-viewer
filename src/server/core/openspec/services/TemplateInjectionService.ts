@@ -152,7 +152,7 @@ const LayerImpl = Effect.gen(function* () {
               schemasTemplateDir,
               schemasTargetDir,
               variables,
-              { skipExisting: false }, // schemas 可以覆盖
+              { skipExisting: true }, // 只添加 SpecForge schemas，不覆盖已有的
             );
           result.created.push(
             ...schemasResult.created.map((f) => `openspec/schemas/${f}`),
@@ -257,31 +257,35 @@ const LayerImpl = Effect.gen(function* () {
         result.errors.push(...skillsResult.errors);
       }
 
-      // 处理 agents 目录（只在全新项目时注入）
-      if (options.scenario === "S1_NEW") {
-        const agentsTemplateDir = path.join(templateDir, "agents");
-        const agentsTargetDir = path.join(targetDir, "agents");
+      // 处理 agents 目录
+      // S1_NEW: 全新项目，必须注入
+      // S3_CLAUDE_ONLY: 已有 .claude 但可能缺 agents
+      // S4_BOTH_NON_SPECFORGE: 已有配置但可能缺 agents
+      // 其他场景: 根据是否存在决定是否注入
+      const agentsTemplateDir = path.join(templateDir, "agents");
+      const agentsTargetDir = path.join(targetDir, "agents");
 
-        const agentsTemplateExists = yield* fs.exists(agentsTemplateDir);
-        if (agentsTemplateExists) {
-          const agentsResult =
-            yield* templateProcessor.processTemplateDirectory(
-              agentsTemplateDir,
-              agentsTargetDir,
-              variables,
-              {
-                skipExisting: true, // agents 永不覆盖
-                filter: (relativePath) => !relativePath.includes(".DS_Store"),
-              },
-            );
-          result.created.push(
-            ...agentsResult.created.map((f) => `.claude/agents/${f}`),
-          );
-          result.skipped.push(
-            ...agentsResult.skipped.map((f) => `.claude/agents/${f}`),
-          );
-          result.errors.push(...agentsResult.errors);
-        }
+      const agentsTemplateExists = yield* fs.exists(agentsTemplateDir);
+      const agentsTargetExists = yield* fs.exists(agentsTargetDir);
+
+      // 只在 agents 目录不存在时注入（避免覆盖用户的 agents 配置）
+      if (agentsTemplateExists && !agentsTargetExists) {
+        const agentsResult = yield* templateProcessor.processTemplateDirectory(
+          agentsTemplateDir,
+          agentsTargetDir,
+          variables,
+          {
+            skipExisting: true, // agents 永不覆盖
+            filter: (relativePath) => !relativePath.includes(".DS_Store"),
+          },
+        );
+        result.created.push(
+          ...agentsResult.created.map((f) => `.claude/agents/${f}`),
+        );
+        result.skipped.push(
+          ...agentsResult.skipped.map((f) => `.claude/agents/${f}`),
+        );
+        result.errors.push(...agentsResult.errors);
       }
 
       return result;
@@ -413,7 +417,8 @@ const LayerImpl = Effect.gen(function* () {
           templateConfig.rules,
         )) {
           if (Array.isArray(templateRules)) {
-            // 如果用户已有该 artifact 的规则，合并数组
+            // 数组类型：追加模板规则到用户规则后面（两者都保留）
+            // 例如：用户规则 [A, B] + 模板规则 [C, D] = [A, B, C, D]
             if (mergedConfig.rules[artifactType]) {
               mergedConfig.rules[artifactType] = [
                 ...mergedConfig.rules[artifactType],
@@ -423,7 +428,10 @@ const LayerImpl = Effect.gen(function* () {
               mergedConfig.rules[artifactType] = templateRules;
             }
           } else if (typeof templateRules === "object") {
-            // 对象类型，递归合并
+            // 对象类型：用户规则优先，模板规则作为补充
+            // 同名键：用户规则覆盖模板规则（用户有最终决定权）
+            // 不同名键：两者都保留
+            // 例如：模板 {max: 100, req: true} + 用户 {max: 200} = {max: 200, req: true}
             mergedConfig.rules[artifactType] = {
               ...templateRules,
               ...mergedConfig.rules[artifactType],
@@ -469,7 +477,7 @@ const LayerImpl = Effect.gen(function* () {
               schemasTemplateDir,
               schemasTargetDir,
               variables,
-              { skipExisting: false }, // schemas 可以覆盖
+              { skipExisting: true }, // 只添加 SpecForge schemas，不覆盖 openspec init 创建的标准 schemas
             );
           result.created.push(
             ...schemasResult.created.map((f) => `openspec/schemas/${f}`),
@@ -675,7 +683,27 @@ const LayerImpl = Effect.gen(function* () {
           const configExists = yield* fs.exists(configPath);
           if (configExists) {
             const originalContent = yield* fs.readFileString(configPath);
-            yield* fs.writeFileString(originConfigPath, originalContent);
+
+            // 添加说明注释到备份文件开头
+            const backupHeader = `# ============================================================================
+# OpenSpec 标准配置备份文件
+# ============================================================================
+#
+# 这是由 SpecForge 在执行 openspec init 后自动创建的备份文件
+#
+# 用途：
+#   - 对比查看 OpenSpec 原始配置和 SpecForge 的增强修改
+#   - 了解 SpecForge 在标准配置基础上做了哪些调整
+#   - 如需回退到标准配置，可以将此文件内容复制到 config.yaml
+#
+# 创建时间：${new Date().toISOString()}
+# 场景：S1_NEW (全新项目初始化)
+#
+# ============================================================================
+
+`;
+            const backupContent = backupHeader + originalContent;
+            yield* fs.writeFileString(originConfigPath, backupContent);
 
             result.created.push(
               "openspec/config.origin.yaml (backup of original config)",
