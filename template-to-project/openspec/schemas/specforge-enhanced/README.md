@@ -19,6 +19,10 @@ SpecForge Enhanced 是一个增强的 OpenSpec 工作流 schema，将 SpecForge 
 | **需求优先执行** ⭐ | 先理解需求，再有针对性地建立认知和验证实现 |
 | **冲突处理机制** ⭐ | MCP-源码不一致时，参考规范和实践做出决策 |
 | **多轮 Q&A 迭代** | 设计文档支持多轮用户确认和系统建议 |
+| **迭代式问题讨论** ⭐ v3.0 | 问题讨论 → 流程图确认 → 文档生成，每次答复后复盘检查新问题 |
+| **问题自动收口** ⭐ v2.2 | format-compliance-agent 自动扫描遗漏项并归集到待决策问题章节 |
+| **技术流程图强化** ⭐ v2.2 | 技术实现流程图必须标注接口名、组件名、字段、数据流向 |
+| **内容质量审查** ⭐ v2.2 | Mermaid 渲染验证、遗漏扫描、逻辑闭环检查 |
 
 ---
 
@@ -38,7 +42,7 @@ proposal ──► specs ──► design ──► tasks ──► apply
                               │   D-3: 差距分析与问题生成
                               │   D-4: 文档构建与输出
                               │
-                              ├── Round 2+: 用户答复 + 系统验证（5 个任务追踪）
+                              ├── Round 2+: 用户意见 + 系统验证（5 个任务追踪）
                               │   R-1: 读取文件状态
                               │   R-2: MCP 验证与契约理解
                               │   R-3: 生成系统建议
@@ -89,7 +93,7 @@ graph LR
 | 任务 | 说明 | 关键点 |
 |:---|:---|:---|
 | **R-1** | 读取文件状态 | 解析用户输入和当前状态 |
-| **R-2** | MCP 验证与契约理解 | 重新查询验证用户答复 |
+| **R-2** | MCP 验证与契约理解 | 重新查询验证用户意见 |
 | **R-3** | 生成系统建议 | 在 SYSTEM_SUGGESTION 区写入建议 |
 | **R-4** | 检查完成度 | 判断是否满足完成条件 |
 | **R-5** | 更新状态或消化内容 | 未完成则继续迭代，已完成则固化内容 |
@@ -130,7 +134,7 @@ graph LR
 **示例**:
 
 ```yaml
-场景：MCP 说 ZModal 只有 visible/onClose，源码用了 maskClosable
+场景：MCP 说 ModalComponent 只有 visible/onClose，源码用了 maskClosable
 
 Step 1: 查 D-1.3 规范
   → 规范未提及 maskClosable
@@ -206,7 +210,7 @@ Claude:
   → 清理上一轮任务（若存在）
   → 创建 5 个任务（R-1~R-5）
   → 执行 R-1: 读取文件状态和用户输入
-  → 执行 R-2: MCP 验证用户答复
+  → 执行 R-2: MCP 验证用户意见
   → 执行 R-3: 生成系统建议
   → 执行 R-4: 检查设计完成度
   → 执行 R-5: 更新状态或消化内容
@@ -264,8 +268,8 @@ Claude:
 示例：
 ```javascript
 mcp__contract-doc__get_contract_doc(
-  serviceCode="31493",
-  operationName="getReferralInfo"
+  serviceCode="ServiceA",
+  operationName="operationB"
 )
 ```
 
@@ -458,7 +462,7 @@ MCP ≠ 源码
 ### 完整的 design 生成流程
 
 ```
-用户需求: 实现火车票推荐有礼页面
+用户需求: 实现用户推荐功能页面
 
 ▶ Round 1: 设计生成
 
@@ -467,39 +471,39 @@ MCP ≠ 源码
 
   [D-1.1] proposal 需求解析
   → 读取 proposal
-  → 识别接口：service 31493, getReferralInfo
-  → 识别组件：ZModal, XButton, XImage
+  → 识别接口：service ServiceA, operationB
+  → 识别组件：ModalComponent, ButtonComponent, ImageComponent
   → 识别功能：分享、埋点
   → 生成查询清单 ✅
 
   [D-1.2] 技术框架概览
   → Skill(querying-infra-catalog) - overview
-  → 了解 Xtaro-ZX 组件库和 NFES 框架
-  → 针对 ZModal, XButton, XImage 了解能力 ✅
+  → 了解 ComponentLibraryX 组件库和 FrameworkY 框架
+  → 针对 ModalComponent, ButtonComponent, ImageComponent 了解能力 ✅
 
   [D-1.3] H5 开发规范查询 (BLOCKING)
-  → Skill(zx-h5-develop-experience)
-  → 获取分享规范：必须使用 zShare API
+  → Skill(开发规范skill名称)
+  → 获取分享规范：必须使用 ShareAPI
   → 获取埋点规范：必须在组件挂载时埋点
-  → 获取请求规范：必须使用 zRequest ✅
+  → 获取请求规范：必须使用 RequestAPI ✅
 
   [D-1.4] 代码库最佳实践探索
-  → Glob("app/member*/")
-  → Read app/memberCenter/client.jsx
+  → Glob("app/feature*/")
+  → Read app/featureA/client.jsx
   → 提取实践：page.jsx + index.jsx + client.jsx
-  → 提取实践：ZModal 使用 maskClosable=false ✅
+  → 提取实践：ModalComponent 使用 maskClosable=false ✅
 
   [D-1.5] 基建能力查询与验证
   → Skill(querying-infra-catalog) - search/specifications
-  → MCP 返回：ZModal (visible, onClose, children)
-  → Read 源码：ZModal (visible, onClose, maskClosable, children)
+  → MCP 返回：ModalComponent (visible, onClose, children)
+  → Read 源码：ModalComponent (visible, onClose, maskClosable, children)
   → 冲突处理：
     - 参考 D-1.3 规范：未提及 maskClosable
     - 参考 D-1.4 实践：使用 maskClosable=false
     - 决策：采纳实践 ✅
 
   [D-2] 后端接口契约查询 (BLOCKING)
-  → mcp__contract-doc__get_contract_doc(31493, getReferralInfo)
+  → mcp__contract-doc__get_contract_doc(ServiceA, operationB)
   → 记录入参表和返回值表 ✅
 
   [D-3] 差距分析与问题生成
@@ -517,20 +521,20 @@ MCP ≠ 源码
 
 ▶ Round 2: 设计评审
 
-  [用户答复]
+  [用户意见]
   Q1: 选择"微信分享"
 
   [创建任务]
   TaskCreate → 5 个任务创建完成
 
   [R-1] 读取文件状态
-  → 解析用户答复：Q1 = 微信分享 ✅
+  → 解析用户意见：Q1 = 微信分享 ✅
 
   [R-2] MCP 验证
-  → 验证微信分享：需要 zShare API（D-1.3 规范已包含）✅
+  → 验证微信分享：需要 ShareAPI（D-1.3 规范已包含）✅
 
   [R-3] 生成系统建议
-  → 建议：使用 zShare.shareToWechat() ✅
+  → 建议：使用 ShareAPI.shareToWechat() ✅
 
   [R-4] 检查完成度
   → 所有问题已解决 ✅
@@ -767,6 +771,115 @@ design.md 可能需要 2-3 轮评审才能完成。每轮评审都会创建 5 �
 ---
 
 ## 版本历史
+
+### v3.0 (2026-02-12) - 迭代式问题讨论与流程图确认
+
+**核心改进**：重新设计 Proposal 工作流，从"一次性生成完整文档"改为"迭代式问题讨论 → 流程图确认 → 完整文档生成"
+
+#### 1. Proposal 工作流重构 ⭐⭐⭐
+
+**新的四阶段流程**：
+
+- **阶段一（需求消化）**：消化需求、解析功能逻辑、识别初始问题列表（不生成流程图，不生成完整文档）
+- **阶段二（问题迭代讨论）**：
+  - P-2-1: 展示所有问题及备选方案
+  - P-2-2: 接收用户答复
+  - P-2-3: **复盘与新问题检测 (CRITICAL!)** - 检查用户答复是否引入新歧义或逻辑漏洞，若有则回到 P-2-1 继续讨论
+- **阶段三（流程图确认）**：
+  - P-3-1: 基于所有已确认答复生成完整业务逻辑流程图
+  - P-3-2: 展示流程图等待用户确认
+  - P-3-3: 处理修改意见并检测新问题，若有则回到阶段二
+- **阶段四（文档生成）**：生成包含所有确认信息的完整 proposal.md
+
+**关键原则**：
+- **不断复盘**：每次用户回答后 MUST 复盘所有信息，检查是否引入新问题
+- **迭代直到闭环**：发现新问题继续讨论，直到所有问题解决且流程图确认
+- **分阶段确认**：问题讨论和流程图确认分开进行，避免信息过载
+
+#### 2. Design 工作流优化 ⭐
+
+在评审阶段（R-1~R-6）强化迭代机制：
+- **R-2 增强**：用户输入验证后增加"复盘检查"步骤，检测是否引入新歧义或逻辑漏洞
+- **R-3 增强**：若发现新问题，自动在待决策问题章节增加新的问题条目
+- **D-4 明确**：生成的文档是"待用户审查的初稿"，所有决策都需要用户确认
+
+#### 3. format-compliance-agent 优化 ⭐
+
+- **调用示例前置**：在文件顶部增加"快速开始"章节，主 agent 可立即看到调用方式
+- **完整示例保留**：底部保留详细示例作为参考
+
+#### 4. 模板结构增强
+
+**proposal.md 模板**：
+- 待决策问题章节增加完整工作流程说明（四阶段流程）
+- 明确每个阶段的目标和输出
+
+**design.md 模板**：
+- 待决策问题章节增加工作流程说明（生成 + 评审迭代）
+- 强调复盘检查和新问题生成机制
+
+#### 5. 复盘检查清单 ⭐
+
+为 P-2-3（Proposal 问题讨论）提供标准化复盘清单：
+- [ ] 用户答复是否引入新的业务逻辑分支？
+- [ ] 不同问题的答复之间是否存在冲突？
+- [ ] 是否有功能点在用户答复后变得不明确？
+- [ ] 是否有新的边界情况或异常流程需要处理？
+- [ ] 多端支持的答复是否一致（APP/小程序/H5）？
+- [ ] 登录态相关的逻辑是否闭环？
+
+**修改文件清单**：
+- `format-compliance-agent.md`：添加快速开始章节（含调用示例）
+- `schema.yaml`：
+  - Proposal: 重构为四阶段流程（12 个任务）
+  - Design: R-2、R-3、D-4 任务描述增强
+- `proposal.md` 模板：待决策问题章节增加完整工作流程说明
+- `design.md` 模板：待决策问题章节增加工作流程说明
+
+**升级理由**：
+- 用户反馈：需要先讨论问题再生成流程图，避免一次性输出过多内容
+- 用户反馈：讨论问题时需要不断复盘，因为用户答复可能引入新的歧义或逻辑漏洞
+- 改进效果：更符合人类思维习惯，分阶段确认降低认知负担，迭代检查提升方案质量
+
+---
+
+### v2.2 (2026-02-11) - 问题收口与内容质量审查
+
+**核心改进**：解决"问题散落"和"流程图缺技术细节"两大问题
+
+#### 1. format-compliance-agent 能力增强 ⭐
+- **结构审查 + 内容质量审查**：从单纯结构检查升级为全面质量审查
+- **Mermaid 流程图验证**：集成 mermaid-mcp 验证语法和渲染正确性
+- **技术细节检查**：检查流程图是否标注接口名、组件名、字段、数据流向
+- **内容遗漏扫描**：自动扫描 `[MISSING]`/`⚠️`/`❌` 标记和不确定信息
+- **逻辑闭环检查**：检查接口/组件描述的完整性、事实依据是否为空
+- **问题自动收口**：发现未收口的遗漏项时，自动在待决策问题章节生成问题条目
+
+#### 2. 批量生成与审查机制 ⭐
+- **Proposal 阶段**：删除"禁止多问并行"约束，改为批量展示所有问题
+- **P-1-3 完成后统一输出**：所有问题归集到待决策问题章节后，一次性输出完整 proposal.md
+- **用户统一审查**：用户在 USER_INPUT 区域集中填写所有问题的答复，不被逐个打断
+
+#### 3. 技术流程图强化 ⭐
+- **模板增强**：design.md 模板提供详细的技术细节标注要求和标准示例
+- **指令强化**：D-4 任务明确要求流程图必须包含接口名、组件名、字段、数据流向
+- **示例升级**：从占位符级别升级为真实的技术流程图示例（90+ 行 Mermaid 代码）
+
+#### 4. 问题收口机制 ⭐
+- **模板明确**：在 proposal.md 和 design.md 模板顶部明确说明"待决策问题章节是统一收口"
+- **指令强化**：P-1-3、D-3 任务明确要求所有问题必须归集到待决策问题章节
+- **自动修复**：format-compliance-agent 自动将散落的遗漏项转化为待决策问题条目
+
+#### 5. 输出时机明确
+- **阶段一完成输出**：P-1-3 完成后 MUST 输出完整 proposal.md
+- **阶段结束输出**：D-4、R-5 完成后输出完整 design.md
+- **批量执行原则**：所有任务执行完成后统一输出，避免中途打断
+
+**修改文件清单**：
+- `format-compliance-agent.md`：从 71 行增强到 334 行（增加内容质量审查）
+- `proposal.md` 模板：增强待决策问题说明、流程图要求、最终确认清单
+- `design.md` 模板：增强待决策问题说明、技术流程图要求和标准示例
+- `schema.yaml`：修复 P-2-1、P-3-3、D-3、D-4、D-5、R-6 任务描述
 
 ### v2.1 (2026-02-04) - 执行顺序优化
 

@@ -67,7 +67,7 @@ export const TasksView: FC<TasksViewProps> = ({
   const handleRegenerateTasks = async () => {
     try {
       setIsProcessing(true);
-      const message = `我已经查看了 tasks.md 的任务规划，你需要根据我的意见来修改任务列表：\n（请在此处补充具体的修改意见，例如：细分某个任务、添加测试步骤等）。\n\n直接修改 tasks.md 文件，不要创建新的文件。`;
+      const message = `我已经查看了 change "${changeId}" 的 tasks.md 任务规划，你需要根据我的意见来修改任务列表：\n（请在此处补充具体的修改意见，例如：细分某个任务、添加测试步骤等）。\n\n直接修改 tasks.md 文件，不要创建新的文件。`;
 
       await navigator.clipboard.writeText(message);
       toast.success(

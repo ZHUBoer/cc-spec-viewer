@@ -39,11 +39,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# dist
-dist/*
-!dist/index.js
-# dist/standalone/node_modules
-
 # playwright
 .user-data/
 
@@ -59,3 +54,6 @@ specs
 
 # e2e check
 temp-pack
+
+
+.history

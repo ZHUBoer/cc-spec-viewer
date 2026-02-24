@@ -1,0 +1,1 @@
+import{j as o,N as n,T as s}from"./index-C1V4XCFv.js";const i=()=>o.jsx(n,{message:o.jsx(s,{id:"notfound.session.title"}),description:o.jsx(s,{id:"notfound.session.description"})});export{i as notFoundComponent};

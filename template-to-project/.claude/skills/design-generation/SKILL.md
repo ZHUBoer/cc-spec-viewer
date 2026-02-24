@@ -1,9 +1,23 @@
 ---
 name: design-generation
-description: 基于 Fact-Based and MCP-First + Contract-First 原则生成和评审技术设计文档。适用于：(1) 在 proposal 基础上，严格使用 skills 和 MCP 获取事实来源，生成设计文档，(2) 验证用户答复并生成系统建议，(3) 多轮 Q&A 迭代直到设计完成。
+description: 基于 Fact-Based and MCP-First + Contract-First 原则生成和评审技术设计文档。适用于：(1) 在 proposal 基础上，严格使用 skills 和 MCP 获取事实来源，生成设计文档，(2) 生成系统建议，验证并消化用户意见重新生成设计文档，(3) 多轮 Q&A 迭代直到设计文档最终确认完成。
 ---
 
 # 技术设计文档生成与评审 (Design Generation & Review)
+
+## ⚠️ 使用说明 (IMPORTANT!)
+
+**如果你正在使用 `specforge-enhanced` schema:**
+- 本 skill 的逻辑已**完全整合**到 `openspec/schemas/specforge-enhanced/schema.yaml` 中
+- 执行时**请遵循 schema.yaml 的详细指令**（D-1-1 ~ D-6-3 共19个任务）
+- 本文档作为**方法论参考**，帮助理解设计原理和核心概念
+
+**如果你不使用 `specforge-enhanced` schema:**
+- 可以直接调用本 skill 进行设计生成和评审
+- 本文档定义了高层次的工作流（D-1/D-2/D-3，R-1~R-5）
+- 适用于自定义工作流或其他 OpenSpec schema
+
+---
 
 基于 Fact-Based and MCP-First + Contract-First 原则，生成严谨的技术设计文档并进行多轮评审。
 
@@ -133,11 +147,11 @@ description: 基于 Fact-Based and MCP-First + Contract-First 原则生成和评
 
 ### R-2: MCP 验证与契约理解
 
-**MUST**: 对用户答复中的关键决策，重新查询并**理解** MCP。
+**MUST**: 对用户意见中的关键决策，重新查询并**理解** MCP。
 
 #### 契约文档理解
 
-若用户答复了后端接口参数（serviceCode/operationName）：
+若用户意见了后端接口参数（serviceCode/operationName）：
 1. 调用 `mcp__contract-doc__get_contract_doc` 获取契约
 2. 严格引用 [field-inference.md](references/field-inference.md) 进行判定
 3. **记录或生成新问题**:
@@ -165,7 +179,7 @@ description: 基于 Fact-Based and MCP-First + Contract-First 原则生成和评
 ### R-3: 生成系统建议
 
 在 `<!-- SYSTEM_SUGGESTION_START:Qx -->` 区域写入建议。
-**禁止修改** `<!-- USER_INPUT_START:Qx -->` 区间内的用户内容。
+**消化/评审阶段可融入用户意见生成新的 design.md** `<!-- USER_INPUT_START:Qx -->` 区间内的用户意见。
 
 | 验证结果 | 建议内容 | 示例 |
 |:---|:---|:---|
@@ -179,7 +193,7 @@ description: 基于 Fact-Based and MCP-First + Contract-First 原则生成和评
 
 1. **3 个核心章节已确认**: 需求逻辑、外部依赖、代码变更范围，用户均已确认。
 2. **待决策问题已解决**: 所有 🔴/🟡 问题已解决（🟢 可跳过）
-3. **外部依赖齐备**: 无 ❌ MISSING 标记，⚠️ L3 有用户答复
+3. **外部依赖齐备**: 无 ❌ MISSING 标记，⚠️ L3 有用户意见
 
 ### R-4.5: 消化内容（仅完成时执行）
 
@@ -209,13 +223,13 @@ Round 1 (生成):
 └─ 状态: ⏳ 待用户审查
 
 Round 2 (评审):
-├─ 用户答复了 Q1, Q2, Q3
+├─ 用户意见了 Q1, Q2, Q3
 ├─ 验证通过 Q1, Q2
 ├─ Q3 需补充（追加问题 Q3.1）
 └─ 状态: ⏳ 待用户审查
 
 Round 3 (评审):
-├─ 用户答复了 Q3.1, Q4, Q5
+├─ 用户意见了 Q3.1, Q4, Q5
 ├─ 全部验证通过
 ├─ 执行 R-4.5 消化
 └─ 状态: ✅ 设计完成，待确认进入任务规划
@@ -229,7 +243,8 @@ Round 4 (确认):
 
 ## 技术栈规范参考 (IMPORTANT)
 
-在生成设计问题和系统建议时，必须使用 `zx-h5-develop-experience` skill 中的开发规范和经验。
+在生成设计问题和系统建议时，必须使用 {{DEVELOP_SKILLS_NAMES}} skill 中的开发规范和经验。
+{{DEVELOP_SKILLS_USAGE_MD}}
 
 ---
 
@@ -243,12 +258,7 @@ Round 4 (确认):
 
 **IMPORTANT**：在 design.md 已经生成，但 tasks.md 未生成的时候，每次 `/opsx:continue` 调用对应一轮评审，AI 应在该轮完成验证和建议生成后返回，等待用户下一次输入。
 
-## 代码最佳实践参考
-
-当项目中存在示例代码时，应优先参考这些示例而非仓库中可能过时的代码。
-
-**参考路径**（相对于项目根目录）:
-- 具体路径以项目实际结构为准
+{{CODE_EXAMPLES_MD}}
 
 ## 何时使用此 Skill
 

@@ -1,9 +1,22 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, CheckCircle2, List, RefreshCw } from "lucide-react";
-import { type FC, useMemo, useRef } from "react";
+import { useSearch } from "@tanstack/react-router";
+import { useAtomValue } from "jotai";
+import {
+  AlertCircle,
+  CheckCircle2,
+  List,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
+import { type FC, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { MarkdownContent } from "@/app/components/MarkdownContent";
+import {
+  useContinueSessionProcessMutation,
+  useCreateSessionProcessMutation,
+} from "@/app/projects/[projectId]/components/chatForm";
+import { sessionProcessesAtom } from "@/app/projects/[projectId]/sessions/[sessionId]/store/sessionProcessesAtom";
 import { Button } from "@/components/ui/button";
 
 import { specDashboardService } from "../SpecDashboardService";
@@ -45,7 +58,23 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
   mode = "design",
 }) => {
   const queryClient = useQueryClient();
-  const isProcessingRef = useRef(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  // 获取当前会话ID和会话进程状态
+  const search = useSearch({ strict: false });
+  const currentSessionId = (search as { sessionId?: string })?.sessionId;
+  const sessionProcesses = useAtomValue(sessionProcessesAtom);
+  const currentSessionProcess = currentSessionId
+    ? sessionProcesses.find((p) => p.sessionId === currentSessionId)
+    : undefined;
+
+  // 创建会话和继续会话的 mutations
+  const createSessionProcess = useCreateSessionProcessMutation(projectId);
+  const continueSessionProcess = useContinueSessionProcessMutation(
+    projectId,
+    currentSessionId || "",
+  );
 
   const isProposal = mode === "proposal";
   const fileName = isProposal ? "proposal.md" : "design.md";
@@ -157,10 +186,19 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
         newFileContent,
       );
 
-      // Optimistic update handled by refetch currently
-      await queryClient.invalidateQueries({
-        queryKey: ["openspec", "change", projectId, changeId],
-      });
+      // 使用 refetchQueries 而不是 invalidateQueries，可以更好地控制错误
+      try {
+        await queryClient.refetchQueries({
+          queryKey: ["openspec", "change", projectId, changeId],
+        });
+      } catch (refetchError) {
+        // 如果刷新失败，只记录错误，不影响主流程
+        console.warn("Failed to refetch change details:", refetchError);
+        // 仍然 invalidate，让下次访问时重新获取
+        queryClient.invalidateQueries({
+          queryKey: ["openspec", "change", projectId, changeId],
+        });
+      }
       toast.success(`${isProposal ? "Proposal" : "Design"} updated`);
     } catch (error) {
       console.error("Update failed", error);
@@ -178,8 +216,8 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
         `<!-- USER_INPUT_START:${qId} -->([\\s\\S]*?)<!-- USER_INPUT_END:${qId} -->`,
       );
       const match = regex.exec(newFullContent);
-      if (match?.[0] && match[2]) {
-        const blockContent = match[2].trim();
+      if (match?.[0] && match[1]) {
+        const blockContent = match[1].trim();
         // Only confirm if not already confirmed (Check metadata OR legacy)
         if (
           !blockContent.includes("<!-- STATUS: CONFIRMED -->") &&
@@ -203,9 +241,19 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
           fileName,
           newFullContent,
         );
-        await queryClient.invalidateQueries({
-          queryKey: ["openspec", "change", projectId, changeId],
-        });
+        // 使用 refetchQueries 而不是 invalidateQueries，可以更好地控制错误
+        try {
+          await queryClient.refetchQueries({
+            queryKey: ["openspec", "change", projectId, changeId],
+          });
+        } catch (refetchError) {
+          // 如果刷新失败，只记录错误，不影响主流程
+          console.warn("Failed to refetch change details:", refetchError);
+          // 仍然 invalidate，让下次访问时重新获取
+          queryClient.invalidateQueries({
+            queryKey: ["openspec", "change", projectId, changeId],
+          });
+        }
         toast.success(`Confirmed ${updateCount} items`);
       } catch (e) {
         console.error("Batch confirm failed", e);
@@ -218,32 +266,56 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
 
   // 重新生成
   const handleRegenerate = async () => {
-    if (isProcessingRef.current) return;
+    if (isRegenerating || isConfirming) return;
     try {
-      isProcessingRef.current = true;
+      setIsRegenerating(true);
       const fileLabel = isProposal ? "proposal.md" : "design.md";
-      const message = `我已经在 ${fileLabel} 中添加了一些意见和修改建议。必须仔细阅读我的意见，理解我的意图，然后重新生成 ${fileLabel}。重点关注标记为 "**用户意见**" 的部分，确保新的内容充分考虑了这些反馈。直接修改 ${fileLabel} 文件，不要创建新的文件。`;
+      const message = `我已经在 change "${changeId}" 的 ${fileLabel} 中添加了一些意见和修改建议。必须仔细阅读我的意见，理解我的意图，然后重新生成 ${fileLabel}。重点关注标记为 "**用户意见**" 的部分，确保新的内容充分考虑了这些反馈。直接修改 ${fileLabel} 文件，不要创建新的文件。`;
 
-      await navigator.clipboard.writeText(message);
-      toast.success(
-        "提示词已复制！请前往左侧【会话列表】，选择刚才的会话，粘贴并发送。",
-        {
-          duration: 5000,
-        },
-      );
+      // 如果有当前会话ID，直接发送到会话
+      if (currentSessionId) {
+        // 检查会话是否已启动
+        if (
+          currentSessionProcess?.status === "running" &&
+          currentSessionProcess.id
+        ) {
+          // 会话正在运行，继续会话
+          await continueSessionProcess.mutateAsync({
+            input: { text: message },
+            sessionProcessId: currentSessionProcess.id,
+          });
+          toast.success("提示词已发送到当前会话");
+        } else {
+          // 会话未启动或已暂停，启动新会话进程
+          await createSessionProcess.mutateAsync({
+            input: { text: message },
+            baseSessionId: currentSessionId,
+          });
+          toast.success("提示词已发送，会话已启动");
+        }
+      } else {
+        // 没有当前会话，复制到剪贴板
+        await navigator.clipboard.writeText(message);
+        toast.success(
+          "提示词已复制！请前往左侧【会话列表】，选择刚才的会话，粘贴并发送。",
+          {
+            duration: 5000,
+          },
+        );
+      }
     } catch (error) {
-      console.error("Failed to copy to clipboard", error);
-      toast.error("复制失败，请手动复制");
+      console.error("Failed to send message", error);
+      toast.error("发送失败，请重试");
     } finally {
-      isProcessingRef.current = false;
+      setIsRegenerating(false);
     }
   };
 
   // 确认并生成下一步
   const handleConfirm = async () => {
-    if (isProcessingRef.current) return;
+    if (isRegenerating || isConfirming) return;
     try {
-      isProcessingRef.current = true;
+      setIsConfirming(true);
 
       // 1. 添加或更新最终确认标记
       const timeTagPrefix = "<!-- CONFIRMED_AT: ";
@@ -281,31 +353,63 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
         updatedContent,
       );
 
-      // 2. 复制提示词
-      let message = "";
+      // 2. 准备提示词
+      const message = `/opsx:continue ${changeId}`;
+
+      // 3. 发送提示词
       if (isProposal) {
-        message = `Proposal 已确认。按照 artifact 的构建要求，根据 proposal.md 生成 design.md。`;
+        // Proposal 确认后新开独立会话生成 design，避免需求上下文与技术实现上下文混杂
+        await createSessionProcess.mutateAsync({
+          input: { text: message },
+        });
+        toast.success("Proposal 已确认！已创建新会话生成 design。");
+      } else if (currentSessionId) {
+        // Design 确认后复用当前会话生成 tasks，保持技术上下文连贯
+        if (
+          currentSessionProcess?.status === "running" &&
+          currentSessionProcess.id
+        ) {
+          await continueSessionProcess.mutateAsync({
+            input: { text: message },
+            sessionProcessId: currentSessionProcess.id,
+          });
+          toast.success("design 已确认！提示词已发送到当前会话。");
+        } else {
+          await createSessionProcess.mutateAsync({
+            input: { text: message },
+            baseSessionId: currentSessionId,
+          });
+          toast.success("design 已确认！提示词已发送，会话已启动。");
+        }
       } else {
-        message = `设计已确认。按照 artifact 的构建要求，根据 design.md 生成 tasks.md。`;
+        // 没有当前会话，复制到剪贴板
+        await navigator.clipboard.writeText(message);
+        toast.success(
+          `${isProposal ? "Proposal" : "design"} 已确认！提示词已复制。请前往左侧【会话列表】，选择刚才的会话，粘贴并发送以继续。`,
+          {
+            duration: 6000,
+          },
+        );
       }
 
-      await navigator.clipboard.writeText(message);
-
-      await queryClient.invalidateQueries({
-        queryKey: ["openspec", "change", projectId, changeId],
-      });
-
-      toast.success(
-        `${isProposal ? "Proposal" : "设计"}已确认！提示词已复制。请前往左侧【会话列表】，选择刚才的会话，粘贴并发送以继续。`,
-        {
-          duration: 6000,
-        },
-      );
+      // 使用 refetchQueries 而不是 invalidateQueries，可以更好地控制错误
+      try {
+        await queryClient.refetchQueries({
+          queryKey: ["openspec", "change", projectId, changeId],
+        });
+      } catch (refetchError) {
+        // 如果刷新失败，只记录错误，不影响主流程
+        console.warn("Failed to refetch change details:", refetchError);
+        // 仍然 invalidate，让下次访问时重新获取
+        queryClient.invalidateQueries({
+          queryKey: ["openspec", "change", projectId, changeId],
+        });
+      }
     } catch (error) {
       console.error("Failed to confirm", error);
       toast.error("确认失败");
     } finally {
-      isProcessingRef.current = false;
+      setIsConfirming(false);
     }
   };
 
@@ -489,8 +593,13 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
                   className="flex-1 cursor-pointer"
                   variant="outline"
                   onClick={handleRegenerate}
+                  disabled={isRegenerating || isConfirming}
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {isRegenerating ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
                   重新生成{isProposal ? " Proposal" : " Design"}
                 </Button>
 
@@ -498,8 +607,13 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
                 <Button
                   className="flex-1 bg-green-600 hover:bg-green-700 cursor-pointer"
                   onClick={handleConfirm}
+                  disabled={isRegenerating || isConfirming}
                 >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  {isConfirming ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                  )}
                   {isProposal
                     ? "确认 proposal 并生成 design"
                     : "设计无误，生成任务"}
@@ -510,8 +624,11 @@ export const DesignReviewView: FC<DesignReviewViewProps> = ({
               <div className="mt-3 text-xs text-muted-foreground flex items-start gap-1">
                 <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
                 <span>
-                  为保证上下文连续性，点击按钮后将<b>复制提示词</b>
-                  ，请在左侧列表选择<b>原会话</b>继续对话。
+                  {isProposal
+                    ? "确认后将使用指令创建新的独立会话来生成 design。如需修改proposal，建议切换到生成当前 proposal 的会话，保持 proposal 阶段的上下文连续。"
+                    : currentSessionId
+                      ? "点击按钮后将直接发送提示词到当前打开的会话。"
+                      : "为保证上下文连续性，点击按钮后将复制提示词，请在左侧列表选择原会话继续对话。"}
                 </span>
               </div>
             </div>

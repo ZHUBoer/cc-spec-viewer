@@ -1,6 +1,5 @@
-import { existsSync } from "node:fs";
-import { readdir } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { FileSystem, Path } from "@effect/platform";
+import { Effect } from "effect";
 
 export type FileCompletionEntry = {
   name: string;
@@ -20,77 +19,104 @@ export type FileCompletionResult = {
  * @param basePath - The relative path from project root (default: "/")
  * @returns File and directory entries at the specified path level
  */
-export const getFileCompletion = async (
+export const getFileCompletion = (
   projectPath: string,
   basePath = "/",
-): Promise<FileCompletionResult> => {
-  // Normalize basePath to prevent directory traversal
-  const normalizedBasePath = basePath.startsWith("/")
-    ? basePath.slice(1)
-    : basePath;
-  const targetPath = resolve(projectPath, normalizedBasePath);
+): Effect.Effect<
+  FileCompletionResult,
+  Error,
+  FileSystem.FileSystem | Path.Path
+> =>
+  Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
 
-  // Security check: ensure target path is within project directory
-  if (!targetPath.startsWith(resolve(projectPath))) {
-    throw new Error("Invalid path: outside project directory");
-  }
+    // Normalize basePath to prevent directory traversal
+    const normalizedBasePath =
+      basePath.startsWith("/") || basePath.startsWith("\\")
+        ? basePath.slice(1)
+        : basePath;
+    const targetPath = path.resolve(projectPath, normalizedBasePath);
+    const resolvedProjectPath = path.resolve(projectPath);
+    const relativeToProject = path.relative(resolvedProjectPath, targetPath);
+    const targetEscapesProject =
+      relativeToProject !== "" &&
+      (relativeToProject === ".." ||
+        relativeToProject.startsWith(`..${path.sep}`) ||
+        relativeToProject.startsWith("../") ||
+        relativeToProject.startsWith("..\\") ||
+        /^[A-Za-z]:[\\/]/.test(relativeToProject) ||
+        relativeToProject.startsWith("/") ||
+        relativeToProject.startsWith("\\"));
 
-  // Check if the target path exists
-  if (!existsSync(targetPath)) {
-    return {
-      entries: [],
-      basePath: normalizedBasePath,
-      projectPath,
-    };
-  }
-
-  try {
-    const dirents = await readdir(targetPath, { withFileTypes: true });
-    const entries: FileCompletionEntry[] = [];
-
-    // Process each directory entry
-    for (const dirent of dirents) {
-      // Skip hidden files and directories (starting with .)
-      if (dirent.name.startsWith(".")) {
-        continue;
-      }
-
-      const entryPath = join(normalizedBasePath, dirent.name);
-
-      if (dirent.isDirectory()) {
-        entries.push({
-          name: dirent.name,
-          type: "directory",
-          path: entryPath,
-        });
-      } else if (dirent.isFile()) {
-        entries.push({
-          name: dirent.name,
-          type: "file",
-          path: entryPath,
-        });
-      }
+    // Security check: ensure target path is within project directory
+    if (targetEscapesProject) {
+      return yield* Effect.fail(
+        new Error("Invalid path: outside project directory"),
+      );
     }
 
-    // Sort entries: directories first, then files, both alphabetically
-    entries.sort((a, b) => {
-      if (a.type !== b.type) {
-        return a.type === "directory" ? -1 : 1;
-      }
-      return a.name.localeCompare(b.name);
-    });
+    // Check if the target path exists
+    const exists = yield* fs.exists(targetPath);
+    if (!exists) {
+      return {
+        entries: [],
+        basePath: normalizedBasePath,
+        projectPath,
+      };
+    }
 
-    return {
-      entries,
-      basePath: normalizedBasePath,
-      projectPath,
-    };
-  } catch (error) {
-    console.error("Error reading directory:", error);
-    return {
-      entries: [],
-      basePath: normalizedBasePath,
-      projectPath,
-    };
-  }
-};
+    try {
+      const dirents = yield* fs.readDirectory(targetPath);
+      const entries: FileCompletionEntry[] = [];
+
+      // Process each directory entry
+      for (const dirent of dirents) {
+        // Skip hidden files and directories (starting with .)
+        if (dirent.startsWith(".")) {
+          continue;
+        }
+
+        const direntPath = path.join(targetPath, dirent);
+        const stat = yield* fs.stat(direntPath);
+        const entryPath = normalizedBasePath
+          ? path.join(normalizedBasePath, dirent)
+          : dirent;
+
+        if (stat.type === "Directory") {
+          entries.push({
+            name: dirent,
+            type: "directory",
+            path: entryPath,
+          });
+        } else if (stat.type === "File") {
+          entries.push({
+            name: dirent,
+            type: "file",
+            path: entryPath,
+          });
+        }
+      }
+
+      // Sort entries: directories first, then files, both alphabetically
+      entries.sort((a, b) => {
+        if (a.type !== b.type) {
+          return a.type === "directory" ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name);
+      });
+
+      return {
+        entries,
+        basePath: normalizedBasePath,
+        projectPath,
+      };
+    } catch (error) {
+      console.error("Error reading directory:", error);
+      return {
+        entries: [],
+        basePath: normalizedBasePath,
+        projectPath,
+      };
+    }
+  });

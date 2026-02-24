@@ -3,6 +3,7 @@ import { Path } from "@effect/platform";
 import { Effect, Layer } from "effect";
 import { DEFAULT_LOCALE } from "../../lib/i18n/localeDetection";
 import { EventBus } from "../../server/core/events/services/EventBus";
+import { createMockCliDetectionService } from "../../server/core/openspec/services/CliDetectionService";
 import type { EnvSchema } from "../../server/core/platform/schema";
 import {
   ApplicationContext,
@@ -81,5 +82,9 @@ export const testPlatformLayer = (overrides?: {
     ccvOptionsServiceLayer,
     envServiceLayer,
     Path.layer,
+    createMockCliDetectionService({
+      globalCli: { installed: false },
+      projectCli: { installed: false },
+    }),
   );
 };

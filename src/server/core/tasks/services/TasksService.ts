@@ -3,6 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { FileSystem, Path } from "@effect/platform";
 import { Context, Effect, Layer, Option } from "effect";
+import { normalizeClaudeProjectPath } from "../../project/functions/normalizeClaudeProjectPath";
 import {
   type Task,
   type TaskCreate,
@@ -49,10 +50,8 @@ export class TasksService extends Context.Tag("TasksService")<
         Effect.succeed(join(homedir(), CLAUDE_DIR_NAME));
 
       const normalizeProjectPath = (projectPath: string) => {
-        // e.g. /Users/foo/bar -> -Users-foo-bar
-        const normalized = projectPath.replaceAll(path.sep, "-");
-        // Ensure it starts with - if the original path started with /
-        return normalized.startsWith("-") ? normalized : `-${normalized}`;
+        // Keep normalization consistent with Claude project directory naming.
+        return normalizeClaudeProjectPath(projectPath);
       };
 
       /**
@@ -241,6 +240,11 @@ export class TasksService extends Context.Tag("TasksService")<
 
       const listTasks = (projectPath: string, specificSessionId?: string) =>
         Effect.gen(function* () {
+          // If no specific session ID is provided, return empty list
+          if (!specificSessionId) {
+            return [];
+          }
+
           const tasksDirOption = yield* getTasksDir(
             projectPath,
             specificSessionId,

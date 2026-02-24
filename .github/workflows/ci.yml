@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: check
+  check-linux:
+    name: check (linux)
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -43,3 +43,24 @@ jobs:
 
       - name: Run pack check
         run: ./scripts/pack/check.sh
+
+  check-windows:
+    name: check (windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Setup Node & pnpm
+        uses: ./.github/actions/setup-node
+
+      - name: Run linting
+        run: pnpm lint
+
+      - name: Run type checking
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test

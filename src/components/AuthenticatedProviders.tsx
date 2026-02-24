@@ -4,6 +4,7 @@ import { SyncSessionProcess } from "../app/components/SyncSessionProcess";
 import { SSEProvider } from "../lib/sse/components/SSEProvider";
 import { useAuth } from "./AuthProvider";
 import { SearchProvider } from "./SearchProvider";
+import { ConfigCheckProvider } from "./spec-dashboard/ConfigCheckProvider";
 
 interface AuthenticatedProvidersProps {
   children: ReactNode;
@@ -28,7 +29,9 @@ export function AuthenticatedProviders({
     <SSEProvider>
       <SSEEventListeners>
         <SyncSessionProcess>
-          <SearchProvider>{children}</SearchProvider>
+          <SearchProvider>
+            <ConfigCheckProvider>{children}</ConfigCheckProvider>
+          </SearchProvider>
         </SyncSessionProcess>
       </SSEEventListeners>
     </SSEProvider>

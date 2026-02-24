@@ -20,9 +20,11 @@ import { FileSystemController } from "./core/file-system/presentation/FileSystem
 import { GitController } from "./core/git/presentation/GitController";
 import { GitService } from "./core/git/services/GitService";
 import { OpenSpecController } from "./core/openspec/presentation/OpenSpecController";
+import { CliDetectionServiceLive } from "./core/openspec/services/CliDetectionService";
 import { OpenSpecEnvironmentService } from "./core/openspec/services/OpenSpecEnvironmentService";
 import { OpenSpecService } from "./core/openspec/services/OpenSpecService";
 import { ProfileConfigService } from "./core/openspec/services/ProfileConfigService";
+import { SkillManagerService } from "./core/openspec/services/SkillManagerService";
 import { TemplateInjectionService } from "./core/openspec/services/TemplateInjectionService";
 import { TemplateProcessor } from "./core/openspec/services/TemplateProcessor";
 import type { CliOptions } from "./core/platform/services/CcvOptionsService";
@@ -128,10 +130,13 @@ const DomainBase = Layer.mergeAll(
 );
 
 // OpenSpec 环境检测和注入服务层（有依赖顺序要求）
+// 注意：OpenSpecEnvironmentService 依赖 CliDetectionService
+// CliDetectionService 会在 DomainLayer 级别提供
 const OpenSpecEnvBase = Layer.mergeAll(
   OpenSpecEnvironmentService.Live,
   ProfileConfigService.Live,
   TemplateProcessor.Live,
+  SkillManagerService.Live,
 );
 
 const OpenSpecEnvLayer = TemplateInjectionService.Live.pipe(
@@ -141,6 +146,7 @@ const OpenSpecEnvLayer = TemplateInjectionService.Live.pipe(
 const DomainLayer = ClaudeCodeLifeCycleService.Live.pipe(
   Layer.provideMerge(DomainBase),
   Layer.provideMerge(OpenSpecEnvLayer),
+  Layer.provideMerge(CliDetectionServiceLive),
 );
 
 const AppServices = Layer.mergeAll(

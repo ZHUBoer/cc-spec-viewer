@@ -23,17 +23,25 @@ describe("parseSessionFilePath", () => {
       });
     });
 
-    it("parses session file with nested path (non-greedy first match)", () => {
-      // The regex is non-greedy, so it matches the first slash
-      // In practice, the projectId is just the first directory component
-      // The encodeProjectIdFromSessionFilePath function handles proper encoding
+    it("parses session file with nested path", () => {
       const result = parseSessionFilePath(
         "home/user/projects/my-app/session123.jsonl",
       );
       expect(result).toEqual({
         type: "session",
-        projectId: "home",
-        sessionId: "user/projects/my-app/session123",
+        projectId: "home/user/projects/my-app",
+        sessionId: "session123",
+      });
+    });
+
+    it("parses Windows style session file path", () => {
+      const result = parseSessionFilePath(
+        "my-project\\550e8400-e29b-41d4-a716-446655440000.jsonl",
+      );
+      expect(result).toEqual({
+        type: "session",
+        projectId: "my-project",
+        sessionId: "550e8400-e29b-41d4-a716-446655440000",
       });
     });
   });
@@ -60,14 +68,21 @@ describe("parseSessionFilePath", () => {
     });
 
     it("parses agent file with nested path (greedy match for projectId)", () => {
-      // For agent files, the regex matches everything before /agent-
-      // This correctly captures the full project path
       const result = parseSessionFilePath(
         "home/user/projects/my-app/agent-def456.jsonl",
       );
       expect(result).toEqual({
         type: "agent",
         projectId: "home/user/projects/my-app",
+        agentSessionId: "def456",
+      });
+    });
+
+    it("parses Windows style agent file path", () => {
+      const result = parseSessionFilePath("my-project\\agent-def456.jsonl");
+      expect(result).toEqual({
+        type: "agent",
+        projectId: "my-project",
         agentSessionId: "def456",
       });
     });

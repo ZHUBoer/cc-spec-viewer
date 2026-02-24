@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mermaid-mcp": {
+      "type": "http",
+      "url": "http://ticket.fws.tripqate.com/api/mcp/mermaid-mcp/mcp"
+    },
+    "contract-doc": {
+      "url": "http://trn-tool-mcp-server-function.faas.ctripcorp.com/mcp",
+      "type": "http"
+    }
+  }
+}

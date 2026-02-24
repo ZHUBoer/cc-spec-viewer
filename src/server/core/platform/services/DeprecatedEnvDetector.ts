@@ -90,7 +90,7 @@ export const checkDeprecatedEnvs = Effect.gen(function* () {
 
   yield* Console.log("For more details, see:");
   yield* Console.log(
-    "  https://github.com/ZHUBoer/cc-spec-viewer#configuration",
+    "  https://git.dev.sh.ctripcorp.com/ticket/spec-forge#configuration",
   );
   yield* Console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   yield* Console.log("");

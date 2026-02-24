@@ -11,6 +11,19 @@ import {
 } from "../services/ProfileConfigService";
 import { TemplateInjectionService } from "../services/TemplateInjectionService";
 
+/**
+ * 通用 Effect 错误兜底，将未处理的 Effect 失败转为 500 响应。
+ * 使用 Effect.catchAll 而非 try/catch，确保 Effect 错误通道的失败被正确捕获。
+ */
+const catchAsServerError = (errorMessage: string) =>
+  Effect.catchAll((error: unknown) => {
+    console.error(`${errorMessage}:`, error);
+    return Effect.succeed({
+      response: { error: errorMessage },
+      status: 500,
+    } as const satisfies ControllerResponse);
+  });
+
 const LayerImpl = Effect.gen(function* () {
   const openSpecService = yield* OpenSpecService;
   const environmentService = yield* OpenSpecEnvironmentService;
@@ -20,67 +33,38 @@ const LayerImpl = Effect.gen(function* () {
 
   const getChangesRoute = (options: { projectId: string }) =>
     Effect.gen(function* () {
-      const { projectId } = options;
-
-      try {
-        const changes = yield* openSpecService.getChanges(projectId);
-        return {
-          response: changes,
-          status: 200,
-        } as const satisfies ControllerResponse;
-      } catch (error) {
-        console.error("OpenSpec getChanges error:", error);
-        // Handle Tagged Errors specifically if needed, for now generic 500
-        return {
-          response: { error: "Failed to list OpenSpec changes" },
-          status: 500,
-        } as const satisfies ControllerResponse;
-      }
-    });
+      const changes = yield* openSpecService.getChanges(options.projectId);
+      return {
+        response: changes,
+        status: 200,
+      } as const satisfies ControllerResponse;
+    }).pipe(catchAsServerError("Failed to list OpenSpec changes"));
 
   const getChangeDetailsRoute = (options: {
     projectId: string;
     changeId: string;
   }) =>
     Effect.gen(function* () {
-      const { projectId, changeId } = options;
-
-      try {
-        const details = yield* openSpecService.getChangeDetails(
-          projectId,
-          changeId,
-        );
-        return {
-          response: details,
-          status: 200,
-        } as const satisfies ControllerResponse;
-      } catch (error) {
-        console.error("OpenSpec getChangeDetails error:", error);
-        return {
-          response: { error: "Failed to get change details" },
-          status: 500,
-        } as const satisfies ControllerResponse;
-      }
-    });
+      const details = yield* openSpecService.getChangeDetails(
+        options.projectId,
+        options.changeId,
+      );
+      return {
+        response: details,
+        status: 200,
+      } as const satisfies ControllerResponse;
+    }).pipe(catchAsServerError("Failed to get change details"));
 
   const getArchivedChangesRoute = (options: { projectId: string }) =>
     Effect.gen(function* () {
-      const { projectId } = options;
-
-      try {
-        const changes = yield* openSpecService.getArchivedChanges(projectId);
-        return {
-          response: changes,
-          status: 200,
-        } as const satisfies ControllerResponse;
-      } catch (error) {
-        console.error("OpenSpec getArchivedChanges error:", error);
-        return {
-          response: { error: "Failed to list OpenSpec archived changes" },
-          status: 500,
-        } as const satisfies ControllerResponse;
-      }
-    });
+      const changes = yield* openSpecService.getArchivedChanges(
+        options.projectId,
+      );
+      return {
+        response: changes,
+        status: 200,
+      } as const satisfies ControllerResponse;
+    }).pipe(catchAsServerError("Failed to list OpenSpec archived changes"));
 
   const updateFileRoute = (options: {
     projectId: string;
@@ -89,30 +73,20 @@ const LayerImpl = Effect.gen(function* () {
     content: string;
   }) =>
     Effect.gen(function* () {
-      const { projectId, changeId, fileName, content } = options;
-
-      try {
-        yield* openSpecService.updateChangeFile(
-          projectId,
-          changeId,
-          fileName,
-          content,
-        );
-        return {
-          response: { success: true },
-          status: 200,
-        } as const satisfies ControllerResponse;
-      } catch (error) {
-        console.error("OpenSpec updateFile error:", error);
-        return {
-          response: { error: "Failed to update file" },
-          status: 500,
-        } as const satisfies ControllerResponse;
-      }
-    });
+      yield* openSpecService.updateChangeFile(
+        options.projectId,
+        options.changeId,
+        options.fileName,
+        options.content,
+      );
+      return {
+        response: { success: true },
+        status: 200,
+      } as const satisfies ControllerResponse;
+    }).pipe(catchAsServerError("Failed to update file"));
 
   // ============================================================================
-  // 新增: 环境检测相关 API
+  // 环境检测相关 API
   // ============================================================================
 
   /**
@@ -121,22 +95,14 @@ const LayerImpl = Effect.gen(function* () {
    */
   const getEnvironmentRoute = (options: { projectId: string }) =>
     Effect.gen(function* () {
-      const { projectId } = options;
-
-      try {
-        const status = yield* environmentService.checkEnvironment(projectId);
-        return {
-          response: status,
-          status: 200,
-        } as const satisfies ControllerResponse;
-      } catch (error) {
-        console.error("OpenSpec getEnvironment error:", error);
-        return {
-          response: { error: "Failed to check environment" },
-          status: 500,
-        } as const satisfies ControllerResponse;
-      }
-    });
+      const status = yield* environmentService.checkEnvironment(
+        options.projectId,
+      );
+      return {
+        response: status,
+        status: 200,
+      } as const satisfies ControllerResponse;
+    }).pipe(catchAsServerError("Failed to check environment"));
 
   /**
    * 获取可用的 Profile 列表
@@ -144,19 +110,28 @@ const LayerImpl = Effect.gen(function* () {
    */
   const getProfilesRoute = (_options: { projectId: string }) =>
     Effect.gen(function* () {
-      try {
-        const profiles = yield* profileConfigService.getAvailableProfiles();
+      const result = yield* Effect.either(
+        profileConfigService.getAvailableProfiles(),
+      );
+
+      if (result._tag === "Left") {
+        const error = result.left;
         return {
-          response: profiles,
-          status: 200,
-        } as const satisfies ControllerResponse;
-      } catch (error) {
-        console.error("OpenSpec getProfiles error:", error);
-        return {
-          response: { error: "Failed to get profiles" },
+          response: {
+            error: "Failed to get profiles",
+            details: String(error),
+            type: error._tag || "UnknownError",
+          },
           status: 500,
         } as const satisfies ControllerResponse;
       }
+
+      // 成功情况：返回 profiles 和 warnings
+      const { profiles, warnings } = result.right;
+      return {
+        response: { profiles, warnings },
+        status: 200,
+      } as const satisfies ControllerResponse;
     });
 
   /**
@@ -167,31 +142,24 @@ const LayerImpl = Effect.gen(function* () {
     projectId: string;
     scenario: ScenarioType;
     profile: Profile;
+    force?: boolean;
   }) =>
     Effect.gen(function* () {
-      const { projectId, scenario, profile } = options;
-
-      try {
-        const result = yield* templateInjectionService.injectTemplates(
-          projectId,
-          {
-            scenario,
-            profile,
-            skipUserFiles: true,
-          },
-        );
-        return {
-          response: result,
-          status: 200,
-        } as const satisfies ControllerResponse;
-      } catch (error) {
-        console.error("OpenSpec initialize error:", error);
-        return {
-          response: { error: "Failed to initialize SpecForge" },
-          status: 500,
-        } as const satisfies ControllerResponse;
-      }
-    });
+      const { projectId, scenario, profile, force } = options;
+      const result = yield* templateInjectionService.injectTemplates(
+        projectId,
+        {
+          scenario,
+          profile,
+          skipUserFiles: true,
+          force,
+        },
+      );
+      return {
+        response: result,
+        status: 200,
+      } as const satisfies ControllerResponse;
+    }).pipe(catchAsServerError("Failed to initialize SpecForge"));
 
   /**
    * 安装 OpenSpec CLI（全局）
@@ -203,31 +171,22 @@ const LayerImpl = Effect.gen(function* () {
   }) =>
     Effect.gen(function* () {
       const { projectId, initialize } = options;
-
-      try {
-        // 获取项目路径用于初始化
-        let projectPath: string | undefined;
-        if (initialize) {
-          const { project } = yield* projectRepository.getProject(projectId);
-          projectPath = project.meta.projectPath ?? undefined;
-        }
-
-        const result = yield* environmentService.installCliGlobal({
-          initialize,
-          projectPath,
-        });
-        return {
-          response: result,
-          status: result.success ? 200 : 500,
-        } as const satisfies ControllerResponse;
-      } catch (error) {
-        console.error("OpenSpec installCliGlobal error:", error);
-        return {
-          response: { error: "Failed to install CLI" },
-          status: 500,
-        } as const satisfies ControllerResponse;
+      // 获取项目路径用于初始化
+      let projectPath: string | undefined;
+      if (initialize) {
+        const { project } = yield* projectRepository.getProject(projectId);
+        projectPath = project.meta.projectPath ?? undefined;
       }
-    });
+
+      const result = yield* environmentService.installCliGlobal({
+        initialize,
+        projectPath,
+      });
+      return {
+        response: result,
+        status: result.success ? 200 : 500,
+      } as const satisfies ControllerResponse;
+    }).pipe(catchAsServerError("Failed to install CLI"));
 
   /**
    * 安装 OpenSpec CLI（项目依赖）
@@ -239,23 +198,14 @@ const LayerImpl = Effect.gen(function* () {
   }) =>
     Effect.gen(function* () {
       const { projectId, initialize } = options;
-
-      try {
-        const result = yield* environmentService.installCliProject(projectId, {
-          initialize,
-        });
-        return {
-          response: result,
-          status: result.success ? 200 : 500,
-        } as const satisfies ControllerResponse;
-      } catch (error) {
-        console.error("OpenSpec installCliProject error:", error);
-        return {
-          response: { error: "Failed to install CLI" },
-          status: 500,
-        } as const satisfies ControllerResponse;
-      }
-    });
+      const result = yield* environmentService.installCliProject(projectId, {
+        initialize,
+      });
+      return {
+        response: result,
+        status: result.success ? 200 : 500,
+      } as const satisfies ControllerResponse;
+    }).pipe(catchAsServerError("Failed to install CLI"));
 
   /**
    * 执行 openspec init 命令
@@ -263,31 +213,38 @@ const LayerImpl = Effect.gen(function* () {
    */
   const runOpenspecInitRoute = (options: { projectId: string }) =>
     Effect.gen(function* () {
-      const { projectId } = options;
+      const result = yield* environmentService.initializeOpenspec(
+        options.projectId,
+      );
+      return {
+        response: result,
+        status: result.success ? 200 : 500,
+      } as const satisfies ControllerResponse;
+    }).pipe(catchAsServerError("Failed to run openspec init"));
 
-      try {
-        const result = yield* environmentService.initializeOpenspec(projectId);
-        return {
-          response: result,
-          status: result.success ? 200 : 500,
-        } as const satisfies ControllerResponse;
-      } catch (error) {
-        console.error("OpenSpec runOpenspecInit error:", error);
-        return {
-          response: { error: "Failed to run openspec init" },
-          status: 500,
-        } as const satisfies ControllerResponse;
-      }
-    });
+  /**
+   * 获取当前项目已保存的 Profile 配置
+   * GET /api/projects/:projectId/openspec/profile-config
+   */
+  const getProjectProfileRoute = (options: { projectId: string }) =>
+    Effect.gen(function* () {
+      const config = yield* profileConfigService.getProjectProfileConfig(
+        options.projectId,
+      );
+      return {
+        response: { profile: config ?? null },
+        status: 200,
+      } as const satisfies ControllerResponse;
+    }).pipe(catchAsServerError("Failed to get project profile config"));
 
   return {
     getChangesRoute,
     getArchivedChangesRoute,
     getChangeDetailsRoute,
     updateFileRoute,
-    // 新增 API
     getEnvironmentRoute,
     getProfilesRoute,
+    getProjectProfileRoute,
     initializeRoute,
     installCliGlobalRoute,
     installCliProjectRoute,

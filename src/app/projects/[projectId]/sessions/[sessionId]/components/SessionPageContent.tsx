@@ -1,4 +1,6 @@
 import { type FC, useEffect, useState } from "react";
+import { useConfigCheckDialog } from "@/components/spec-dashboard/ConfigCheckProvider";
+import { useConfigCheck } from "@/components/spec-dashboard/hooks/useConfigCheck";
 import { useWorkspacePanel } from "@/hooks/useWorkspacePanel";
 
 import { SessionPageMainWrapper } from "./SessionPageMainWrapper";
@@ -14,6 +16,8 @@ export const SessionPageContent: FC<{
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1200,
   );
+  const { isConfigured } = useConfigCheck(projectId);
+  const { openInitRequiredDialog } = useConfigCheckDialog();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -21,6 +25,13 @@ export const SessionPageContent: FC<{
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // 检查配置状态，如果未初始化则弹出弹窗
+  useEffect(() => {
+    if (isConfigured === false) {
+      openInitRequiredDialog(projectId);
+    }
+  }, [isConfigured, projectId, openInitRequiredDialog]);
 
   const mainContentWidth = activeMode !== "none" ? 100 - panelWidth : 100;
 

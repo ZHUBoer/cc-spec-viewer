@@ -331,6 +331,11 @@ const LayerImpl = Effect.gen(function* () {
             const result = await Runtime.runPromise(runtime)(
               handleMessage(message),
             ).catch((error) => {
+              // If abort signal is triggered, don't mark as failed - abort is handled by abortTask
+              if (sessionProcess.def.abortController.signal.aborted) {
+                return "continue" as const;
+              }
+
               // If the iter itself hasn't crashed, we want to continue, so swallow the error
               Effect.runFork(
                 sessionProcessService.changeTaskState({
@@ -361,6 +366,11 @@ const LayerImpl = Effect.gen(function* () {
             }
           }
         } catch (error) {
+          // If abort signal is triggered, don't mark as failed - abort is handled by abortTask
+          if (sessionProcess.def.abortController.signal.aborted) {
+            return;
+          }
+
           if (sessionInitializedPromise.status === "pending") {
             sessionInitializedPromise.reject(error);
           }
@@ -436,12 +446,26 @@ const LayerImpl = Effect.gen(function* () {
       const currentProcess =
         yield* sessionProcessService.getSessionProcess(sessionProcessId);
 
+      // If already completed, nothing to abort
+      if (currentProcess.type === "completed") {
+        return;
+      }
+
       currentProcess.def.abortController.abort();
 
-      yield* sessionProcessService.toCompletedState({
-        sessionProcessId: currentProcess.def.sessionProcessId,
-        error: new Error("Task aborted"),
-      });
+      // Wait briefly to let the daemon's loop detect the abort signal
+      yield* Effect.sleep("100 millis");
+
+      // Re-check state to avoid conflict with daemon's finally block
+      const latestProcess =
+        yield* sessionProcessService.getSessionProcess(sessionProcessId);
+
+      if (latestProcess.type !== "completed") {
+        yield* sessionProcessService.toCompletedState({
+          sessionProcessId: currentProcess.def.sessionProcessId,
+          error: new Error("Task aborted"),
+        });
+      }
     });
 
   const abortAllTasks = () =>

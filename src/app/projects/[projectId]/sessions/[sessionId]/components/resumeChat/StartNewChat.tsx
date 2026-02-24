@@ -1,5 +1,7 @@
 import { Trans, useLingui } from "@lingui/react";
 import { type FC, useState } from "react";
+import { useConfigCheckDialog } from "../../../../../../../components/spec-dashboard/ConfigCheckProvider";
+import { useConfigCheck } from "../../../../../../../components/spec-dashboard/hooks/useConfigCheck";
 import { useConfig } from "../../../../../../hooks/useConfig";
 import {
   ChatInput,
@@ -11,10 +13,18 @@ export const StartNewChat: FC<{ projectId: string }> = ({ projectId }) => {
   const { i18n } = useLingui();
   const createSessionProcess = useCreateSessionProcessMutation(projectId);
   const { config } = useConfig();
+  const { isConfigured } = useConfigCheck(projectId);
+  const { openInitRequiredDialog } = useConfigCheckDialog();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (input: MessageInput) => {
+    // 检查是否已配置
+    if (isConfigured === false) {
+      openInitRequiredDialog(projectId);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await createSessionProcess.mutateAsync({ input });

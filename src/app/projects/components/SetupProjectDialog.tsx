@@ -1,5 +1,5 @@
 import { Trans } from "@lingui/react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader2, Plus } from "lucide-react";
 import { type FC, useState } from "react";
@@ -15,12 +15,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { honoClient } from "@/lib/api/client";
+import { projectListQuery } from "@/lib/api/queries";
 import { DirectoryPicker } from "./DirectoryPicker";
 
 export const SetupProjectDialog: FC = () => {
   const [open, setOpen] = useState(false);
   const [selectedPath, setSelectedPath] = useState<string>("");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const setupProjectMutation = useMutation({
     mutationFn: async () => {
@@ -35,18 +37,18 @@ export const SetupProjectDialog: FC = () => {
       return await response.json();
     },
 
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       toast.success("Project set up successfully");
+      await queryClient.invalidateQueries({
+        queryKey: projectListQuery.queryKey,
+      });
       setOpen(false);
       navigate({
         to: "/projects/$projectId/session",
         params: {
           projectId: result.projectId,
         },
-        search: (prev) => ({
-          ...prev,
-          sessionId: result.sessionId,
-        }),
+        search: (prev) => prev,
       });
     },
 

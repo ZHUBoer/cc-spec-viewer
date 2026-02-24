@@ -1,0 +1,51 @@
+schema: specforge-enhanced
+
+context: |
+  格式合规审查 (IMPORTANT):
+  - 调用时机：仅在阶段四文档生成完成后调用，阶段二、阶段三的迭代过程中不调用（文档仍在变化中）
+  - 每个 artifact（proposal/design/tasks）在阶段四生成完成后，MUST 使用 Task 工具启动 subagent（model: fast）进行格式合规审查
+  - subagent 职责：读取对应模板文件 → 对比生成文档的结构 → 修复结构偏差 → 严禁删除信息
+  - 若发现待决策点散落在文档其他章节、章节顺序与模板不一致、确认区缺失等问题，必须修复
+  - 具体调用时机：
+    - proposal: 在 P-4-1 完成后调用（阶段四文档生成）
+    - design: 在 D-6-1 完成后调用（阶段四文档生成）
+    - tasks: 在 tasks.md 生成后调用
+
+rules:
+  proposal:
+    - MUST 不要强行继续执行，等待用户提供信息后再重新执行
+
+  design:
+    - MUST 遵循 schema.yaml 中定义的四阶段设计流程（已整合 design-generation skill 原则）
+    - MUST 使用 TaskCreate/TaskUpdate/TaskList 工具追踪设计流程的每个步骤
+    - MUST 使用 querying-infra-catalog skill 来获取基建知识
+    - MUST 遵循 {{DEVELOP_SKILLS_NAMES}} skill 的开发规范
+    - MUST 每次更新任务状态的时候，多思考一下这个任务应该如何执行
+    - MUST 不要在乎时间和 token 的限制，慢慢做，直到做到完美
+
+    # 四阶段概览（详细定义见 schema.yaml）
+    - 阶段一：技术事实收集（7个任务，D-1-1 ~ D-3）
+    - 阶段二：技术问题讨论（3个任务，D-4-1 ~ D-4-3，循环直到问题解决）
+    - 阶段三：技术流程图确认（3个任务，D-5-1 ~ D-5-3，循环直到流程图确认）
+    - 阶段四：文档生成与交付（3个任务，D-6-1 ~ D-6-3）
+
+    # Fact-Based Development
+    - 每个字段、组件引用必须有事实依据（PRD原文/MCP查询结果/现有代码实现）
+    - 严禁编造 pageId、serviceCode、组件名或参数
+    - 查不到的内容标记为 MISSING
+
+    # Contract-First
+    - 后端接口必须先调用契约查询
+    - 入参表必须包含：字段路径、类型、必填、来源、示例值、置信度状态
+    - 返回值表必须完整展开嵌套结构
+
+    # Problem Generation
+    - L2 字段不生成问题，用户无异议即确认
+    - 问题按功能块聚类，禁止碎片化提问
+
+  tasks:
+    - MUST 遵循 task-planning skill 的任务边界划分原则
+    - 每个任务必须是完整的工作单元
+    - 任务规模控制在单次 session 内完成
+    - 禁止生成独立的"测试"任务（除非用户明确要求）
+    - 按依赖关系排序任务

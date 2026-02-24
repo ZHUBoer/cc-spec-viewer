@@ -215,12 +215,16 @@ describe("parseCommandXml", () => {
       }
     });
 
-    it("does not match nested tags (regex limitation)", () => {
+    it("parses nested tags as raw command content", () => {
       const input = "<command-name><nested>inner</nested>outer</command-name>";
       const result = parseUserMessage(input);
 
-      // The regex won't match properly nested tags due to [^<]* pattern
-      expect(result.kind).toBe("text");
+      expect(result).toEqual({
+        kind: "command",
+        commandName: "<nested>inner</nested>outer",
+        commandArgs: undefined,
+        commandMessage: undefined,
+      });
     });
 
     it("handles tags with surrounding text", () => {

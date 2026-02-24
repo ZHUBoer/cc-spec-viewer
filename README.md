@@ -1,276 +1,286 @@
-# SpecForge Viewer
+# SpecForge
 
-[![License](https://img.shields.io/github/license/ZHUBoer/spec-forge-viewer)](https://github.com/ZHUBoer/cc-spec-viewer/blob/main/LICENSE)
-[![CI](https://github.com/ZHUBoer/cc-spec-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/ZHUBoer/cc-spec-viewer/actions/workflows/ci.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/ZHUBoer/spec-forge-viewer)](https://github.com/ZHUBoer/cc-spec-viewer/releases)
 
-<img height="auto" width="50%" alt="ccv-logo" src="https://github.com/user-attachments/assets/0e092b2b-6acd-4380-b924-eed7a28acd69" />
+SpecForge 是一套完整的工具链，将 **Spec Coding（规范驱动开发）** 理念落地为可操作的工作流。它集成了规范管理、实时预览、版本控制的现代化开发环境，让 AI 辅助开发变得可预测和高效。
 
-A full-featured web-based Claude Code client that provides complete interactive functionality for managing Claude Code projects. Start new conversations, resume existing sessions, monitor running tasks in real-time, and browse your conversation history—all through a modern web interface.
+## 核心理念
 
-https://github.com/user-attachments/assets/090d4806-163f-4bac-972a-002c7433145e
+在 AI 辅助开发的时代，如何确保 AI 编码助手准确理解需求并生成可预测的代码？
 
-## Introduction
+**Spec Coding** 的答案是：**在编写任何代码之前，先让人类和 AI 就要构建的内容达成一致**。通过轻量级的规范层，确保需求在实现之前就被明确定义和验证。
 
-SpecForge Viewer is a web-based Claude Code client focused on **comprehensive session log analysis**. It preserves and organizes all conversation data through strict schema validation and a progressive disclosure UI that reveals details on demand.
+SpecForge 通过提供完整的 Web 客户端和可视化工作流，让这一理念变得易于实践。
 
-**Core Philosophy**: Zero data loss + Effective organization + Remote-friendly design
+## 核心特性
 
-## Features
+### 规范驱动工作流
 
-| Feature | Description |
-| --- | --- |
-| View Chat Logs | View Claude Code session logs in real-time through the web UI. Supports historical logs as it uses standard Claude Code logs (~/.claude/projects/...) as the data source |
-| Search Conversations | Full-text search across conversations with `⌘K` (macOS) or `Ctrl+K` (Linux). Search within a specific project or across all projects. Features fuzzy matching, prefix search, and keyboard navigation (↑↓ to navigate, Enter to select) |
-| Start Conversations | Start Claude Code sessions directly from SpecForge Viewer. Enjoy core functionality like file/command completion, pause/resume, and tool approval through a superior web experience |
-| Resume Sessions | Resume conversations directly from existing session logs |
-| Continue Sessions | SpecForge Viewer provides advanced session process control. Sessions started through SpecForge Viewer remain alive (unless aborted), allowing you to continue conversations without resuming (no session-id reassignment) |
-| Create Projects | Create new projects from SpecForge Viewer. Select a directory through the web UI to execute the `/init` command and begin project setup |
-| File Upload & Preview | Upload images (PNG, JPEG, GIF, WebP), PDFs, and text files directly from the chat interface. Each file type displays with dedicated preview components—images render inline, PDFs embed with a viewer, and text files show formatted content |
-| Browser Preview | Preview web applications directly within SpecForge Viewer. Click the preview button on any URL in chat messages to open a resizable browser panel on the right side. Features include URL input with keyboard navigation, reload functionality, and automatic chat window width adjustment. The embedded browser tracks URL changes as you navigate (same-origin only) |
-| Message Scheduler | Schedule Claude Code messages using cron expressions for recurring tasks or specific datetime for one-time execution. Supports concurrency control (skip/run) for periodic jobs and auto-deletion for reserved jobs |
-| Review Changes | Built-in Git Diff Viewer lets you review all changes directly within SpecForge Viewer |
-| Commit Changes | Execute Git commits directly from the web interface within the Git Diff Viewer |
-| Push Changes | Push committed changes directly from the Git Diff Viewer. Supports both separate push operations and combined commit-and-push workflows for streamlined deployment |
-| MCP Server Viewer | View MCP server configurations directly in the session sidebar. Lists all configured servers with their names and commands, with real-time reload capability |
-| System Information | Monitor Claude Code and SpecForge Viewer versions, feature compatibility, and system status |
-| Multi-language Support | Full internationalization support with English, Japanese, and Simplified Chinese language options |
+- **完整的状态管理**：从草稿 → 设计 → 任务规划 → 实施 → 完成 → 归档的完整生命周期
+- **Spec Dashboard**：可视化展示所有变更（Changes）及其状态
+- **OpenSpec 兼容**：完全兼容 OpenSpec 1.0 的目录结构和 schema 系统
 
-## Screenshots
+### Workspace 工作面板
 
-| Feature | Capture |
-| --- | --- |
-| BasicChat (Desktop) | ![](./e2e/snapshots/projects/L2hvbWUvcnVubmVyL3dvcmsvY2xhdWRlLWNvZGUtdmlld2VyL2NsYXVkZS1jb2RlLXZpZXdlci9tb2NrLWdsb2JhbC1jbGF1ZGUtZGlyL3Byb2plY3RzL3NhbXBsZS1wcm9qZWN0/session_sessionId_fe5e1c67-53e7-4862-81ae-d0e013e3270b/desktop-dark.png) |
-| BasicChat (Mobile) | ![](./e2e/snapshots/projects/L2hvbWUvcnVubmVyL3dvcmsvY2xhdWRlLWNvZGUtdmlld2VyL2NsYXVkZS1jb2RlLXZpZXdlci9tb2NrLWdsb2JhbC1jbGF1ZGUtZGlyL3Byb2plY3RzL3NhbXBsZS1wcm9qZWN0/session_sessionId_fe5e1c67-53e7-4862-81ae-d0e013e3270b/mobile-dark.png) |
-| CommandCompletion | ![](./docs/assets/command_completion.png) |
-| FileCompletion | ![](./docs/assets/file_completion.png) |
-| Diff Viewer | ![](./docs/assets/git_diff.png) |
+统一的可调整面板，支持三种工作模式：
 
-Note: Additional UI screenshots are available in [/e2e/snapshots/](./e2e/snapshots/)
+- **Spec 模式**：规范管理和查看，支持内容编辑、状态可视化、实时同步
+- **Browser 模式**：嵌入式浏览器，实时预览 Web 应用和验证功能
+- **Diff 模式**：Git 变更对比和审查，直接提交和推送代码
 
-## Installation & Usage
+### Claude Code 全功能客户端
 
-### Quick Start (CLI)
+- **会话管理**：浏览历史会话、搜索对话、启动新会话、恢复会话
+- **实时交互**：支持文件上传、命令补全、工具权限控制
+- **进程控制**：Keep-Alive 进程管理，支持无缝继续会话
+- **全文搜索**：`⌘K` / `Ctrl+K` 快速搜索所有项目和会话
+- **Git 集成**：内置 Diff 查看器，直接执行提交和推送操作
 
-Run directly from npm without installation:
+### 用户友好
+
+- **主题切换**：深色/浅色模式，跟随系统设置
+- **移动端适配**：响应式设计，支持平板和手机访问
+- **远程开发**：支持服务器部署，通过浏览器访问
+- **零数据丢失**：严格的 Zod Schema 验证，确保所有会话数据完整保存
+
+## 快速开始
+
+### 本地运行
+
+使用 npx 直接运行（无需安装）：
 
 ```bash
-npx @zhuboer/spec-forge-viewer@latest --port 3400
+npx @ctrip/spec-forge@latest --port 3400
 ```
 
-Alternatively, install globally:
+或全局安装后使用：
 
 ```bash
-npm install -g @zhuboer/spec-forge-viewer
+npm install -g @ctrip/spec-forge
 spec-forge-viewer --port 3400
 ```
 
-The server will start on port 3400 (or the default port 3000). Open `http://localhost:3400` in your browser to access the interface.
+服务启动后，在浏览器中打开 `http://localhost:3400`
 
-**Available Options:**
+### Docker 部署
 
-```bash
-spec-forge-viewer [options]
-
-Options:
-  -p, --port <port>                Port to listen on (default: 3000)
-  -h, --hostname <hostname>        Hostname to listen on (default: localhost)
-  -P, --password <password>        Password for authentication
-  -e, --executable <executable>    Path to Claude Code executable
-  --claude-dir <claude-dir>        Path to Claude directory
-```
-
-### Docker Deployment
-
-Build the image locally:
+构建镜像：
 
 ```bash
 docker build -t spec-forge-viewer .
 ```
 
-Run the container directly:
+运行容器：
 
 ```bash
 docker run --rm -p 3400:3400 \
   -e PORT=3400 \
   -e CCV_PASSWORD=your-password \
-  -e ANTHROPIC_BASE_URL=... \
-  -e ANTHROPIC_API_KEY=... \
-  -e ANTHROPIC_AUTH_TOKEN=... \
+  -e ANTHROPIC_API_KEY=your-api-key \
   spec-forge-viewer
 ```
 
-Alternatively, use the provided Compose configuration:
+或使用 Docker Compose：
 
 ```bash
 docker compose up --build
 ```
 
-> Note: `docker-compose.yml` ships without mounting `claude_home` by default. If you need the container to reuse an existing Claude workspace, map a volume to `/root/.claude`, for example:
->
-> ```yaml
-> services:
->   app:
->     volumes:
->       - /path/to/claude_home:/root/.claude
-> ```
+## 配置说明
 
+### 命令行选项
 
-## Data Source
+```bash
+spec-forge-viewer [options]
 
-The application reads Claude Code conversation logs from:
+选项:
+  -p, --port <port>                端口号 (默认: 3000)
+  -h, --hostname <hostname>        监听的主机名 (默认: localhost)
+  -P, --password <password>        认证密码
+  -e, --executable <executable>    Claude Code 可执行文件路径
+  --claude-dir <claude-dir>        Claude 目录路径 (默认: ~/.claude)
+```
 
-- **Location**: `~/.claude/projects/<project>/<session-id>.jsonl`
-- **Format**: JSONL files containing conversation entries
-- **Auto-detection**: Automatically discovers new projects and sessions
+### 环境变量
 
-## Requirements
-
-### System Requirements
-
-- **Node.js**: Version 20.19.0 or later
-- **Operating Systems**: macOS and Linux (Windows is not supported)
-
-### Claude Code Compatibility
-
-- **Minimum Version**: Claude Code v1.0.50 or later
-- **Tool Approval Feature**: Requires Claude Code v1.0.82 or later
-
-**Note on Version Support**: Recent versions of Claude Code have adopted more aggressive summarization behavior. To accommodate users who prefer to pin to specific versions, SpecForge Viewer maintains compatibility with Claude Code v1.0.50 and later for the foreseeable future.
-
-### Environment Variables
-
-**NODE_ENV Consideration**: If you have `NODE_ENV=development` set in your environment (from other projects or system configuration), the application may not work correctly. Either set `NODE_ENV=production` or leave it unset when running SpecForge Viewer.
-
-**Anthropic API Configuration**: When using SpecForge Viewer to create new Claude Code sessions, you need to configure authentication with Anthropic's API. SpecForge Viewer supports both standard and custom proxy configurations:
-
-| Environment Variable | Description | Required |
+| 环境变量 | 说明 | 必需 |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | Your Anthropic API key for authentication. This is the standard variable used by Anthropic SDK. | Yes (unless using custom proxy) |
-| `ANTHROPIC_AUTH_TOKEN` | Alternative authentication token, typically used with custom proxy services. If `ANTHROPIC_API_KEY` is not set, this will be used automatically. | No |
-| `ANTHROPIC_BASE_URL` | Custom API endpoint URL. Use this when routing requests through a proxy service or custom deployment. | No (defaults to Anthropic's official endpoint) |
+| `PORT` | 端口号 | 否 (默认: 3000) |
+| `HOSTNAME` | 监听主机名 | 否 (默认: localhost) |
+| `CCV_PASSWORD` | 认证密码 | 否 |
+| `CCV_CC_EXECUTABLE_PATH` | Claude Code 路径 | 否 (自动检测) |
+| `CCV_GLOBAL_CLAUDE_DIR` | Claude 目录路径 | 否 (默认: ~/.claude) |
+| `ANTHROPIC_API_KEY` | Anthropic API 密钥 | 是* |
+| `ANTHROPIC_AUTH_TOKEN` | 自定义代理认证令牌 | 否 |
+| `ANTHROPIC_BASE_URL` | 自定义 API 端点 | 否 |
 
-**Authentication Setup**:
+\* 创建新会话时必需
 
-1. **Standard Anthropic API** (recommended for most users):
-   ```bash
-   export ANTHROPIC_API_KEY="your-api-key-here"
-   ```
+### 用户设置
 
-2. **Custom Proxy Service** (e.g., corporate proxy):
-   ```bash
-   export ANTHROPIC_BASE_URL="http://your-proxy-url"
-   export ANTHROPIC_AUTH_TOKEN="your-proxy-auth-token"
-   # ANTHROPIC_AUTH_TOKEN will be automatically used as ANTHROPIC_API_KEY
-   ```
+可在应用侧边栏中配置：
 
-3. **Verify Configuration**:
-   After setting environment variables, restart SpecForge Viewer. Check the console output for:
-   ```
-   [SpecForge] Claude Code SDK authentication: API key configured, Base URL: ...
-   ```
-
-**Important**: These environment variables must be set before starting SpecForge Viewer. If you see "Invalid API key" errors when creating sessions, verify that:
-- Environment variables are exported (use `export` command)
-- SpecForge Viewer was started after setting the variables
-- The API key/token is valid and not expired
-
-## Configuration
-
-### Command-Line Options and Environment Variables
-
-SpecForge Viewer can be configured using command-line options or environment variables. Command-line options take precedence over environment variables.
-
-| Command-Line Option | Environment Variable | Description | Default |
-| --- | --- | --- | --- |
-| `-p, --port <port>` | `PORT` | Port number for SpecForge Viewer to run on | `3000` |
-| `-h, --hostname <hostname>` | `HOSTNAME` | Hostname to listen on for remote access | `localhost` |
-| `-P, --password <password>` | `CCV_PASSWORD` | Password for authentication. When set, enables password-based authentication to protect access to SpecForge Viewer. All `/api` routes (except login, logout, check, config, and version endpoints) require authentication. If not set, authentication is disabled and the application is publicly accessible | (none) |
-| `-e, --executable <executable>` | `CCV_CC_EXECUTABLE_PATH` | Path to Claude Code installation. If not set, uses system PATH installation, or falls back to bundled version from dependencies | (auto-detect) |
-| `--claude-dir <claude-dir>` | `CCV_GLOBAL_CLAUDE_DIR` | Path to Claude directory where session logs are stored | `~/.claude` |
-
-**Breaking Change**: Environment variable names have been changed. If you're using environment variables, update them as follows:
-- `CLAUDE_CODE_VIEWER_AUTH_PASSWORD` → `CCV_PASSWORD`
-- `CLAUDE_CODE_VIEWER_CC_EXECUTABLE_PATH` → `CCV_CC_EXECUTABLE_PATH`
-- New environment variable added: `CCV_GLOBAL_CLAUDE_DIR` (previously the Claude directory path was hardcoded to `~/.claude`)
-
-### User Settings
-
-Settings can be configured from the sidebar in SpecForge Viewer.
-
-| Setting | Default | Description |
+| 设置项 | 默认值 | 说明 |
 | --- | --- | --- |
-| Hide sessions without user messages | true | Claude Code creates logs for operations like `/compact` that aren't tied to actual tasks, which can create noise. When enabled, sessions without user messages are hidden. |
-| Unify sessions with same title | false | When resuming, Claude Code creates a new session with regenerated conversation logs. When enabled, only the latest session with the same title is displayed. |
-| Auto-schedule Continue on Rate Limit | false | Automatically schedules a continue message when Claude hits rate limits. When enabled, the system detects rate limit errors in live sessions and creates a scheduled job to send "continue" one minute after the limit reset time. This prevents manual intervention for rate limit recovery. |
-| Enter Key Behavior | Shift+Enter | Specifies which key combination sends messages. Options include Enter, Shift+Enter, and Command+Enter. |
-| Search Hotkey | Command+K | Select the hotkey to open search dialog. Options include Ctrl+K and Command+K. |
-| Permission Mode | Ask permission | Controls the approval logic when Claude Code requests tool invocations. By default, users approve requests through the UI. This feature requires Claude Code v1.0.82 or later; earlier versions automatically approve regardless of this setting. |
-| Theme | System | Toggles between Dark Mode and Light Mode. Default follows system settings. |
-| Notifications | None | Enables sound notifications when running session processes complete. Choose from multiple notification sounds with test playback functionality. |
-| Language | System | Interface language selection. Supports English, Japanese, and Simplified Chinese with automatic system detection. |
+| 隐藏无用户消息的会话 | 开启 | 隐藏系统自动创建的会话 |
+| 合并相同标题的会话 | 关闭 | 只显示最新的恢复会话 |
+| 遇到速率限制自动调度继续 | 关闭 | 自动在速率限制解除后继续会话 |
+| 发送消息快捷键 | Shift+Enter | 选择发送消息的组合键 |
+| 搜索快捷键 | Command+K | 打开搜索对话框的快捷键 |
+| 权限模式 | 询问权限 | 工具调用的审批逻辑 |
+| 主题 | 跟随系统 | 深色/浅色模式切换 |
+| 通知音效 | 无 | 会话完成时的声音提醒 |
 
-## Internationalization (i18n)
+## Spec Coding 工作流
 
-SpecForge Viewer currently supports **English**, **Japanese**, and **Simplified Chinese (简体中文)**. Adding new languages is straightforward—simply add a new `messages.json` file for your locale (see [src/i18n/locales/](./src/i18n/locales/) for examples).
+### 目录结构
 
-If you'd like support for your language, please open an issue—we'll add it quickly!
+```
+openspec/
+├── changes/                    # 变更目录
+│   ├── add-authentication/     # 单个变更
+│   │   ├── proposal.md         # 需求说明（为什么做、做什么）
+│   │   ├── architecture.md     # 技术方案和架构决策
+│   │   ├── tasks.md           # 实现清单（checkbox 格式）
+│   │   ├── tests.md           # 测试计划
+│   │   └── specs/             # Delta specs
+│   └── archive/               # 已归档的变更
+└── specs/                     # 真理源（当前系统规范）
+```
 
-## Alternatives & Differentiation
+### 工作流状态
 
-### Official Solution: Claude Code on the Web
+```
+draft (草稿)
+  ↓
+designing (设计中)
+  ↓
+design-confirmed (设计确认)
+  ↓
+task-planning (任务规划)
+  ↓
+implementing (实施中)
+  ↓
+completed (已完成)
+  ↓
+archived (已归档)
+```
 
-Anthropic provides [Claude Code on the Web](https://docs.claude.com/en/docs/claude-code/claude-code-on-the-web), which runs Claude Code sessions in Anthropic's cloud VMs. Each session clones your repository and executes predefined setup commands (e.g., `pnpm install`).
+SpecForge 通过文件内容自动推断变更状态：
 
-**When to use Claude Code on the Web**:
-- Quick testing without local setup or self-hosting infrastructure
-- Casual development from mobile devices or public computers
-- Simple repository structures with single CLAUDE.md at the root
+- 检查 `tasks.md` 中的任务完成情况（`- [x]`）
+- 识别确认标记（`<!-- TASKS_CONFIRMED: true -->`）
+- 识别设计最终确认（`<!-- DESIGN_FINAL_CONFIRMATION: true -->`）
 
-**When to use SpecForge Viewer**:
-- Working with pre-configured local environments (databases, services, large dependencies)
-- Monorepo projects with multiple CLAUDE.md files in different directories
-- Development requiring significant computational resources or long-running processes
-- Preference for self-hosted infrastructure with full control over the development environment
+### 典型工作流
 
-### Community Web Clients
+1. **创建 Proposal**：在 Spec Dashboard 中创建新变更，描述需求
+2. **设计方案**：AI 生成 `architecture.md`，在 Workspace 中审阅
+3. **规划任务**：AI 生成 `tasks.md`，确认实现清单
+4. **逐个实现**：AI 按任务列表实现功能
+5. **实时预览**：在 Browser 面板中预览应用效果
+6. **审查变更**：在 Diff 面板中查看所有文件变更
+7. **提交代码**：直接在 Web 界面提交和推送到 Git
+8. **归档变更**：完成后归档到 `archive/` 目录
 
-Several excellent community-built web clients exist:
+## 技术架构
 
-- https://github.com/sugyan/claude-code-webuisupport
-- https://github.com/wbopan/cui
-- https://github.com/siteboon/claudecodeui
+### 前端技术栈
 
-**What Makes SpecForge Viewer Different**: While these tools excel as general-purpose web clients, SpecForge Viewer is specifically designed as a **session log viewer** with:
+- **React 19** - 现代 UI 框架
+- **Vite** - 快速构建工具
+- **TanStack Router** - 类型安全的路由
+- **TanStack Query** - 服务器状态管理
+- **Biome** - 代码质量工具
+- **@lingui/react** - 国际化方案
 
-- **Zero Information Loss**: Strict Zod schema validation ensures every conversation detail is preserved
-- **Progressive Disclosure**: Expandable elements and sub-session modals help manage information density
-- **Built-in Git Operations**: Comprehensive diff viewer with direct commit functionality for remote development workflows
-- **Session Flow Analysis**: Complete conversation tracking across multiple sessions
-- **System Monitoring**: Real-time version and feature compatibility monitoring
-- **International Accessibility**: Multi-language support for global development teams
+### 后端技术栈
 
-Each tool serves different use cases—choose the one that best fits your workflow and priorities.
+- **Hono** - 轻量高性能 Web 框架
+- **Effect-TS** - 函数式副作用管理
+- **Zod** - Schema 验证
+- **Node 22** - 运行时
 
-## Remote Development
+### 核心设计
 
-SpecForge Viewer is designed with remote hosting in mind. To support remote development workflows, it includes:
+**端到端类型安全**：
+```typescript
+// Hono RPC 提供全链路类型推断
+export type RouteType = typeof app
+const response = await honoClient.api.projects[":projectId"].$get({
+  param: { projectId }
+})
+```
 
-- **Mobile-Optimized UI**: Responsive interface with dedicated mobile sidebar and touch-optimized controls
-- **Built-in Git Operations**: Review and commit changes directly from the web interface
-- **Real-time Notifications**: Audio notifications for task completion to maintain workflow awareness
-- **System Monitoring**: Monitor Claude Code compatibility and feature availability across environments
+**实时同步**：
+```typescript
+// Server-Sent Events (SSE) 推送更新
+useServerEventListener("sessionChanged", ({ projectId, sessionId }) => {
+  queryClient.invalidateQueries({
+    queryKey: ["session", projectId, sessionId]
+  })
+})
+```
 
-The application features a separated client-server architecture that enables remote hosting. **Basic password authentication is available** via the `--password` command-line option or `CCV_PASSWORD` environment variable. When set, users must authenticate with the configured password before accessing the application. However, this is a simple single-password authentication mechanism without advanced features like multi-user support, role-based access control, or OAuth integration. If you require more sophisticated authentication, carefully evaluate your security requirements and implement appropriate access controls at the infrastructure level (e.g., reverse proxy with OAuth, VPN, IP whitelisting).
+**零信息丢失**：
+- 23 个 Zod Schema 覆盖所有 JSONL 字段
+- 任何不符合 Schema 的数据触发验证错误
+- 随 Claude Code 版本演进持续完善
 
-## Privacy
+**Effect-TS 分层架构**：
+```typescript
+MainLayer = PresentationLayer
+  .pipe(Layer.provide(ApplicationLayer))
+  .pipe(Layer.provide(DomainLayer))
+  .pipe(Layer.provide(InfraLayer))
+  .pipe(Layer.provide(PlatformLayer))
+```
 
-For information about privacy and network communication, see [PRIVACY.md](./PRIVACY.md).
+## 系统要求
 
-## License
+- **Node.js**：20.19.0 或更高版本
+- **操作系统**：macOS、Linux 或 Windows（需确保 `claude` 可执行文件在 PATH 中，或通过 `--executable` / `CCV_CC_EXECUTABLE_PATH` 指定）
+- **Claude Code**：v1.0.50 或更高版本
+  - 工具权限审批功能需要 v1.0.82 或更高版本
 
-This project is available under the MIT License.
+## 数据源
 
-## Contributing
+SpecForge 直接读取 Claude Code 的会话日志：
 
-See [docs/dev.md](docs/dev.md) for detailed development setup and contribution guidelines.
+- **位置**：`~/.claude/projects/<project>/<session-id>.jsonl`
+- **格式**：JSONL 格式的会话记录
+- **自动发现**：自动检测新项目和会话
+
+## 开发指南
+
+详见 [docs/dev.md](docs/dev.md)
+
+核心命令：
+
+```bash
+# 类型检查（提交前必须）
+pnpm typecheck
+
+# 自动修复代码风格
+pnpm fix
+
+# 运行单元测试
+pnpm test
+
+# E2E 测试
+pnpm e2e
+```
+
+## 许可证
+
+MIT License
+
+## 参考资源
+
+- **OpenSpec 官网**：https://openspec.dev
+- **Effect-TS 文档**：https://effect.website
+- **Hono 文档**：https://hono.dev
+- **TanStack Query 文档**：https://tanstack.com/query
+
+---
+
+*最后更新：2026-02-06*

@@ -67,10 +67,8 @@ export const pathToCommandName = (
   filePath: string,
   baseDir: string,
 ): string => {
-  // Normalize base directory by removing trailing slash
-  const normalizedBaseDir = baseDir.endsWith("/")
-    ? baseDir.slice(0, -1)
-    : baseDir;
+  // Normalize base directory by removing trailing slash/backslash
+  const normalizedBaseDir = baseDir.replace(/[\\/]+$/, "");
 
   // Get relative path from base directory
   const relativePath = filePath.startsWith(normalizedBaseDir)
@@ -78,7 +76,7 @@ export const pathToCommandName = (
     : filePath;
 
   // Remove .md extension and convert path separators to colons
-  return relativePath.replace(/\.md$/, "").replace(/\//g, ":");
+  return relativePath.replace(/\.md$/, "").replace(/[\\/]/g, ":");
 };
 
 /**
@@ -295,7 +293,7 @@ export const scanSkillFilesRecursively = (
 
         if (skillFileExists) {
           // Extract skill name from relative path
-          const skillName = relativePath.replace(/\//g, ":");
+          const skillName = relativePath.replace(/[\\/]/g, ":");
           if (skillName) {
             skillNames.push(skillName);
           }
@@ -389,7 +387,7 @@ export const scanSkillFilesWithMetadata = (
 
         if (skillFileExists) {
           // Extract skill name from relative path
-          const skillName = relativePath.replace(/\//g, ":");
+          const skillName = relativePath.replace(/[\\/]/g, ":");
           if (skillName) {
             // Read file content and parse frontmatter
             const content = yield* fs.readFileString(skillFilePath);

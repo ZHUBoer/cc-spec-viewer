@@ -1,17 +1,21 @@
 import z from "zod";
 
-const sessionFileRegExp = /(?<projectId>.*?)\/(?<sessionId>.*?)\.jsonl$/;
-const agentFileRegExp =
-  /(?<projectId>.*?)\/agent-(?<agentSessionId>.*?)\.jsonl$/;
+const pathSeparator = String.raw`[/\\]`;
+const sessionFileRegExp = new RegExp(
+  `(?<projectId>.+)${pathSeparator}(?<sessionId>[^/\\\\]+)\\.jsonl$`,
+);
+const agentFileRegExp = new RegExp(
+  `(?<projectId>.+)${pathSeparator}agent-(?<agentSessionId>[^/\\\\]+)\\.jsonl$`,
+);
 
 const sessionFileGroupSchema = z.object({
-  projectId: z.string(),
-  sessionId: z.string(),
+  projectId: z.string().min(1),
+  sessionId: z.string().min(1),
 });
 
 const agentFileGroupSchema = z.object({
-  projectId: z.string(),
-  agentSessionId: z.string(),
+  projectId: z.string().min(1),
+  agentSessionId: z.string().min(1),
 });
 
 export type SessionFileMatch = {

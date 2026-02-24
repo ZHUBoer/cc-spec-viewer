@@ -9,14 +9,17 @@ import {
   Loader2,
   PenTool,
 } from "lucide-react";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { MarkdownContent } from "@/app/components/MarkdownContent";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { specDashboardService } from "./SpecDashboardService";
+import {
+  type OpenSpecChange,
+  specDashboardService,
+} from "./SpecDashboardService";
 import { StatusBadge } from "./StatusBadge";
 import { DesignReviewView } from "./views/DesignReviewView";
 import { SpecContentView } from "./views/SpecContentView";
@@ -34,8 +37,16 @@ interface SpecContextPanelProps {
 
 type Stage = "proposal" | "specs" | "design" | "tasks" | "tests";
 
+/** 根据 change 内容的生成状态，确定应展示的默认标签页 */
+function determineDefaultStage(change: OpenSpecChange): Stage {
+  if (change.tasksContent) return "tasks";
+  if (change.designContent) return "design";
+  return "proposal";
+}
+
 export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
-  const [activeStage, setActiveStage] = useState<Stage>("design"); // Default to design as per UX focus
+  const [activeStage, setActiveStage] = useState<Stage>("proposal");
+  const prevChangeIdRef = useRef<string | null>(null);
 
   // Safe cast and validation
   const ctx = context as SpecPanelContext;
@@ -49,6 +60,7 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     isLoading,
     error,
     refetch,
+    isFetching,
   } = useQuery({
     queryKey: ["openspec", "change", ctx?.projectId, ctx?.changeId],
     queryFn: async () => {
@@ -59,13 +71,27 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     // 在 implementing 状态时每 2 秒刷新一次
     refetchInterval: (query) =>
       query.state.data?.status === "implementing" ? 2000 : false,
+    // 保留之前的数据，避免在刷新时显示错误页面
+    placeholderData: (previousData) => previousData,
   });
 
-  // Effect: Reset active stage if current stage becomes invalid (e.g. specs/tests removed)
-  // This prevents being stuck on a hidden tab when switching changes
+  // Effect: 当 changeId 变化（包括首次加载）时，自动选择合适的默认标签页；
+  // 同时处理当前标签无效的回退逻辑
   useEffect(() => {
     if (!change) return;
 
+    // 当 changeId 变化时，自动选择合适的标签
+    // 需确认 change 数据确实对应当前 changeId，避免 placeholderData 带来的竞态
+    if (
+      prevChangeIdRef.current !== ctx.changeId &&
+      change.name === ctx.changeId
+    ) {
+      prevChangeIdRef.current = ctx.changeId;
+      setActiveStage(determineDefaultStage(change));
+      return;
+    }
+
+    // 原有逻辑：当前标签无效时回退
     const hasSpecs = !!(
       change.specsContent ||
       (change.specFiles && change.specFiles.length > 0)
@@ -73,11 +99,11 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     const hasTests = !!change.testsContent;
 
     if (activeStage === "specs" && !hasSpecs) {
-      setActiveStage("design");
+      setActiveStage(determineDefaultStage(change));
     } else if (activeStage === "tests" && !hasTests) {
-      setActiveStage("design");
+      setActiveStage(determineDefaultStage(change));
     }
-  }, [change, activeStage]);
+  }, [change, activeStage, ctx.changeId]);
 
   if (!isValidContext) {
     return (
@@ -88,7 +114,8 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     );
   }
 
-  if (isLoading) {
+  // 只在初始加载时显示 loading
+  if (isLoading && !change) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-zinc-500">
         <Loader2 className="w-8 h-8 animate-spin mb-2" />
@@ -97,11 +124,31 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     );
   }
 
-  if (error || !change) {
+  // 只在初始加载失败且没有缓存数据时显示错误
+  // 由于使用了 placeholderData，即使查询失败 change 也可能保留之前的值
+  // 所以只有当 change 为 null/undefined 且（有错误或不在加载中）时才显示错误
+  if (!change && (error || (!isLoading && !isFetching))) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-red-500">
         <AlertCircle className="w-8 h-8 mb-2" />
         <p>Failed to load context</p>
+        {error && (
+          <p className="text-sm mt-2 text-muted-foreground">
+            {error instanceof Error ? error.message : String(error)}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // 如果有错误但之前有数据，继续显示之前的数据（后台刷新失败不影响显示）
+  // change 此时应该存在（因为上面已经检查过）
+  if (!change) {
+    // 如果 change 仍然为 null，返回一个占位符（不应该到达这里，但为了类型安全）
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-zinc-500">
+        <FileText className="w-12 h-12 mb-4 opacity-50" />
+        <p>No data available</p>
       </div>
     );
   }

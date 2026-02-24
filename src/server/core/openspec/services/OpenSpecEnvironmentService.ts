@@ -1,9 +1,8 @@
-import { execSync } from "node:child_process";
-import * as path from "node:path";
-import { FileSystem } from "@effect/platform";
-import { Context, Data, Effect, Layer } from "effect";
+import { Command, FileSystem, Path } from "@effect/platform";
+import { Context, Data, Duration, Effect, Either, Layer } from "effect";
 import type { InferEffect } from "../../../lib/effect/types";
 import { ProjectRepository } from "../../project/infrastructure/ProjectRepository";
+import { CliDetectionService } from "./CliDetectionService";
 
 // ============================================================================
 // Error Types
@@ -54,7 +53,11 @@ export interface EnvironmentStatus {
   hasOpenspecDir: boolean;
   hasClaudeDir: boolean;
   hasSpecforgeMarker: boolean;
-  specforgeConfig?: SpecforgeConfig;
+  specforgeConfig: SpecforgeConfig | null; // 明确使用 null 而不是 optional
+
+  // 配置验证
+  isConfigCorrupted: boolean; // 配置是否损坏
+  configErrors: string[]; // 配置错误列表
 
   // 缺失项分析
   missingSpecforgeSkills: string[];
@@ -109,57 +112,8 @@ const SCENARIO_ACTIONS: Record<ScenarioType, RecommendedAction> = {
 const LayerImpl = Effect.gen(function* () {
   const projectRepository = yield* ProjectRepository;
   const fs = yield* FileSystem.FileSystem;
-
-  /**
-   * 检测 openspec CLI 安装状态
-   */
-  const checkCliInstallation = (): {
-    installed: boolean;
-    version?: string;
-    type?: "global" | "project" | "npx";
-  } => {
-    // 1. 检查全局安装
-    try {
-      const version = execSync("openspec --version 2>/dev/null", {
-        encoding: "utf-8",
-        timeout: 5000,
-      }).trim();
-      return { installed: true, version, type: "global" };
-    } catch {
-      // 继续检查其他方式
-    }
-
-    // 2. 检查 npx 可用性
-    try {
-      const version = execSync("npx openspec --version 2>/dev/null", {
-        encoding: "utf-8",
-        timeout: 10000,
-      }).trim();
-      return { installed: true, version, type: "npx" };
-    } catch {
-      // npx 也不可用
-    }
-
-    return { installed: false };
-  };
-
-  /**
-   * 检查项目级 CLI 安装
-   */
-  const checkProjectCliInstallation = (
-    projectPath: string,
-  ): { installed: boolean; version?: string } => {
-    const cliPath = path.join(projectPath, "node_modules", ".bin", "openspec");
-    try {
-      const version = execSync(`${cliPath} --version 2>/dev/null`, {
-        encoding: "utf-8",
-        timeout: 5000,
-      }).trim();
-      return { installed: true, version };
-    } catch {
-      return { installed: false };
-    }
-  };
+  const path = yield* Path.Path;
+  const cliDetection = yield* CliDetectionService;
 
   /**
    * 解析 specforge 标记
@@ -226,6 +180,47 @@ const LayerImpl = Effect.gen(function* () {
     });
 
   /**
+   * 验证配置完整性
+   * 返回配置错误列表
+   */
+  const validateConfig = (
+    hasOpenspecDir: boolean,
+    hasClaudeDir: boolean,
+    hasMarker: boolean,
+    specforgeConfig: SpecforgeConfig | undefined,
+    missingSkills: string[],
+  ): string[] => {
+    const errors: string[] = [];
+
+    // 检查 openspec 目录
+    if (!hasOpenspecDir) {
+      errors.push("缺少 openspec 目录");
+    }
+
+    // 检查 .claude 目录
+    if (!hasClaudeDir) {
+      errors.push("缺少 .claude 目录");
+    }
+
+    // 检查 specforge 标记
+    if (hasOpenspecDir && !hasMarker) {
+      errors.push("openspec/config.yaml 中缺少 _specforge 标记");
+    }
+
+    // 检查配置完整性
+    if (hasMarker && !specforgeConfig) {
+      errors.push("_specforge 标记存在但解析失败（配置格式损坏）");
+    }
+
+    // 检查必需的 skills
+    if (missingSkills.length > 0) {
+      errors.push(`缺少必需的 skills: ${missingSkills.join(", ")}`);
+    }
+
+    return errors;
+  };
+
+  /**
    * 检查 .mcp.json 中缺失的 MCP 服务器
    * 暂时返回空数组，后续根据 profile 配置扩展
    */
@@ -273,20 +268,43 @@ const LayerImpl = Effect.gen(function* () {
     Effect.gen(function* () {
       const { project } = yield* projectRepository.getProject(projectId);
       if (project.meta.projectPath === null) {
-        return yield* Effect.fail(new ProjectPathNotFoundError({ projectId }));
+        const globalCli = yield* cliDetection.checkGlobalCli();
+        return {
+          cliInstalled: globalCli.installed,
+          cliVersion: globalCli.version,
+          cliInstallType: globalCli.installed ? globalCli.type : undefined,
+          scenario: "S1_NEW" as const,
+          scenarioDescription:
+            "无法从 Claude 会话中解析项目路径，请先在目标项目目录发起一次 Claude 会话",
+          hasOpenspecDir: false,
+          hasClaudeDir: false,
+          hasSpecforgeMarker: false,
+          specforgeConfig: null,
+          isConfigCorrupted: true,
+          configErrors: [
+            "无法解析项目路径（projectPath 为空）。请先在目标项目目录发起一次 Claude 会话后重试。",
+          ],
+          missingSpecforgeSkills: [...SPECFORGE_REQUIRED_SKILLS],
+          missingMcpServers: [],
+          recommendedAction: "none" as const,
+        } satisfies EnvironmentStatus;
       }
 
       const projectPath = project.meta.projectPath;
 
-      // 1. 检测 CLI 安装状态
-      const globalCli = checkCliInstallation();
-      const projectCli = checkProjectCliInstallation(projectPath);
+      // 1. 检测 CLI 安装状态（使用 CliDetectionService）
+      const [globalCli, projectCli] = yield* Effect.all(
+        [
+          cliDetection.checkGlobalCli(),
+          cliDetection.checkProjectCli(projectPath),
+        ],
+        { concurrency: "unbounded" },
+      );
 
-      const cliInstalled = globalCli.installed || projectCli.installed;
-      const cliVersion = globalCli.version || projectCli.version;
-      const cliInstallType = projectCli.installed
-        ? ("project" as const)
-        : globalCli.type;
+      // SpecForge 强制要求全局 openspec，项目本地安装仅作信息参考
+      const cliInstalled = globalCli.installed;
+      const cliVersion = globalCli.version ?? projectCli.version;
+      const cliInstallType = globalCli.installed ? globalCli.type : undefined;
 
       // 2. 检测目录状态
       const openspecDir = path.join(projectPath, "openspec");
@@ -311,7 +329,18 @@ const LayerImpl = Effect.gen(function* () {
 
       const missingMcpServers = yield* getMissingMcpServers(projectPath);
 
-      // 5. 识别场景
+      // 5. 验证配置
+      const configErrors = validateConfig(
+        hasOpenspecDir,
+        hasClaudeDir,
+        hasMarker,
+        specforgeConfig,
+        missingSpecforgeSkills,
+      );
+
+      const isConfigCorrupted = configErrors.length > 0;
+
+      // 6. 识别场景
       const scenario = identifyScenario(
         hasOpenspecDir,
         hasClaudeDir,
@@ -333,7 +362,11 @@ const LayerImpl = Effect.gen(function* () {
         hasOpenspecDir,
         hasClaudeDir,
         hasSpecforgeMarker: hasMarker,
-        specforgeConfig,
+        specforgeConfig: specforgeConfig ?? null, // 确保字段存在（null 而不是 undefined）
+
+        // 配置验证
+        isConfigCorrupted,
+        configErrors,
 
         // 缺失项分析
         missingSpecforgeSkills,
@@ -353,38 +386,65 @@ const LayerImpl = Effect.gen(function* () {
    */
   const installCliGlobal = (
     options: { initialize?: boolean; projectPath?: string } = {},
-  ) => {
-    try {
+  ) =>
+    Effect.gen(function* () {
       // 1. 安装 CLI
-      execSync("npm install -g openspec", {
-        encoding: "utf-8",
-        timeout: 120000,
-        stdio: "pipe",
-      });
+      const installCommand = Command.make(
+        "npm",
+        "install",
+        "-g",
+        "@fission-ai/openspec@latest",
+      );
+      const installResult = yield* Effect.either(
+        Command.string(installCommand).pipe(
+          Effect.timeout(Duration.seconds(120)),
+        ),
+      );
+
+      if (Either.isLeft(installResult)) {
+        return {
+          success: false as const,
+          error: `安装失败: ${String(installResult.left)}`,
+          initialized: false,
+        };
+      }
 
       // 2. 可选：执行初始化
       if (options.initialize && options.projectPath) {
-        execSync("openspec init --tools claude --force", {
-          encoding: "utf-8",
-          timeout: 60000,
-          stdio: "pipe",
-          cwd: options.projectPath,
-        });
+        const initCommand = Command.make(
+          "openspec",
+          "init",
+          "--tools",
+          "claude",
+          "--force",
+        );
+
+        const initCommandWithCwd = Command.workingDirectory(
+          initCommand,
+          options.projectPath,
+        );
+
+        const initResult = yield* Effect.either(
+          Command.string(initCommandWithCwd).pipe(
+            Effect.timeout(Duration.seconds(60)),
+          ),
+        );
+
+        if (Either.isLeft(initResult)) {
+          return {
+            success: false as const,
+            error: `初始化失败: ${String(initResult.left)}`,
+            initialized: false,
+          };
+        }
       }
 
-      return Effect.succeed({
+      return {
         success: true as const,
         error: undefined,
         initialized: options.initialize ?? false,
-      });
-    } catch (error) {
-      return Effect.succeed({
-        success: false as const,
-        error: error instanceof Error ? error.message : String(error),
-        initialized: false,
-      });
-    }
-  };
+      };
+    });
 
   /**
    * 安装 openspec CLI（项目依赖）
@@ -400,37 +460,71 @@ const LayerImpl = Effect.gen(function* () {
         return yield* Effect.fail(new ProjectPathNotFoundError({ projectId }));
       }
 
-      try {
-        // 1. 安装 CLI
-        execSync("npm install --save-dev openspec", {
-          encoding: "utf-8",
-          timeout: 120000,
-          stdio: "pipe",
-          cwd: project.meta.projectPath,
-        });
+      const projectPath = project.meta.projectPath;
 
-        // 2. 可选：执行初始化
-        if (options.initialize) {
-          execSync("npx openspec init --tools claude --force", {
-            encoding: "utf-8",
-            timeout: 60000,
-            stdio: "pipe",
-            cwd: project.meta.projectPath,
-          });
-        }
+      // 1. 安装 CLI
+      const installCommand = Command.make(
+        "npm",
+        "install",
+        "--save-dev",
+        "@fission-ai/openspec@latest",
+      );
 
-        return {
-          success: true,
-          error: undefined,
-          initialized: options.initialize ?? false,
-        };
-      } catch (error) {
+      const installCommandWithCwd = Command.workingDirectory(
+        installCommand,
+        projectPath,
+      );
+
+      const installResult = yield* Effect.either(
+        Command.string(installCommandWithCwd).pipe(
+          Effect.timeout(Duration.seconds(120)),
+        ),
+      );
+
+      if (Either.isLeft(installResult)) {
         return {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: `安装失败: ${String(installResult.left)}`,
           initialized: false,
         };
       }
+
+      // 2. 可选：执行初始化
+      if (options.initialize) {
+        const initCommand = Command.make(
+          "npx",
+          "openspec",
+          "init",
+          "--tools",
+          "claude",
+          "--force",
+        );
+
+        const initCommandWithCwd = Command.workingDirectory(
+          initCommand,
+          projectPath,
+        );
+
+        const initResult = yield* Effect.either(
+          Command.string(initCommandWithCwd).pipe(
+            Effect.timeout(Duration.seconds(60)),
+          ),
+        );
+
+        if (Either.isLeft(initResult)) {
+          return {
+            success: false,
+            error: `初始化失败: ${String(initResult.left)}`,
+            initialized: false,
+          };
+        }
+      }
+
+      return {
+        success: true,
+        error: undefined,
+        initialized: options.initialize ?? false,
+      };
     });
 
   /**
@@ -444,44 +538,70 @@ const LayerImpl = Effect.gen(function* () {
         return yield* Effect.fail(new ProjectPathNotFoundError({ projectId }));
       }
 
-      try {
-        // 尝试使用全局 openspec
-        execSync("openspec init --tools claude --force", {
-          encoding: "utf-8",
-          timeout: 60000,
-          stdio: "pipe",
-          cwd: project.meta.projectPath,
-        });
+      const projectPath = project.meta.projectPath;
 
+      // 尝试使用全局 openspec
+      const globalCommand = Command.make(
+        "openspec",
+        "init",
+        "--tools",
+        "claude",
+        "--force",
+      );
+
+      const globalCommandWithCwd = Command.workingDirectory(
+        globalCommand,
+        projectPath,
+      );
+
+      const globalResult = yield* Effect.either(
+        Command.string(globalCommandWithCwd).pipe(
+          Effect.timeout(Duration.seconds(60)),
+        ),
+      );
+
+      if (Either.isRight(globalResult)) {
         return {
           success: true,
           error: undefined,
           method: "global" as const,
         };
-      } catch {
-        // 如果全局命令失败，尝试使用 npx
-        try {
-          execSync("npx openspec init --tools claude --force", {
-            encoding: "utf-8",
-            timeout: 120000,
-            stdio: "pipe",
-            cwd: project.meta.projectPath,
-          });
-
-          return {
-            success: true,
-            error: undefined,
-            method: "npx" as const,
-          };
-        } catch (npxError) {
-          return {
-            success: false,
-            error:
-              npxError instanceof Error ? npxError.message : String(npxError),
-            method: null,
-          };
-        }
       }
+
+      // 如果全局命令失败，尝试使用 npx
+      const npxCommand = Command.make(
+        "npx",
+        "openspec",
+        "init",
+        "--tools",
+        "claude",
+        "--force",
+      );
+
+      const npxCommandWithCwd = Command.workingDirectory(
+        npxCommand,
+        projectPath,
+      );
+
+      const npxResult = yield* Effect.either(
+        Command.string(npxCommandWithCwd).pipe(
+          Effect.timeout(Duration.seconds(120)),
+        ),
+      );
+
+      if (Either.isRight(npxResult)) {
+        return {
+          success: true,
+          error: undefined,
+          method: "npx" as const,
+        };
+      }
+
+      return {
+        success: false,
+        error: `初始化失败: ${String(npxResult.left)}`,
+        method: null,
+      };
     });
 
   return {

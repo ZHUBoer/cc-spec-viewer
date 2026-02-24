@@ -19,6 +19,7 @@ import { FileSystemController } from "../core/file-system/presentation/FileSyste
 import { GitController } from "../core/git/presentation/GitController";
 import { CommitRequestSchema, PushRequestSchema } from "../core/git/schema";
 import { OpenSpecController } from "../core/openspec/presentation/OpenSpecController";
+import type { CliDetectionService } from "../core/openspec/services/CliDetectionService";
 import {
   CcvOptionsService,
   type CliOptions,
@@ -95,6 +96,7 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
       | ClaudeCodeLifeCycleService
       | ProjectRepository
       | SchedulerConfigBaseDir
+      | CliDetectionService
     >();
 
     if ((yield* envService.getEnv("NEXT_PHASE")) !== "phase-production-build") {
@@ -246,7 +248,20 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           return response;
         })
 
-        // 新增：获取可用 Profile 列表
+        // 获取当前项目已保存的 Profile 配置
+        .get("/api/projects/:projectId/openspec/profile-config", async (c) => {
+          const response = await effectToResponse(
+            c,
+            openSpecController
+              .getProjectProfileRoute({
+                projectId: c.req.param("projectId"),
+              })
+              .pipe(Effect.provide(runtime)),
+          );
+          return response;
+        })
+
+        // 获取可用 Profile 列表
         .get("/api/projects/:projectId/openspec/profiles", async (c) => {
           const response = await effectToResponse(
             c,
@@ -273,9 +288,9 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
                 "S5_CONFIGURED",
                 "S6_PARTIAL",
               ]),
+              force: z.boolean().optional(),
               profile: z.object({
                 displayName: z.string(),
-                description: z.string(),
                 infra_catalog: z.object({
                   mcp_server_providers: z.record(
                     z.string(),
@@ -467,6 +482,18 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
             return response;
           },
         )
+
+        .post("/api/projects/:projectId/repair-path", async (c) => {
+          const response = await effectToResponse(
+            c,
+            projectController
+              .repairProjectPath({
+                ...c.req.param(),
+              })
+              .pipe(Effect.provide(runtime)),
+          );
+          return response;
+        })
 
         .get("/api/projects/:projectId/latest-session", async (c) => {
           const response = await effectToResponse(
@@ -740,7 +767,7 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           zValidator("json", z.object({ projectId: z.string() })),
           async (c) => {
             const { sessionProcessId } = c.req.param();
-            void Effect.runFork(
+            await Runtime.runPromise(runtime)(
               claudeCodeLifeCycleService.abortTask(sessionProcessId),
             );
             return c.json({ message: "Task aborted" });
@@ -864,9 +891,11 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           async (c) => {
             const response = await effectToResponse(
               c,
-              fileSystemController.getFileCompletionRoute({
-                ...c.req.valid("query"),
-              }),
+              fileSystemController
+                .getFileCompletionRoute({
+                  ...c.req.valid("query"),
+                })
+                .pipe(Effect.provide(runtime)),
             );
 
             return response;
@@ -888,9 +917,11 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           async (c) => {
             const response = await effectToResponse(
               c,
-              fileSystemController.getDirectoryListingRoute({
-                ...c.req.valid("query"),
-              }),
+              fileSystemController
+                .getDirectoryListingRoute({
+                  ...c.req.valid("query"),
+                })
+                .pipe(Effect.provide(runtime)),
             );
             return response;
           },

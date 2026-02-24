@@ -56,4 +56,51 @@ describe("SystemEntrySchema", () => {
       expect(result.success).toBe(false);
     });
   });
+  describe("microcompact_boundary subtype", () => {
+    test("accepts valid microcompact_boundary entry", () => {
+      const result = SystemEntrySchema.safeParse({
+        parentUuid: "4ed2e2fc-94b3-4c57-b576-32fc446157d3",
+        isSidechain: false,
+        userType: "external",
+        cwd: "/Users/qao/CRN/ztrip-xtaro-train",
+        sessionId: "f4a87526-e78d-420a-a67b-c6dea1fab8a3",
+        version: "2.1.38",
+        gitBranch: "feat/spect_test_jifen2",
+        slug: "piped-crafting-brook",
+        type: "system",
+        subtype: "microcompact_boundary",
+        content: "Context microcompacted",
+        isMeta: false,
+        timestamp: "2026-02-11T07:16:45.592Z",
+        uuid: "0fd54212-8dc0-4955-8e99-c5da5c5a9cb9",
+        level: "info",
+        microcompactMetadata: {
+          trigger: "auto",
+          preTokens: 837,
+          tokensSaved: 4000,
+          compactedToolIds: [],
+          clearedAttachmentUUIDs: [],
+        },
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test("accepts microcompact_boundary entry without optional fields", () => {
+      const result = SystemEntrySchema.safeParse({
+        parentUuid: null,
+        isSidechain: false,
+        userType: "external",
+        cwd: "/some/path",
+        sessionId: "abc123",
+        version: "2.1.38",
+        type: "system",
+        subtype: "microcompact_boundary",
+        content: "Context microcompacted",
+        timestamp: "2026-02-11T07:16:45.592Z",
+        uuid: "0fd54212-8dc0-4955-8e99-c5da5c5a9cb9",
+        level: "info",
+      });
+      expect(result.success).toBe(true);
+    });
+  });
 });

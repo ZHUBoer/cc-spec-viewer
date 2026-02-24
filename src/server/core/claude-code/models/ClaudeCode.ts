@@ -12,21 +12,65 @@ type AgentSdkQueryOptions = NonNullable<
 >;
 
 const npxCacheRegExp = /_npx[/\\].*node_modules[\\/]\.bin/;
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const localNodeModulesBinRegExp = new RegExp(
-  `${process.cwd()}/node_modules/.bin`,
+  `${escapeRegExp(process.cwd().replace(/\\/g, "/"))}/node_modules/\\.bin`,
 );
 
 export const claudeCodePathPriority = (path: string): number => {
-  if (npxCacheRegExp.test(path)) {
+  const normalizedPath = path.replace(/\\/g, "/");
+
+  if (npxCacheRegExp.test(normalizedPath)) {
     return 0;
   }
 
-  if (localNodeModulesBinRegExp.test(path)) {
+  if (localNodeModulesBinRegExp.test(normalizedPath)) {
     return 1;
   }
 
   return 2;
 };
+
+const listClaudePathsFromPath = Effect.gen(function* () {
+  const commands: ReadonlyArray<readonly [string, ...string[]]> =
+    process.platform === "win32"
+      ? [
+          ["where", "claude"],
+          ["where", "claude.cmd"],
+          ["where", "claude.exe"],
+          ["where", "claude.ps1"],
+        ]
+      : [["which", "-a", "claude"]];
+
+  const pathLists = yield* Effect.forEach(commands, ([command, ...args]) =>
+    Command.string(
+      Command.make(command, ...args).pipe(Command.runInShell(true)),
+    ).pipe(
+      Effect.map((output) =>
+        output
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line !== ""),
+      ),
+      Effect.catchAll(() => Effect.succeed<string[]>([])),
+    ),
+  );
+
+  return uniq(pathLists.flat()).toSorted((a, b) => {
+    const aPriority = claudeCodePathPriority(a);
+    const bPriority = claudeCodePathPriority(b);
+
+    if (aPriority < bPriority) {
+      return 1;
+    }
+    if (aPriority > bPriority) {
+      return -1;
+    }
+
+    return 0;
+  });
+});
 
 class ClaudeCodePathNotFoundError extends Data.TaggedError(
   "ClaudeCodePathNotFoundError",
@@ -52,31 +96,7 @@ const resolveClaudeCodePath = Effect.gen(function* () {
   }
 
   // System PATH lookup
-  const claudePaths = yield* Command.string(
-    Command.make("which", "-a", "claude").pipe(Command.runInShell(true)),
-  ).pipe(
-    Effect.map(
-      (output) =>
-        output
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line !== "") ?? [],
-    ),
-    Effect.map((paths) =>
-      uniq(paths).toSorted((a, b) => {
-        const aPriority = claudeCodePathPriority(a);
-        const bPriority = claudeCodePathPriority(b);
-
-        if (aPriority < bPriority) {
-          return 1;
-        }
-        if (aPriority > bPriority) {
-          return -1;
-        }
-
-        return 0;
-      }),
-    ),
+  const claudePaths = yield* listClaudePathsFromPath.pipe(
     Effect.catchAll(() => Effect.succeed<string[]>([])),
   );
 
@@ -108,14 +128,10 @@ export const Config = Effect.gen(function* () {
 
 export const getMcpListOutput = (projectCwd: string) =>
   Effect.gen(function* () {
+    const path = yield* Path.Path;
     const { claudeCodeExecutablePath } = yield* Config;
-    const command = Command.make(
-      "cd",
-      projectCwd,
-      "&&",
-      claudeCodeExecutablePath,
-      "mcp",
-      "list",
+    const command = Command.make(claudeCodeExecutablePath, "mcp", "list").pipe(
+      Command.workingDirectory(path.resolve(projectCwd)),
     );
     const output = yield* Command.string(
       command.pipe(Command.runInShell(true)),
@@ -187,7 +203,7 @@ export const query = (
       ...baseOptions,
       pathToClaudeCodeExecutable: claudeCodeExecutablePath,
       ...baseOptions,
-      disallowedTools: [], // Cannot answer from web interface instead of CLI
+      disallowedTools: ["AskUserQuestion"], // Cannot answer from web interface instead of CLI
       ...(availableFeatures.canUseTool
         ? { canUseTool, permissionMode }
         : {

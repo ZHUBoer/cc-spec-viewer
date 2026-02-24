@@ -1,7 +1,27 @@
 import { hc } from "hono/client";
+import type { z } from "zod";
 import type { RouteType } from "@/server/hono/route";
+import {
+  type BuiltInProfileSchema,
+  EnvironmentStatusSchema,
+  InjectionResultSchema,
+  InstallResultSchema,
+  OpenSpecChangeSchema,
+  OpenspecInitResultSchema,
+  ProfileLoadResultSchema,
+  ProjectProfileConfigSchema,
+} from "./schemas";
 
 const client = hc<RouteType>("/");
+
+// 类型导出
+export type BuiltInProfile = z.infer<typeof BuiltInProfileSchema>;
+export type EnvironmentStatus = z.infer<typeof EnvironmentStatusSchema>;
+export type InjectionResult = z.infer<typeof InjectionResultSchema>;
+export type ProfileLoadWarning = z.infer<
+  typeof ProfileLoadResultSchema
+>["warnings"][number];
+export type ProfileLoadResult = z.infer<typeof ProfileLoadResultSchema>;
 
 export interface OpenSpecChange {
   name: string;
@@ -81,8 +101,8 @@ export const specDashboardService = {
           : JSON.stringify(data.error);
       throw new Error(errorMessage);
     }
-    // Backend now returns full details including status and content
-    return data as OpenSpecChange;
+    // 使用 Zod 验证
+    return OpenSpecChangeSchema.parse(data);
   },
 
   updateChangeFile: async (
@@ -127,18 +147,49 @@ export const specDashboardService = {
           : JSON.stringify(data.error),
       );
     }
-    return data as EnvironmentStatus;
+    // 使用 Zod 验证
+    return EnvironmentStatusSchema.parse(data);
   },
 
   /**
    * 获取可用的 Profile 列表
    */
-  getProfiles: async (projectId: string): Promise<BuiltInProfile[]> => {
+  getProfiles: async (projectId: string): Promise<ProfileLoadResult> => {
     const res = await client.api.projects[":projectId"].openspec.profiles.$get({
       param: { projectId },
     });
     if (!res.ok) {
-      throw new Error("Failed to get profiles");
+      throw new Error(`加载 Profile 失败: HTTP ${res.status}`);
+    }
+    const data = await res.json();
+
+    // 检查是否有错误响应
+    if ("error" in data) {
+      const errorMsg = typeof data.error === "string" ? data.error : "未知错误";
+      const details =
+        "details" in data && typeof data.details === "string"
+          ? ` - ${data.details}`
+          : "";
+      throw new Error(`${errorMsg}${details}`);
+    }
+
+    // 使用 Zod 验证返回的数据结构
+    return ProfileLoadResultSchema.parse(data);
+  },
+
+  /**
+   * 获取当前项目已保存的 Profile 配置
+   */
+  getProjectProfileConfig: async (
+    projectId: string,
+  ): Promise<ProjectProfileConfig | null> => {
+    const res = await client.api.projects[":projectId"].openspec[
+      "profile-config"
+    ].$get({
+      param: { projectId },
+    });
+    if (!res.ok) {
+      throw new Error("Failed to get project profile config");
     }
     const data = await res.json();
     if ("error" in data) {
@@ -148,7 +199,10 @@ export const specDashboardService = {
           : JSON.stringify(data.error),
       );
     }
-    return data as BuiltInProfile[];
+    if (!("profile" in data) || data.profile === null) {
+      return null;
+    }
+    return ProjectProfileConfigSchema.parse(data.profile);
   },
 
   /**
@@ -175,7 +229,8 @@ export const specDashboardService = {
           : JSON.stringify(data.error),
       );
     }
-    return data as InjectionResult;
+    // 使用 Zod 验证
+    return InjectionResultSchema.parse(data);
   },
 
   /**
@@ -199,7 +254,8 @@ export const specDashboardService = {
     if ("error" in data && typeof data.error === "string") {
       throw new Error(data.error);
     }
-    return data as InstallResult;
+    // 使用 Zod 验证
+    return InstallResultSchema.parse(data);
   },
 
   /**
@@ -223,7 +279,8 @@ export const specDashboardService = {
     if ("error" in data && typeof data.error === "string") {
       throw new Error(data.error);
     }
-    return data as InstallResult;
+    // 使用 Zod 验证
+    return InstallResultSchema.parse(data);
   },
 
   /**
@@ -243,7 +300,8 @@ export const specDashboardService = {
     if ("error" in data && typeof data.error === "string") {
       throw new Error(data.error);
     }
-    return data as OpenspecInitResult;
+    // 使用 Zod 验证
+    return OpenspecInitResultSchema.parse(data);
   },
 };
 
@@ -266,85 +324,15 @@ export type RecommendedAction =
   | "repair"
   | "none";
 
-export interface EnvironmentStatus {
-  cliInstalled: boolean;
-  cliVersion: string | null;
-  cliInstallType: "global" | "project" | "npx" | null;
-  scenario: ScenarioType;
-  scenarioDescription: string;
-  hasOpenspecDir: boolean;
-  hasClaudeDir: boolean;
-  hasSpecforgeMarker: boolean;
-  specforgeConfig: {
-    version: string;
-    profile: string;
-    initializedAt: string;
-  } | null;
-  missingSpecforgeSkills: string[];
-  missingMcpServers: string[];
-  recommendedAction: RecommendedAction;
-}
-
-export interface McpServerConfig {
-  type: "http" | "sse" | "stdio";
-  url?: string;
-  command?: string;
-  args?: string[];
-}
-
-export interface ProfileInfraCatalog {
-  mcp_server_providers: Record<string, McpServerConfig>;
-  mcp_tool_definitions: {
-    overview: { description: string; tools: string[] };
-    search: { description: string; tools: string[] };
-    specifications: { description: string; tools: string[] };
-  };
-  skills?: string[];
-  develop_skills?: {
-    description: string;
-    skills: string[];
-  };
-  code_examples?: {
-    examples: Array<{
-      name: string;
-      description?: string;
-      paths: string[];
-    }>;
-  };
-}
-
-export interface BuiltInProfile {
-  id: string;
-  displayName: string;
-  description: string;
-  infra_catalog: ProfileInfraCatalog;
-}
-
 export interface InitializeOptions {
   scenario: ScenarioType;
+  force?: boolean;
   profile: {
     displayName: string;
-    description: string;
-    infra_catalog: ProfileInfraCatalog;
+    infra_catalog: z.infer<typeof BuiltInProfileSchema>["infra_catalog"];
   };
 }
 
-export interface InjectionResult {
-  success: boolean;
-  created: string[];
-  skipped: string[];
-  updated: string[];
-  errors: Array<{ file: string; error: string }>;
-}
-
-export interface InstallResult {
-  success: boolean;
-  error?: string;
-  initialized?: boolean;
-}
-
-export interface OpenspecInitResult {
-  success: boolean;
-  error?: string;
-  method?: "global" | "npx" | null;
-}
+export type ProjectProfileConfig = z.infer<typeof ProjectProfileConfigSchema>;
+export type InstallResult = z.infer<typeof InstallResultSchema>;
+export type OpenspecInitResult = z.infer<typeof OpenspecInitResultSchema>;

@@ -115,6 +115,20 @@ export const ConversationItem: FC<{
         lines.push(`Pre-Tokens: ${conversation.compactMetadata.preTokens}`);
       }
 
+      // Handle microcompact_boundary
+      if (
+        conversation.subtype === "microcompact_boundary" &&
+        conversation.microcompactMetadata
+      ) {
+        lines.push(`Trigger: ${conversation.microcompactMetadata.trigger}`);
+        lines.push(
+          `Pre-Tokens: ${conversation.microcompactMetadata.preTokens}`,
+        );
+        lines.push(
+          `Saved-Tokens: ${conversation.microcompactMetadata.tokensSaved}`,
+        );
+      }
+
       // Handle api_error
       if (conversation.subtype === "api_error" && "error" in conversation) {
         const error = conversation.error;

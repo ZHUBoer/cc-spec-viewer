@@ -1,78 +1,117 @@
-import { execFile } from "node:child_process";
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
-import { promisify } from "node:util";
+import { Command, FileSystem, Path } from "@effect/platform";
+import { Data, Effect, Either } from "effect";
 
-import type { GitError, GitResult } from "../types";
-
-const execFileAsync = promisify(execFile);
+import type { GitError } from "../types";
 
 /**
- * Execute a git command in the specified directory
+ * Git 命令错误（导出供测试使用）
  */
-export async function executeGitCommand(
-  args: string[],
-  cwd: string,
-): Promise<GitResult<string>> {
-  try {
-    // Check if the directory exists
-    if (!existsSync(cwd)) {
-      return {
-        success: false,
-        error: {
+export class GitCommandError extends Data.TaggedError("GitCommandError")<{
+  code: GitError["code"];
+  message: string;
+  command: string;
+  stderr?: string;
+}> {}
+
+/**
+ * 检查错误对象是否包含 stderr 信息
+ */
+function hasStderr(error: unknown): error is { stderr?: string } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    ("stderr" in error || "message" in error)
+  );
+}
+
+/**
+ * 执行 Git 命令（Effect 版本）
+ */
+export const executeGitCommand = (args: string[], cwd: string) =>
+  Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+
+    // 解析并检查目录是否存在
+    const absoluteCwd = path.resolve(cwd);
+    const dirExists = yield* fs.exists(absoluteCwd);
+
+    if (!dirExists) {
+      return yield* Effect.fail(
+        new GitCommandError({
           code: "NOT_A_REPOSITORY",
           message: `Directory does not exist: ${cwd}`,
           command: `git ${args.join(" ")}`,
-        },
-      };
+        }),
+      );
     }
 
-    // Git will search parent directories for .git, so we don't need to check explicitly
+    // Git 会自动搜索父目录中的 .git，因此不需要显式检查
 
-    const { stdout } = await execFileAsync("git", args, {
-      cwd,
-      maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large diffs
-      timeout: 30000, // 30 second timeout
-    });
+    // 创建并执行 git 命令
+    const command = Command.make("git", ...args).pipe(
+      Command.workingDirectory(absoluteCwd),
+    );
 
-    return {
-      success: true,
-      data: stdout,
-    };
-  } catch (error: unknown) {
-    const err = error as { code?: string; stderr?: string; message?: string };
+    const result = yield* Effect.either(Command.string(command));
 
-    let errorCode: GitError["code"] = "COMMAND_FAILED";
-    let errorMessage = err.message || "Unknown git command error";
+    if (Either.isLeft(result)) {
+      const error = result.left;
+      let errorCode: GitError["code"] = "COMMAND_FAILED";
+      let errorMessage = "Unknown git command error";
+      let stderr: string | undefined;
 
-    if (err.stderr) {
-      if (err.stderr.includes("not a git repository")) {
-        errorCode = "NOT_A_REPOSITORY";
-        errorMessage = "Not a git repository";
-      } else if (err.stderr.includes("unknown revision")) {
-        errorCode = "BRANCH_NOT_FOUND";
-        errorMessage = "Branch or commit not found";
+      // 安全地提取错误信息（不使用 as 转换）
+      if (hasStderr(error)) {
+        const stderrContent = String(error.stderr || "");
+        stderr = stderrContent;
+
+        if (stderrContent.includes("not a git repository")) {
+          errorCode = "NOT_A_REPOSITORY";
+          errorMessage = "Not a git repository";
+        } else if (stderrContent.includes("unknown revision")) {
+          errorCode = "BRANCH_NOT_FOUND";
+          errorMessage = "Branch or commit not found";
+        } else if ("message" in error) {
+          errorMessage = String(error.message);
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
       }
+
+      return yield* Effect.fail(
+        new GitCommandError({
+          code: errorCode,
+          message: errorMessage,
+          command: `git ${args.join(" ")}`,
+          stderr,
+        }),
+      );
     }
 
-    return {
-      success: false,
-      error: {
-        code: errorCode,
-        message: errorMessage,
-        command: `git ${args.join(" ")}`,
-        stderr: err.stderr,
-      },
-    };
-  }
-}
+    return result.right;
+  });
 
 /**
- * Check if a directory is a git repository
+ * 检查目录是否是 Git 仓库（Effect 版本）
  */
-export function isGitRepository(cwd: string): boolean {
-  return existsSync(cwd) && existsSync(resolve(cwd, ".git"));
-}
+export const isGitRepository = (cwd: string) =>
+  Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+
+    const absoluteCwd = path.resolve(cwd);
+    const cwdExists = yield* fs.exists(absoluteCwd);
+
+    if (!cwdExists) {
+      return false;
+    }
+
+    const gitPath = path.resolve(absoluteCwd, ".git");
+    const gitExists = yield* fs.exists(gitPath);
+
+    return gitExists;
+  });
 
 /**
  * Remove ANSI color codes from a string

@@ -464,7 +464,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        57
+        67
       ]
     ],
     "translation": "开始对话"
@@ -486,11 +486,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        221
+        241
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        493
+        512
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
@@ -506,11 +506,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ContinueChat.tsx",
-        37
+        47
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        36
+        46
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Command+Enter 发送)"
@@ -522,11 +522,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ContinueChat.tsx",
-        30
+        40
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        29
+        39
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Enter 发送)"
@@ -538,11 +538,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ContinueChat.tsx",
-        43
+        53
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        42
+        52
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Shift+Enter 发送)"
@@ -554,7 +554,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ResumeChat.tsx",
-        35
+        45
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Command+Enter 发送)"
@@ -566,7 +566,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ResumeChat.tsx",
-        28
+        38
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Enter 发送)"
@@ -578,7 +578,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ResumeChat.tsx",
-        41
+        51
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Shift+Enter 发送)"
@@ -589,7 +589,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ResumeChat.tsx",
-        48
+        58
       ]
     ],
     "translation": "继续"
@@ -636,7 +636,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ContinueChat.tsx",
-        60
+        70
       ]
     ],
     "translation": "发送"
@@ -718,7 +718,7 @@
     "origin": [
       [
         "src/app/projects/components/SetupProjectDialog.tsx",
-        91
+        93
       ]
     ],
     "translation": "取消"
@@ -853,11 +853,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        273
+        291
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        371
+        389
       ]
     ],
     "translation": "分支"
@@ -879,7 +879,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        347
+        365
       ]
     ],
     "translation": "元数据"
@@ -890,7 +890,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        398
+        416
       ]
     ],
     "translation": "模型"
@@ -948,7 +948,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        353
+        371
       ]
     ],
     "translation": "项目路径"
@@ -983,11 +983,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        288
+        306
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        385
+        403
       ]
     ],
     "translation": "会话 ID"
@@ -1637,7 +1637,7 @@
     "origin": [
       [
         "src/app/projects/components/SetupProjectDialog.tsx",
-        65
+        67
       ]
     ],
     "translation": "新建项目"
@@ -1648,7 +1648,7 @@
     "origin": [
       [
         "src/app/projects/components/SetupProjectDialog.tsx",
-        101
+        103
       ]
     ],
     "translation": "正在设置..."
@@ -1659,7 +1659,7 @@
     "origin": [
       [
         "src/app/projects/components/SetupProjectDialog.tsx",
-        104
+        106
       ]
     ],
     "translation": "设置项目"
@@ -1670,7 +1670,7 @@
     "origin": [
       [
         "src/app/projects/components/SetupProjectDialog.tsx",
-        74
+        76
       ]
     ],
     "translation": "导航到要设置为 Claude Code 项目的目录。如果存在 CLAUDE.md,它将描述项目;否则使用 <0>/init</0> 初始化。"
@@ -1681,7 +1681,7 @@
     "origin": [
       [
         "src/app/projects/components/SetupProjectDialog.tsx",
-        71
+        73
       ]
     ],
     "translation": "设置新项目"
@@ -2179,7 +2179,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        308
+        326
       ]
     ],
     "translation": "已暂停"
@@ -2190,7 +2190,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        299
+        317
       ]
     ],
     "translation": "运行中"
@@ -2201,7 +2201,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        433
+        451
       ]
     ],
     "translation": "缓存创建"
@@ -2212,7 +2212,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        441
+        459
       ]
     ],
     "translation": "缓存读取"
@@ -2223,7 +2223,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        417
+        435
       ]
     ],
     "translation": "输入令牌"
@@ -2234,7 +2234,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        411
+        429
       ]
     ],
     "translation": "会话成本"
@@ -2245,7 +2245,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        425
+        443
       ]
     ],
     "translation": "输出令牌"
@@ -2295,7 +2295,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        462
+        480
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/DeleteSessionDialog.tsx",
@@ -2310,7 +2310,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        496
+        515
       ]
     ],
     "translation": "开始新对话以展开交流"
@@ -2321,7 +2321,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        510
+        529
       ]
     ],
     "translation": "Claude Code 正在处理..."
@@ -2699,7 +2699,7 @@
     "origin": [
       [
         "src/components/GlobalSidebar.tsx",
-        114
+        120
       ]
     ],
     "translation": "系统信息"

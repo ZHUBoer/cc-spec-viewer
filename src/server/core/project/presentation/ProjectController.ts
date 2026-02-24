@@ -8,10 +8,13 @@ import { ApplicationContext } from "../../platform/services/ApplicationContext";
 import { UserConfigService } from "../../platform/services/UserConfigService";
 import { SessionRepository } from "../../session/infrastructure/SessionRepository";
 import { encodeProjectId } from "../functions/id";
+import { PROJECT_PATH_HINT_FILENAME } from "../functions/projectPathHint";
 import { ProjectRepository } from "../infrastructure/ProjectRepository";
+import { ProjectMetaService } from "../services/ProjectMetaService";
 
 const LayerImpl = Effect.gen(function* () {
   const projectRepository = yield* ProjectRepository;
+  const projectMetaService = yield* ProjectMetaService;
   const claudeCodeLifeCycleService = yield* ClaudeCodeLifeCycleService;
   const userConfigService = yield* UserConfigService;
   const sessionRepository = yield* SessionRepository;
@@ -132,14 +135,27 @@ const LayerImpl = Effect.gen(function* () {
         claudeProjectsDirPath: (yield* context.claudeCodePaths)
           .claudeProjectsDirPath,
       });
+      const projectPathHintFilePath = path.join(
+        claudeProjectFilePath,
+        PROJECT_PATH_HINT_FILENAME,
+      );
       const projectId = encodeProjectId(claudeProjectFilePath);
       const userConfig = yield* userConfigService.getUserConfig();
+
+      // Persist original project path early so metadata does not depend on
+      // the first conversation payload being fully written.
+      yield* fileSystem
+        .makeDirectory(claudeProjectFilePath, { recursive: true })
+        .pipe(Effect.catchAll(() => Effect.void));
+      yield* fileSystem
+        .writeFileString(projectPathHintFilePath, projectPath)
+        .pipe(Effect.catchAll(() => Effect.void));
 
       // Check if CLAUDE.md exists in the project directory
       const claudeMdPath = path.join(projectPath, "CLAUDE.md");
       const claudeMdExists = yield* fileSystem.exists(claudeMdPath);
 
-      const result = yield* claudeCodeLifeCycleService.startTask({
+      yield* claudeCodeLifeCycleService.startTask({
         baseSession: {
           cwd: projectPath,
           projectId,
@@ -151,14 +167,22 @@ const LayerImpl = Effect.gen(function* () {
         },
       });
 
-      const { sessionId } = yield* result.yieldSessionFileCreated();
-
       return {
         status: 201,
         response: {
           projectId,
-          sessionId,
         },
+      } as const satisfies ControllerResponse;
+    });
+
+  const repairProjectPath = (options: { projectId: string }) =>
+    Effect.gen(function* () {
+      const result = yield* projectMetaService.repairProjectPath(
+        options.projectId,
+      );
+      return {
+        status: result.success ? 200 : 409,
+        response: result,
       } as const satisfies ControllerResponse;
     });
 
@@ -167,6 +191,7 @@ const LayerImpl = Effect.gen(function* () {
     getProject,
     getProjectLatestSession,
     createProject,
+    repairProjectPath,
   };
 });
 

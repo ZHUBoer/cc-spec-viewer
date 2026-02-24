@@ -1,5 +1,7 @@
 import { Trans, useLingui } from "@lingui/react";
 import type { FC } from "react";
+import { useConfigCheckDialog } from "../../../../../../../components/spec-dashboard/ConfigCheckProvider";
+import { useConfigCheck } from "../../../../../../../components/spec-dashboard/hooks/useConfigCheck";
 import { useConfig } from "../../../../../../hooks/useConfig";
 import {
   ChatInput,
@@ -19,8 +21,16 @@ export const ContinueChat: FC<{
     sessionId,
   );
   const { config } = useConfig();
+  const { isConfigured } = useConfigCheck(projectId);
+  const { openInitRequiredDialog } = useConfigCheckDialog();
 
   const handleSubmit = async (input: MessageInput) => {
+    // 检查是否已配置
+    if (isConfigured === false) {
+      openInitRequiredDialog(projectId);
+      return;
+    }
+
     await continueSessionProcess.mutateAsync({ input, sessionProcessId });
   };
 

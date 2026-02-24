@@ -1,8 +1,9 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useSetAtom } from "jotai";
 import type { PublicSessionProcess } from "@/types/session-process";
 import { honoClient } from "../../../../../lib/api/client";
+import { projectDetailQuery } from "../../../../../lib/api/queries";
 import { sessionProcessesAtom } from "../../sessions/[sessionId]/store/sessionProcessesAtom";
 import type { MessageInput } from "./ChatInput";
 
@@ -12,6 +13,7 @@ export const useCreateSessionProcessMutation = (
 ) => {
   const navigate = useNavigate();
   const setSessionProcesses = useSetAtom(sessionProcessesAtom);
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (options: {
@@ -48,6 +50,12 @@ export const useCreateSessionProcessMutation = (
           status: "running" as const,
         } as unknown as PublicSessionProcess,
       ]);
+
+      // Invalidate project detail query to refresh session list immediately
+      await queryClient.invalidateQueries({
+        queryKey: projectDetailQuery(projectId).queryKey,
+      });
+
       navigate({
         to: "/projects/$projectId/session",
         params: {

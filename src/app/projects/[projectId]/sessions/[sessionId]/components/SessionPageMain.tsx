@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useSetAtom } from "jotai";
 import {
+  ArrowDownIcon,
   DownloadIcon,
   GitBranchIcon,
   InfoIcon,
@@ -142,7 +143,20 @@ const SessionPageMainContent: FC<
     useState(0);
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const handleScroll = () => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 20;
+
+    setIsUserScrolledUp(!isAtBottom);
+    setShowScrollBottom(!isAtBottom);
+  };
 
   const abortTask = useMutation({
     mutationFn: async (sessionProcessId: string) => {
@@ -177,7 +191,7 @@ const SessionPageMainContent: FC<
     ) {
       setPreviousConversationLength(conversations.length);
       const scrollContainer = scrollContainerRef.current;
-      if (scrollContainer) {
+      if (scrollContainer && !isUserScrolledUp) {
         scrollContainer.scrollTo({
           top: scrollContainer.scrollHeight,
           behavior: "smooth",
@@ -189,6 +203,7 @@ const SessionPageMainContent: FC<
     isExistingSession,
     relatedSessionProcess?.status,
     previousConversationLength,
+    isUserScrolledUp,
   ]);
 
   const handleScrollToTop = () => {
@@ -215,6 +230,11 @@ const SessionPageMainContent: FC<
     sessionData?.session.meta.firstUserMessage != null
       ? firstUserMessageToTitle(sessionData.session.meta.firstUserMessage)
       : (sessionId ?? "");
+  const projectPathDisplayName =
+    projectPath
+      ?.split(/[\\/]/)
+      .filter((segment) => segment.length > 0)
+      .at(-1) ?? projectPath;
 
   let headerTitle: ReactNode = projectName ?? projectId;
   if (!isExistingSession) {
@@ -250,9 +270,7 @@ const SessionPageMainContent: FC<
                       variant="secondary"
                       className="h-6 text-xs flex items-center max-w-full cursor-help"
                     >
-                      <span className="truncate">
-                        {projectPath.split("/").pop()}
-                      </span>
+                      <span className="truncate">{projectPathDisplayName}</span>
                     </Badge>
                   </TooltipTrigger>
                   <TooltipContent>{projectPath}</TooltipContent>
@@ -358,7 +376,7 @@ const SessionPageMainContent: FC<
                                 variant="secondary"
                                 className="h-7 text-xs flex items-center w-fit cursor-help"
                               >
-                                {projectPath.split("/").pop()}
+                                {projectPathDisplayName}
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>{projectPath}</TooltipContent>
@@ -473,6 +491,7 @@ const SessionPageMainContent: FC<
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto min-h-0 min-w-0"
           data-testid="scrollable-content"
+          onScroll={handleScroll}
         >
           <main className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 relative min-w-0 pb-4">
             <ConversationList
@@ -515,7 +534,17 @@ const SessionPageMainContent: FC<
           </main>
         </div>
 
-        <div className="w-full pt-3">
+        <div className="w-full pt-3 relative">
+          {showScrollBottom && (
+            <Button
+              size="icon"
+              variant="secondary"
+              className="absolute -top-12 right-6 z-20 rounded-full h-10 w-10 shadow-lg hover:shadow-xl opacity-90 hover:opacity-100 transition-all cursor-pointer hover:scale-110"
+              onClick={handleScrollToBottom}
+            >
+              <ArrowDownIcon className="w-5 h-5" />
+            </Button>
+          )}
           <ChatActionMenu
             projectId={projectId}
             onScrollToTop={handleScrollToTop}

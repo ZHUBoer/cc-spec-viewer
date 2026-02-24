@@ -105,7 +105,13 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
     id: "spec-dashboard",
     icon: BookOpenIcon,
     title: "Spec Dashboard", // TODO: i18n
-    content: <SpecSidebarPanel projectId={projectId ?? ""} />,
+    content: projectId ? (
+      <SpecSidebarPanel projectId={projectId} />
+    ) : (
+      <div className="p-4 text-sm text-sidebar-foreground/50 text-center">
+        请先选择一个项目
+      </div>
+    ),
   };
 
   const systemInfoTab: SidebarTab = {
@@ -119,7 +125,12 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
     ),
   };
 
-  const allTabs = [...additionalTabs, specTab, settingsTab, systemInfoTab];
+  const allTabs = [
+    ...additionalTabs,
+    ...(projectId ? [specTab] : []),
+    settingsTab,
+    systemInfoTab,
+  ];
   const [activeTab, setActiveTab] = useState<string>(
     defaultActiveTab ?? allTabs[allTabs.length - 1]?.id ?? "settings",
   );
@@ -132,6 +143,44 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
       setIsExpanded(false);
     }
   }, [forceCollapsed]);
+
+  // 监听 specforge:open-init-dialog 事件，自动切换到 spec-dashboard 标签页
+  useEffect(() => {
+    if (!projectId) return;
+
+    const handleOpenInitDialogEvent = (event: CustomEvent) => {
+      if (event.detail?.projectId === projectId) {
+        // 如果已经在 spec-dashboard 标签页，不需要切换，直接让 SpecSidebarPanel 处理
+        if (activeTab === "spec-dashboard") {
+          return;
+        }
+
+        // 切换到 spec-dashboard 标签页并展开侧边栏
+        setActiveTab("spec-dashboard");
+        setIsExpanded(true);
+
+        // 延迟再次发送事件，确保 SpecSidebarPanel 挂载后能接收到
+        setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent("specforge:open-init-dialog", {
+              detail: { projectId },
+            }),
+          );
+        }, 100);
+      }
+    };
+
+    window.addEventListener(
+      "specforge:open-init-dialog",
+      handleOpenInitDialogEvent as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "specforge:open-init-dialog",
+        handleOpenInitDialogEvent as EventListener,
+      );
+    };
+  }, [projectId, activeTab]);
 
   const handleTabClick = (tabId: string) => {
     if (activeTab === tabId && isExpanded) {

@@ -1,5 +1,4 @@
-import * as path from "node:path";
-import { FileSystem } from "@effect/platform";
+import { FileSystem, Path } from "@effect/platform";
 import { Context, Data, Effect, Layer } from "effect";
 import type { InferEffect } from "../../../lib/effect/types";
 
@@ -32,6 +31,7 @@ export interface TemplateVariables {
 
   // Skills 相关变量
   DEVELOP_SKILLS_APPEND?: string;
+  DEVELOP_SKILLS_NAMES?: string;
   DEVELOP_SKILLS_USAGE_MD?: string;
 
   // 代码示例变量
@@ -54,6 +54,7 @@ export interface ProcessTemplateOptions {
 
 const LayerImpl = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
 
   /**
    * 替换模板变量
@@ -248,10 +249,7 @@ const LayerImpl = Effect.gen(function* () {
           Effect.catchAll((error) =>
             Effect.succeed({
               success: false as const,
-              error:
-                error instanceof Error
-                  ? error.message
-                  : String((error as TemplateProcessingError).message),
+              error: error instanceof Error ? error.message : String(error),
             }),
           ),
         );

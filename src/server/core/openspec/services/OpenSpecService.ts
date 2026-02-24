@@ -1,7 +1,5 @@
-import * as path from "node:path";
-import { FileSystem } from "@effect/platform";
+import { FileSystem, Path } from "@effect/platform";
 import { Context, Data, Effect, Layer, Option } from "effect";
-import type { InferEffect } from "../../../lib/effect/types";
 import { ProjectRepository } from "../../project/infrastructure/ProjectRepository";
 
 class ProjectPathNotFoundError extends Data.TaggedError(
@@ -43,6 +41,7 @@ export interface OpenSpecChangeDetails extends OpenSpecChangeItem {
 const LayerImpl = Effect.gen(function* () {
   const projectRepository = yield* ProjectRepository;
   const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
 
   /**
    * 检查 tasks.md 中的所有任务是否已完成
@@ -267,7 +266,7 @@ const LayerImpl = Effect.gen(function* () {
       }
 
       const stat = yield* fs.stat(changeDir);
-      const isArchived = changeDir.includes("/archive/");
+      const isArchived = /[\\/]archive[\\/]/.test(changeDir);
 
       // Read proposal.md
       const proposalPath = path.join(changeDir, "proposal.md");
@@ -458,7 +457,7 @@ const LayerImpl = Effect.gen(function* () {
   };
 });
 
-export type IOpenSpecService = InferEffect<typeof LayerImpl>;
+export type IOpenSpecService = Effect.Effect.Success<typeof LayerImpl>;
 
 export class OpenSpecService extends Context.Tag("OpenSpecService")<
   OpenSpecService,

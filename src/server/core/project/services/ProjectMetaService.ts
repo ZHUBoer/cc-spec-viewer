@@ -10,8 +10,23 @@ import { PersistentService } from "../../../lib/storage/FileCacheStorage/Persist
 import { parseJsonl } from "../../claude-code/functions/parseJsonl";
 import type { ProjectMeta } from "../../types";
 import { decodeProjectId } from "../functions/id";
+import { PROJECT_PATH_HINT_FILENAME } from "../functions/projectPathHint";
 
 const ProjectPathSchema = z.string().nullable();
+
+export type ProjectPathRepairResult =
+  | {
+      success: true;
+      projectPath: string;
+    }
+  | {
+      success: false;
+      reason:
+        | "no_project_path_found"
+        | "ambiguous_project_paths"
+        | "candidate_path_not_exists";
+      candidates: string[];
+    };
 
 const LayerImpl = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
@@ -63,11 +78,15 @@ const LayerImpl = Effect.gen(function* () {
     Effect.gen(function* () {
       const metaCache = yield* Ref.get(projectMetaCacheRef);
       const cached = metaCache.get(projectId);
-      if (cached !== undefined) {
+      if (cached !== undefined && cached.projectPath !== null) {
         return cached;
       }
 
       const claudeProjectPath = decodeProjectId(projectId);
+      const projectPathHintFilePath = path.join(
+        claudeProjectPath,
+        PROJECT_PATH_HINT_FILENAME,
+      );
 
       const dirents = yield* fs.readDirectory(claudeProjectPath);
       const fileEntries = yield* Effect.all(
@@ -92,15 +111,18 @@ const LayerImpl = Effect.gen(function* () {
       });
 
       let projectPath: string | null = null;
-
-      for (const file of files) {
-        projectPath = yield* extractProjectPathFromJsonl(file.fullPath);
-
-        if (projectPath === null) {
-          continue;
+      const hintedPath = yield* readProjectPathHint(projectPathHintFilePath);
+      if (hintedPath !== null) {
+        projectPath = hintedPath;
+      } else {
+        const repairResult = yield* repairProjectPathBySessionFiles({
+          projectId,
+          persistHint: true,
+          files,
+        });
+        if (repairResult.success) {
+          projectPath = repairResult.projectPath;
         }
-
-        break;
       }
 
       const projectMeta: ProjectMeta = {
@@ -125,9 +147,121 @@ const LayerImpl = Effect.gen(function* () {
       });
     });
 
+  const readProjectPathHint = (
+    hintFilePath: string,
+  ): Effect.Effect<string | null, Error> =>
+    Effect.gen(function* () {
+      if (!(yield* fs.exists(hintFilePath))) {
+        return null;
+      }
+      const hintedPath = (yield* fs.readFileString(hintFilePath)).trim();
+      if (hintedPath.length === 0) {
+        return null;
+      }
+      if (!(yield* fs.exists(hintedPath))) {
+        return null;
+      }
+      return hintedPath;
+    });
+
+  const repairProjectPathBySessionFiles = (options: {
+    projectId: string;
+    persistHint: boolean;
+    files?: ReadonlyArray<{ fullPath: string; mtime: Date }>;
+  }): Effect.Effect<ProjectPathRepairResult, Error> =>
+    Effect.gen(function* () {
+      const claudeProjectPath = decodeProjectId(options.projectId);
+      const projectPathHintFilePath = path.join(
+        claudeProjectPath,
+        PROJECT_PATH_HINT_FILENAME,
+      );
+      const fileList =
+        options.files ??
+        (yield* Effect.gen(function* () {
+          const dirents = yield* fs.readDirectory(claudeProjectPath);
+          const entries = yield* Effect.all(
+            dirents
+              .filter((name) => name.endsWith(".jsonl"))
+              .map((name) =>
+                Effect.gen(function* () {
+                  const fullPath = path.resolve(claudeProjectPath, name);
+                  const stat = yield* fs.stat(fullPath);
+                  return {
+                    fullPath,
+                    mtime: Option.getOrElse(stat.mtime, () => new Date(0)),
+                  } as const;
+                }),
+              ),
+            { concurrency: "unbounded" },
+          );
+          return entries.sort((a, b) => a.mtime.getTime() - b.mtime.getTime());
+        }));
+
+      const candidates = new Set<string>();
+      for (const file of fileList) {
+        const extracted = yield* extractProjectPathFromJsonl(file.fullPath);
+        if (extracted !== null) {
+          candidates.add(extracted);
+        }
+      }
+
+      const candidateList = [...candidates];
+      if (candidateList.length !== 1) {
+        return {
+          success: false,
+          reason:
+            candidateList.length === 0
+              ? "no_project_path_found"
+              : "ambiguous_project_paths",
+          candidates: candidateList,
+        };
+      }
+
+      const candidatePath = candidateList[0];
+      if (candidatePath === undefined || !(yield* fs.exists(candidatePath))) {
+        return {
+          success: false,
+          reason: "candidate_path_not_exists",
+          candidates: candidateList,
+        };
+      }
+
+      if (options.persistHint) {
+        yield* fs
+          .writeFileString(projectPathHintFilePath, candidatePath)
+          .pipe(Effect.catchAll(() => Effect.void));
+      }
+
+      yield* invalidateProject(options.projectId);
+      return {
+        success: true,
+        projectPath: candidatePath,
+      };
+    });
+
+  const repairProjectPath = (
+    projectId: string,
+  ): Effect.Effect<ProjectPathRepairResult, Error> =>
+    Effect.gen(function* () {
+      const claudeProjectPath = decodeProjectId(projectId);
+      const projectPathHintFilePath = path.join(
+        claudeProjectPath,
+        PROJECT_PATH_HINT_FILENAME,
+      );
+      const hintedPath = yield* readProjectPathHint(projectPathHintFilePath);
+      if (hintedPath !== null) {
+        return { success: true, projectPath: hintedPath };
+      }
+      return yield* repairProjectPathBySessionFiles({
+        projectId,
+        persistHint: true,
+      });
+    });
+
   return {
     getProjectMeta,
     invalidateProject,
+    repairProjectPath,
   };
 });
 

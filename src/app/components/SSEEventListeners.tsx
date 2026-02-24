@@ -1,6 +1,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { FC, PropsWithChildren } from "react";
-import { projectDetailQuery, sessionDetailQuery } from "../../lib/api/queries";
+import {
+  projectDetailQuery,
+  projectListQuery,
+  sessionDetailQuery,
+} from "../../lib/api/queries";
 import { useServerEventListener } from "../../lib/sse/hook/useServerEventListener";
 
 export const SSEEventListeners: FC<PropsWithChildren> = ({ children }) => {
@@ -8,9 +12,14 @@ export const SSEEventListeners: FC<PropsWithChildren> = ({ children }) => {
 
   useServerEventListener("sessionListChanged", async (event) => {
     try {
-      await queryClient.invalidateQueries({
-        queryKey: projectDetailQuery(event.projectId).queryKey,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: projectDetailQuery(event.projectId).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: projectListQuery.queryKey,
+        }),
+      ]);
     } catch (error) {
       console.error(
         "[SSEEventListeners] Failed to invalidate project queries:",
@@ -21,9 +30,15 @@ export const SSEEventListeners: FC<PropsWithChildren> = ({ children }) => {
 
   useServerEventListener("sessionChanged", async (event) => {
     try {
-      await queryClient.invalidateQueries({
-        queryKey: sessionDetailQuery(event.projectId, event.sessionId).queryKey,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: sessionDetailQuery(event.projectId, event.sessionId)
+            .queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: projectListQuery.queryKey,
+        }),
+      ]);
     } catch (error) {
       console.error(
         "[SSEEventListeners] Failed to invalidate session queries:",

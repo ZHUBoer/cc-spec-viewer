@@ -1,5 +1,4 @@
-import * as path from "node:path";
-import { FileSystem } from "@effect/platform";
+import { FileSystem, Path } from "@effect/platform";
 import { Context, Data, Effect, Layer } from "effect";
 import YAML from "yaml";
 import type { InferEffect } from "../../../lib/effect/types";
@@ -9,6 +8,7 @@ import {
   type ScenarioType,
 } from "./OpenSpecEnvironmentService";
 import { type Profile, ProfileConfigService } from "./ProfileConfigService";
+import { SkillManagerService } from "./SkillManagerService";
 import { TemplateProcessor } from "./TemplateProcessor";
 
 // ============================================================================
@@ -22,6 +22,21 @@ class ProjectPathNotFoundError extends Data.TaggedError(
 }> {}
 
 // ============================================================================
+// Type Guards
+// ============================================================================
+
+interface YamlConfig {
+  schema?: string;
+  context?: string;
+  rules?: Record<string, unknown[] | Record<string, unknown>>;
+  [key: string]: unknown;
+}
+
+function isYamlConfig(value: unknown): value is YamlConfig {
+  return typeof value === "object" && value !== null;
+}
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -31,6 +46,8 @@ export interface InjectionResult {
   skipped: string[];
   updated: string[];
   errors: Array<{ file: string; error: string }>;
+  /** 非阻断性警告（如 git skill 安装失败），不影响 success 判定 */
+  warnings: Array<{ file: string; message: string }>;
 }
 
 export interface InjectionOptions {
@@ -40,6 +57,8 @@ export interface InjectionOptions {
   profile: Profile;
   /** 是否跳过已存在的用户文件 */
   skipUserFiles?: boolean;
+  /** 是否强制重新注入（用于 S5_CONFIGURED 场景下的更新覆盖） */
+  force?: boolean;
 }
 
 // ============================================================================
@@ -47,25 +66,24 @@ export interface InjectionOptions {
 // ============================================================================
 
 /**
- * SpecForge 管理的 Skills（可覆盖更新）
+ * SpecForge 框架内置的 Skills（可覆盖更新）
+ * 注意：此处仅包含框架内置 skills，业务 skills（通过 git 动态安装）不应出现在这里
  */
 const SPECFORGE_MANAGED_SKILLS = [
   "design-generation",
   "querying-infra-catalog",
   "task-planning",
   "ast-grep",
-  "zx-h5-develop-experience",
 ];
 
 /**
- * 获取 Viewer 内置模板路径
- * 注意：这里假设模板位于项目的 template-to-project 目录
+ * 获取 Viewer 内置模板路径（已弃用，移至 LayerImpl 内部）
+ * 开发环境：从项目根目录的 template-to-project 目录读取
+ * 生产环境（npm包）：从 dist/template-to-project 目录读取
  */
-const getTemplateBasePath = (): string => {
-  // 在实际部署中，这个路径需要根据运行环境动态确定
-  // 开发环境可能是相对路径，生产环境可能是绝对路径
-  return path.join(process.cwd(), "template-to-project");
-};
+// const getTemplateBasePath = (): string => {
+//   已移至 LayerImpl 内部，使用 Effect-TS 和 Path.Path
+// };
 
 // ============================================================================
 // Service Implementation
@@ -74,9 +92,28 @@ const getTemplateBasePath = (): string => {
 const LayerImpl = Effect.gen(function* () {
   const projectRepository = yield* ProjectRepository;
   const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
   const templateProcessor = yield* TemplateProcessor;
   const profileConfigService = yield* ProfileConfigService;
   const environmentService = yield* OpenSpecEnvironmentService;
+  const skillManagerService = yield* SkillManagerService;
+
+  /**
+   * 获取 Viewer 内置模板基础路径
+   *
+   * 优先使用 import.meta.dirname（适用于 npx 和生产环境打包后的 dist/main.js），
+   * 若该路径下不存在模板目录，则回退到 process.cwd()（适用于开发环境 tsx watch）。
+   */
+  const getTemplateBasePath = Effect.gen(function* () {
+    // 打包后路径：dist/template-to-project（适用于 npx、生产环境）
+    const distPath = path.join(import.meta.dirname, "template-to-project");
+    if (yield* fs.exists(distPath)) {
+      return distPath;
+    }
+
+    // 开发环境回退：从项目根目录获取
+    return path.join(process.cwd(), "template-to-project");
+  });
 
   /**
    * 生成 specforge 标记块
@@ -126,7 +163,8 @@ const LayerImpl = Effect.gen(function* () {
     options: { scenario: ScenarioType },
   ) =>
     Effect.gen(function* () {
-      const templateDir = path.join(getTemplateBasePath(), "openspec");
+      const templateBasePath = yield* getTemplateBasePath;
+      const templateDir = path.join(templateBasePath, "openspec");
       const targetDir = path.join(projectPath, "openspec");
 
       const result: { created: string[]; skipped: string[]; errors: string[] } =
@@ -174,14 +212,13 @@ const LayerImpl = Effect.gen(function* () {
         return result;
       }
 
-      // 处理模板目录
+      // 处理模板目录（始终覆盖更新，确保旧版本文件被升级）
       const processResult = yield* templateProcessor.processTemplateDirectory(
         templateDir,
         targetDir,
         variables,
         {
-          skipExisting:
-            options.scenario !== "S1_NEW" && options.scenario !== "S6_PARTIAL",
+          skipExisting: false,
           filter: (relativePath) => {
             // 跳过 .DS_Store 等系统文件
             return !relativePath.includes(".DS_Store");
@@ -205,7 +242,8 @@ const LayerImpl = Effect.gen(function* () {
     options: { scenario: ScenarioType },
   ) =>
     Effect.gen(function* () {
-      const templateDir = path.join(getTemplateBasePath(), ".claude");
+      const templateBasePath = yield* getTemplateBasePath;
+      const templateDir = path.join(templateBasePath, ".claude");
       const targetDir = path.join(projectPath, ".claude");
 
       const result: { created: string[]; skipped: string[]; errors: string[] } =
@@ -240,7 +278,7 @@ const LayerImpl = Effect.gen(function* () {
             skipExisting: false, // SpecForge skills 可覆盖更新
             filter: (relativePath) => {
               // 只处理 SpecForge 管理的 skills
-              const skillName = relativePath.split("/")[0];
+              const skillName = relativePath.split(/[\\/]/)[0];
               if (!skillName) return false;
 
               // 增量场景下，只注入缺失的 SpecForge skills
@@ -296,7 +334,38 @@ const LayerImpl = Effect.gen(function* () {
     });
 
   /**
-   * 增量合并 .mcp.json
+   * 加载 .mcp.template.json 中的内置 MCP 服务器配置
+   */
+  const loadBuiltInMcpServers = Effect.gen(function* () {
+    const templateBasePath = yield* getTemplateBasePath;
+    const templatePath = path.join(
+      templateBasePath,
+      "profiles",
+      ".mcp.template.json",
+    );
+    const exists = yield* fs.exists(templatePath);
+    if (!exists) {
+      return {};
+    }
+    try {
+      const content = yield* fs.readFileString(templatePath);
+      const parsed = JSON.parse(content) as {
+        mcpServers?: Record<string, unknown>;
+      };
+      return parsed.mcpServers ?? {};
+    } catch {
+      return {};
+    }
+  });
+
+  /**
+   * 合并 .mcp.json（内置 MCP + Profile MCP，每次覆盖写入）
+   *
+   * 合并策略：
+   * 1. 读取项目已有的 .mcp.json（保留用户自行添加的服务器）
+   * 2. 合并内置模板中的 MCP 服务器（来自 .mcp.template.json）
+   * 3. 合并 Profile 中用户配置的 MCP 服务器
+   * 内置和 Profile 中的服务器始终覆盖同名项，确保配置最新。
    */
   const mergeMcpConfig = (projectPath: string, profile: Profile) =>
     Effect.gen(function* () {
@@ -319,27 +388,31 @@ const LayerImpl = Effect.gen(function* () {
         }
       }
 
-      // 从 profile 获取 MCP 服务器配置
-      const newServers = profile.infra_catalog.mcp_server_providers || {};
-      let addedCount = 0;
-
-      // 只添加不存在的服务器
-      for (const [name, config] of Object.entries(newServers)) {
-        if (!existingConfig.mcpServers[name]) {
-          existingConfig.mcpServers[name] = config;
-          addedCount++;
-        }
+      // 加载内置 MCP 服务器（始终覆盖同名项）
+      const builtInServers = yield* loadBuiltInMcpServers;
+      for (const [name, config] of Object.entries(builtInServers)) {
+        existingConfig.mcpServers[name] = config;
       }
 
-      // 只有有变更时才写入
-      if (addedCount > 0 || !exists) {
-        yield* fs.writeFileString(
-          mcpPath,
-          JSON.stringify(existingConfig, null, 2),
-        );
+      // 合并 Profile 中的 MCP 服务器（始终覆盖同名项）
+      const profileServers = profile.infra_catalog.mcp_server_providers || {};
+      for (const [name, config] of Object.entries(profileServers)) {
+        existingConfig.mcpServers[name] = config;
       }
 
-      return { addedCount, totalServers: Object.keys(newServers).length };
+      // 每次都写入，确保配置最新
+      yield* fs.writeFileString(
+        mcpPath,
+        JSON.stringify(existingConfig, null, 2),
+      );
+
+      const totalServers = Object.keys(existingConfig.mcpServers).length;
+      return {
+        addedCount:
+          Object.keys(builtInServers).length +
+          Object.keys(profileServers).length,
+        totalServers,
+      };
     });
 
   /**
@@ -355,8 +428,9 @@ const LayerImpl = Effect.gen(function* () {
   ) =>
     Effect.gen(function* () {
       const userConfigPath = path.join(projectPath, "openspec", "config.yaml");
+      const templateBasePath = yield* getTemplateBasePath;
       const templateConfigPath = path.join(
-        getTemplateBasePath(),
+        templateBasePath,
         "openspec",
         "config.yaml",
       );
@@ -370,8 +444,11 @@ const LayerImpl = Effect.gen(function* () {
       }
 
       const userConfigContent = yield* fs.readFileString(userConfigPath);
-      // biome-ignore lint/suspicious/noExplicitAny: YAML 解析需要 any
-      const userConfig = YAML.parse(userConfigContent) as any;
+      const userConfigParsed: unknown = YAML.parse(userConfigContent);
+      if (!isYamlConfig(userConfigParsed)) {
+        return yield* Effect.fail(new Error("用户的 config.yaml 格式无效"));
+      }
+      const userConfig = userConfigParsed;
 
       // 读取模板的 config.yaml
       const templateConfigExists = yield* fs.exists(templateConfigPath);
@@ -393,8 +470,11 @@ const LayerImpl = Effect.gen(function* () {
         }
       }
 
-      // biome-ignore lint/suspicious/noExplicitAny: YAML 解析需要 any
-      const templateConfig = YAML.parse(templateConfigContent) as any;
+      const templateConfigParsed: unknown = YAML.parse(templateConfigContent);
+      if (!isYamlConfig(templateConfigParsed)) {
+        return yield* Effect.fail(new Error("模板的 config.yaml 格式无效"));
+      }
+      const templateConfig = templateConfigParsed;
 
       // 合并配置
       const mergedConfig = { ...userConfig };
@@ -423,23 +503,36 @@ const LayerImpl = Effect.gen(function* () {
           if (Array.isArray(templateRules)) {
             // 数组类型：追加模板规则到用户规则后面（两者都保留）
             // 例如：用户规则 [A, B] + 模板规则 [C, D] = [A, B, C, D]
-            if (mergedConfig.rules[artifactType]) {
+            const existingRules = mergedConfig.rules?.[artifactType];
+            if (Array.isArray(existingRules)) {
               mergedConfig.rules[artifactType] = [
-                ...mergedConfig.rules[artifactType],
+                ...existingRules,
                 ...templateRules,
               ];
             } else {
               mergedConfig.rules[artifactType] = templateRules;
             }
-          } else if (typeof templateRules === "object") {
+          } else if (
+            typeof templateRules === "object" &&
+            templateRules !== null
+          ) {
             // 对象类型：用户规则优先，模板规则作为补充
             // 同名键：用户规则覆盖模板规则（用户有最终决定权）
             // 不同名键：两者都保留
             // 例如：模板 {max: 100, req: true} + 用户 {max: 200} = {max: 200, req: true}
-            mergedConfig.rules[artifactType] = {
-              ...templateRules,
-              ...mergedConfig.rules[artifactType],
-            };
+            const existingRules = mergedConfig.rules?.[artifactType];
+            if (
+              typeof existingRules === "object" &&
+              existingRules !== null &&
+              !Array.isArray(existingRules)
+            ) {
+              mergedConfig.rules[artifactType] = {
+                ...templateRules,
+                ...existingRules,
+              };
+            } else {
+              mergedConfig.rules[artifactType] = templateRules;
+            }
           }
         }
       }
@@ -466,8 +559,9 @@ const LayerImpl = Effect.gen(function* () {
         };
 
       // 1. 复制自定义 schemas 目录
+      const templateBasePath = yield* getTemplateBasePath;
       const schemasTemplateDir = path.join(
-        getTemplateBasePath(),
+        templateBasePath,
         "openspec",
         "schemas",
       );
@@ -527,7 +621,8 @@ const LayerImpl = Effect.gen(function* () {
           errors: [],
         };
 
-      const templateDir = path.join(getTemplateBasePath(), ".claude");
+      const templateBasePath = yield* getTemplateBasePath;
+      const templateDir = path.join(templateBasePath, ".claude");
       const targetDir = path.join(projectPath, ".claude");
 
       // 1. 复制 SpecForge 管理的 skills
@@ -546,7 +641,7 @@ const LayerImpl = Effect.gen(function* () {
                 skipExisting: false, // SpecForge skills 可覆盖更新
                 filter: (relativePath) => {
                   // 只处理 SpecForge 管理的 skills
-                  const skillName = relativePath.split("/")[0];
+                  const skillName = relativePath.split(/[\\/]/)[0];
                   if (!skillName) return false;
 
                   return SPECFORGE_MANAGED_SKILLS.includes(skillName);
@@ -612,13 +707,7 @@ const LayerImpl = Effect.gen(function* () {
       }
 
       const projectPath = project.meta.projectPath;
-      const { scenario, profile } = options;
-
-      // 生成模板变量
-      const variables = profileConfigService.generateTemplateVariables(
-        profile,
-        projectPath,
-      );
+      const { scenario, profile, force } = options;
 
       const result: InjectionResult = {
         success: true,
@@ -626,30 +715,47 @@ const LayerImpl = Effect.gen(function* () {
         skipped: [],
         updated: [],
         errors: [],
+        warnings: [],
       };
 
-      // S5 场景不需要注入
-      if (scenario === "S5_CONFIGURED") {
+      // S5 场景默认不需要注入，除非 force=true（用于重新初始化更新）
+      if (scenario === "S5_CONFIGURED" && !force) {
         return result;
       }
 
-      // 所有场景（除 S5）都需要先执行 openspec init
-      // 这确保了 openspec 目录结构的完整性，即使用户已经执行过 init，
-      // openspec CLI 的 --force 参数会妥善处理升级问题
-
-      // 1. 检查 CLI 是否安装
+      // ================================================================
+      // 阶段 1: 确保 CLI 已安装（自动安装）
+      // ================================================================
       const envStatus = yield* environmentService.checkEnvironment(projectId);
 
-      if (!envStatus.cliInstalled) {
-        result.success = false;
-        result.errors.push({
-          file: "openspec-init",
-          error: "OpenSpec CLI 未安装。请先安装 CLI 后再执行初始化操作。",
+      if (!envStatus.cliInstalled || envStatus.cliInstallType === "npx") {
+        // 自动安装 CLI
+        // 注意：npx 检测通过不代表能稳定执行 openspec init（嵌套 npx 可能静默失败），
+        // 因此 npx-only 时也需要全局安装
+        console.log(
+          envStatus.cliInstallType === "npx"
+            ? "[SpecForge] OpenSpec CLI 仅通过 npx 可用，正在全局安装以确保稳定性..."
+            : "[SpecForge] OpenSpec CLI 未安装，正在自动安装 @fission-ai/openspec@latest...",
+        );
+        const installResult = yield* environmentService.installCliGlobal({
+          initialize: false,
         });
-        return result;
+
+        if (!installResult.success) {
+          result.success = false;
+          result.errors.push({
+            file: "openspec-cli-install",
+            error: `自动安装 OpenSpec CLI 失败: ${installResult.error ?? "未知错误"}。请手动执行 npm install -g @fission-ai/openspec@latest`,
+          });
+          return result;
+        }
+
+        console.log("[SpecForge] OpenSpec CLI 安装成功");
       }
 
-      // 2. 执行 openspec init
+      // ================================================================
+      // 阶段 2: 执行 openspec init
+      // ================================================================
       try {
         const initResult =
           yield* environmentService.initializeOpenspec(projectId);
@@ -664,13 +770,28 @@ const LayerImpl = Effect.gen(function* () {
           return result;
         }
 
-        // 标记 openspec init 创建/更新的文件
         result.created.push(
           "openspec/config.yaml (by openspec init)",
           "openspec/specs/ (by openspec init)",
           "openspec/changes/ (by openspec init)",
           ".claude/skills/openspec-* (by openspec init)",
         );
+
+        // 防御性校验：验证 openspec init 是否真正创建了 config.yaml
+        const configCreatedCheck = yield* fs.exists(
+          path.join(projectPath, "openspec", "config.yaml"),
+        );
+        if (!configCreatedCheck) {
+          result.success = false;
+          result.errors.push({
+            file: "openspec-init-verify",
+            error:
+              "openspec init 报告成功但 config.yaml 未创建。" +
+              "这可能是因为 openspec CLI 未正确安装。" +
+              "请尝试手动执行: npm install -g @fission-ai/openspec@latest",
+          });
+          return result;
+        }
       } catch (error) {
         result.success = false;
         result.errors.push({
@@ -679,6 +800,60 @@ const LayerImpl = Effect.gen(function* () {
         });
         return result;
       }
+
+      // ================================================================
+      // 阶段 3: 从 Git 安装 develop_skills（在 generateTemplateVariables 之前）
+      // ================================================================
+      const developSkillsConfig = profile.infra_catalog.develop_skills;
+      let installedDevelopSkills: Array<{
+        name: string;
+        description: string;
+      }> = [];
+
+      if (
+        developSkillsConfig?.gitUrl &&
+        developSkillsConfig.skills.length > 0
+      ) {
+        console.log(
+          `[SpecForge] 正在从 ${developSkillsConfig.gitUrl} 安装 Skills...`,
+        );
+        installedDevelopSkills =
+          yield* skillManagerService.installSkillsFromGit(
+            projectPath,
+            developSkillsConfig.gitUrl,
+            developSkillsConfig.skills,
+          );
+
+        if (installedDevelopSkills.length > 0) {
+          result.created.push(
+            ...installedDevelopSkills.map(
+              (s) => `.claude/skills/${s.name} (from git)`,
+            ),
+          );
+          console.log(
+            `[SpecForge] 成功安装 ${installedDevelopSkills.length} 个 Skills: ${installedDevelopSkills.map((s) => s.name).join(", ")}`,
+          );
+        } else {
+          // Git skill 安装失败不阻断流程，降级为警告
+          result.warnings.push({
+            file: "develop-skills",
+            message:
+              `从 Git 仓库安装 develop_skills 失败。请检查：\n` +
+              `  1. Git URL 是否可访问: ${developSkillsConfig.gitUrl}\n` +
+              `  2. skills 路径是否正确: ${developSkillsConfig.skills.join(", ")}\n` +
+              `  3. 仓库中对应目录是否包含 SKILL.md 文件`,
+          });
+        }
+      }
+
+      // ================================================================
+      // 阶段 4: 生成模板变量（此时 git skills 已安装到位）
+      // ================================================================
+      const variables = yield* profileConfigService.generateTemplateVariables(
+        profile,
+        projectPath,
+        installedDevelopSkills,
+      );
 
       // 3. 备份原始 config.yaml 为 config.origin.yaml
       // 只在 config.yaml 不包含 _specforge: 标记时备份（说明是纯 OpenSpec 配置）

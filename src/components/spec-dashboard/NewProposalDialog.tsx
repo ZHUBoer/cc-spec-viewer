@@ -62,12 +62,11 @@ export const NewProposalDialog: FC<NewProposalDialogProps> = ({
         </div>
         <div className="bg-muted p-4 rounded-md mt-4 text-sm text-muted-foreground">
           <p className="mb-2">
-            <strong>Tip:</strong> This will start an interactive flow where you
-            can describe:
+            <strong>Tip:</strong> 这将启动一个交互式流程，您可以在其中描述：
           </p>
           <ul className="list-disc pl-4 space-y-1">
-            <li>Why is this change needed? (Problem)</li>
-            <li>What is the proposed solution? (Solution)</li>
+            <li>需求概述</li>
+            <li>功能逻辑或业务逻辑详述</li>
           </ul>
         </div>
       </DialogContent>

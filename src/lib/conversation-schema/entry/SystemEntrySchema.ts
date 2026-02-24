@@ -89,11 +89,30 @@ const ApiErrorEntrySchema = BaseEntrySchema.extend({
   maxRetries: z.number().optional(),
 });
 
+// Microcompact boundary entry (new format from Claude Code)
+const MicrocompactBoundaryEntrySchema = BaseEntrySchema.extend({
+  type: z.literal("system"),
+  subtype: z.literal("microcompact_boundary"),
+  content: z.string(),
+  level: z.enum(["info"]),
+  slug: z.string().optional(),
+  microcompactMetadata: z
+    .object({
+      trigger: z.string(),
+      preTokens: z.number(),
+      tokensSaved: z.number(),
+      compactedToolIds: z.array(z.string()),
+      clearedAttachmentUUIDs: z.array(z.string()),
+    })
+    .optional(),
+});
+
 export const SystemEntrySchema = z.union([
   StopHookSummaryEntrySchema,
   LocalCommandEntrySchema,
   TurnDurationEntrySchema,
   CompactBoundaryEntrySchema,
+  MicrocompactBoundaryEntrySchema,
   ApiErrorEntrySchema,
   SystemEntryWithContentSchema, // Must be last (catch-all for undefined subtype)
 ]);

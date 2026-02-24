@@ -1,19 +1,19 @@
 {
-  "name": "@zhuboer/spec-forge-viewer",
-  "version": "0.0.1",
+  "name": "@ctrip/spec-forge",
+  "version": "3.2.30",
   "description": "A full-featured web-based Claude Code client that provides complete interactive functionality for managing Claude Code projects.",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ZHUBoer/cc-spec-viewer.git"
+    "url": "https://git.dev.sh.ctripcorp.com/ticket/spec-forge.git"
   },
-  "homepage": "https://github.com/ZHUBoer/cc-spec-viewer",
+  "homepage": "https://git.dev.sh.ctripcorp.com/ticket/spec-forge",
   "files": [
     "dist"
   ],
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=20.11.0"
   },
   "bin": {
     "spec-forge-viewer": "./dist/main.js"
@@ -39,9 +39,7 @@
     "e2e:start-server": "./scripts/e2e/start_server.sh",
     "e2e:capture-snapshots": "./scripts/e2e/capture_snapshots.sh",
     "lingui:extract": "lingui extract --clean && node ./scripts/lingui-sort.js",
-    "lingui:compile": "lingui compile --typescript",
-    "prepack": "pnpm build",
-    "prepare": "lefthook install"
+    "lingui:compile": "lingui compile --typescript"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.2.20",

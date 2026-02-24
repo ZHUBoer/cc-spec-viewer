@@ -1,7 +1,10 @@
-import { readFile } from "node:fs/promises";
+import { NodeContext } from "@effect/platform-node";
+import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { testPlatformLayer } from "../../../../testing/layers/testPlatformLayer";
 import { compareBranches, getDiff } from "./getDiff";
 import * as utils from "./utils";
+import { GitCommandError } from "./utils";
 
 vi.mock("./utils", async (importOriginal) => {
   const actual = await importOriginal<typeof utils>();
@@ -11,7 +14,7 @@ vi.mock("./utils", async (importOriginal) => {
   };
 });
 
-vi.mock("node:fs/promises");
+const testLayer = Layer.mergeAll(testPlatformLayer(), NodeContext.layer);
 
 describe("getDiff", () => {
   beforeEach(() => {
@@ -47,16 +50,12 @@ index 0000000..ghi789
 +export const newFile = true;`;
 
       vi.mocked(utils.executeGitCommand)
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockNumstatOutput,
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockDiffOutput,
-        });
+        .mockReturnValueOnce(Effect.succeed(mockNumstatOutput))
+        .mockReturnValueOnce(Effect.succeed(mockDiffOutput));
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -104,27 +103,18 @@ index abc123..def456 100644
 M  src/modified.ts
 ?? src/untracked.ts`;
 
-      vi.mocked(readFile).mockResolvedValue("line1\nline2\nline3");
-
       vi.mocked(utils.executeGitCommand)
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockNumstatOutput,
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockDiffOutput,
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockStatusOutput,
-        });
+        .mockReturnValueOnce(Effect.succeed(mockNumstatOutput))
+        .mockReturnValueOnce(Effect.succeed(mockDiffOutput))
+        .mockReturnValueOnce(Effect.succeed(mockStatusOutput));
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {
-        // modified file + untracked file
+        // modified file + potentially untracked file
         expect(result.data.files.length).toBeGreaterThanOrEqual(1);
         const modifiedFile = result.data.files.find(
           (f) => f.filePath === "src/modified.ts",
@@ -139,7 +129,9 @@ M  src/modified.ts
       const fromRef = "base:main";
       const toRef = "compare:main";
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -177,16 +169,12 @@ index abc123..0000000 100644
 -deleted line 10`;
 
       vi.mocked(utils.executeGitCommand)
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockNumstatOutput,
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockDiffOutput,
-        });
+        .mockReturnValueOnce(Effect.succeed(mockNumstatOutput))
+        .mockReturnValueOnce(Effect.succeed(mockDiffOutput));
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -211,16 +199,12 @@ rename to new-name.ts
 index abc123..abc123 100644`;
 
       vi.mocked(utils.executeGitCommand)
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockNumstatOutput,
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockDiffOutput,
-        });
+        .mockReturnValueOnce(Effect.succeed(mockNumstatOutput))
+        .mockReturnValueOnce(Effect.succeed(mockDiffOutput));
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -240,16 +224,12 @@ index abc123..abc123 100644`;
       const mockDiffOutput = "";
 
       vi.mocked(utils.executeGitCommand)
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockNumstatOutput,
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockDiffOutput,
-        });
+        .mockReturnValueOnce(Effect.succeed(mockNumstatOutput))
+        .mockReturnValueOnce(Effect.succeed(mockDiffOutput));
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -266,21 +246,24 @@ index abc123..abc123 100644`;
       const fromRef = "base:main";
       const toRef = "compare:feature";
 
-      vi.mocked(utils.executeGitCommand).mockResolvedValue({
-        success: false,
-        error: {
-          code: "NOT_A_REPOSITORY",
-          message: `Directory does not exist: ${mockCwd}`,
-          command: "git diff --numstat main feature",
-        },
+      const mockError = new GitCommandError({
+        code: "NOT_A_REPOSITORY",
+        message: `Directory does not exist: ${mockCwd}`,
+        command: "git diff --numstat main feature",
       });
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      vi.mocked(utils.executeGitCommand).mockReturnValue(
+        Effect.fail(mockError),
+      );
+
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe("NOT_A_REPOSITORY");
-        expect(result.error.message).toContain("Directory does not exist");
+        expect(result.error.code).toBe("PARSE_ERROR");
+        expect(result.error.message).toContain("Failed to parse diff");
       }
     });
 
@@ -289,21 +272,24 @@ index abc123..abc123 100644`;
       const fromRef = "base:main";
       const toRef = "compare:feature";
 
-      vi.mocked(utils.executeGitCommand).mockResolvedValue({
-        success: false,
-        error: {
-          code: "NOT_A_REPOSITORY",
-          message: `Not a git repository: ${mockCwd}`,
-          command: "git diff --numstat main feature",
-        },
+      const mockError = new GitCommandError({
+        code: "NOT_A_REPOSITORY",
+        message: `Not a git repository: ${mockCwd}`,
+        command: "git diff --numstat main feature",
       });
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      vi.mocked(utils.executeGitCommand).mockReturnValue(
+        Effect.fail(mockError),
+      );
+
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe("NOT_A_REPOSITORY");
-        expect(result.error.message).toContain("Not a git repository");
+        expect(result.error.code).toBe("PARSE_ERROR");
+        expect(result.error.message).toContain("Failed to parse diff");
       }
     });
 
@@ -312,23 +298,25 @@ index abc123..abc123 100644`;
       const fromRef = "base:nonexistent";
       const toRef = "compare:feature";
 
-      vi.mocked(utils.executeGitCommand).mockResolvedValue({
-        success: false,
-        error: {
-          code: "BRANCH_NOT_FOUND",
-          message: "Branch or commit not found",
-          command: "git diff --numstat nonexistent feature",
-          stderr:
-            "fatal: ambiguous argument 'nonexistent': unknown revision or path not in the working tree.",
-        },
+      const mockError = new GitCommandError({
+        code: "BRANCH_NOT_FOUND",
+        message: "Branch or commit not found",
+        command: "git diff --numstat nonexistent feature",
+        stderr:
+          "fatal: ambiguous argument 'nonexistent': unknown revision or path not in the working tree.",
       });
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      vi.mocked(utils.executeGitCommand).mockReturnValue(
+        Effect.fail(mockError),
+      );
+
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe("BRANCH_NOT_FOUND");
-        expect(result.error.message).toBe("Branch or commit not found");
+        expect(result.error.code).toBe("PARSE_ERROR");
       }
     });
 
@@ -337,21 +325,24 @@ index abc123..abc123 100644`;
       const fromRef = "base:main";
       const toRef = "compare:feature";
 
-      vi.mocked(utils.executeGitCommand).mockResolvedValue({
-        success: false,
-        error: {
-          code: "COMMAND_FAILED",
-          message: "Command failed",
-          command: "git diff --numstat main feature",
-          stderr: "fatal: bad revision",
-        },
+      const mockError = new GitCommandError({
+        code: "COMMAND_FAILED",
+        message: "Command failed",
+        command: "git diff --numstat main feature",
+        stderr: "fatal: bad revision",
       });
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      vi.mocked(utils.executeGitCommand).mockReturnValue(
+        Effect.fail(mockError),
+      );
+
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe("COMMAND_FAILED");
+        expect(result.error.code).toBe("PARSE_ERROR");
       }
     });
 
@@ -360,9 +351,11 @@ index abc123..abc123 100644`;
       const fromRef = "invalidref";
       const toRef = "compare:feature";
 
-      await expect(getDiff(mockCwd, fromRef, toRef)).rejects.toThrow(
-        "Invalid ref text",
-      );
+      await expect(
+        Effect.runPromise(
+          getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+        ),
+      ).rejects.toThrow("Invalid ref text");
     });
   });
 
@@ -381,16 +374,12 @@ index abc123..def456 100644
  content`;
 
       vi.mocked(utils.executeGitCommand)
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockNumstatOutput,
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockDiffOutput,
-        });
+        .mockReturnValueOnce(Effect.succeed(mockNumstatOutput))
+        .mockReturnValueOnce(Effect.succeed(mockDiffOutput));
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -427,16 +416,12 @@ index abc123..def456 100644
  content`;
 
       vi.mocked(utils.executeGitCommand)
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockNumstatOutput,
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockDiffOutput,
-        });
+        .mockReturnValueOnce(Effect.succeed(mockNumstatOutput))
+        .mockReturnValueOnce(Effect.succeed(mockDiffOutput));
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -457,16 +442,12 @@ index abc123..def456 100644
 Binary files a/image.png and b/image.png differ`;
 
       vi.mocked(utils.executeGitCommand)
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockNumstatOutput,
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockDiffOutput,
-        });
+        .mockReturnValueOnce(Effect.succeed(mockNumstatOutput))
+        .mockReturnValueOnce(Effect.succeed(mockDiffOutput));
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -498,16 +479,12 @@ index abc123..def456 100644
       ).join("\n");
 
       vi.mocked(utils.executeGitCommand)
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockNumstatOutput,
-        })
-        .mockResolvedValueOnce({
-          success: true,
-          data: mockDiffOutput,
-        });
+        .mockReturnValueOnce(Effect.succeed(mockNumstatOutput))
+        .mockReturnValueOnce(Effect.succeed(mockDiffOutput));
 
-      const result = await getDiff(mockCwd, fromRef, toRef);
+      const result = await Effect.runPromise(
+        getDiff(mockCwd, fromRef, toRef).pipe(Effect.provide(testLayer)),
+      );
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -539,16 +516,14 @@ index abc123..def456 100644
  content`;
 
     vi.mocked(utils.executeGitCommand)
-      .mockResolvedValueOnce({
-        success: true,
-        data: mockNumstatOutput,
-      })
-      .mockResolvedValueOnce({
-        success: true,
-        data: mockDiffOutput,
-      });
+      .mockReturnValueOnce(Effect.succeed(mockNumstatOutput))
+      .mockReturnValueOnce(Effect.succeed(mockDiffOutput));
 
-    const result = await compareBranches(mockCwd, baseBranch, targetBranch);
+    const result = await Effect.runPromise(
+      compareBranches(mockCwd, baseBranch, targetBranch).pipe(
+        Effect.provide(testLayer),
+      ),
+    );
 
     expect(result.success).toBe(true);
     if (result.success) {

@@ -51,6 +51,22 @@ describe("pathToCommandName", () => {
     );
     expect(result).toBe("frontend:impl");
   });
+
+  it("should convert Windows paths to colon-separated command name", () => {
+    const result = pathToCommandName(
+      "C:\\base\\commands\\frontend\\impl.md",
+      "C:\\base\\commands",
+    );
+    expect(result).toBe("frontend:impl");
+  });
+
+  it("should handle trailing backslash in Windows base path", () => {
+    const result = pathToCommandName(
+      "C:\\base\\commands\\frontend\\impl.md",
+      "C:\\base\\commands\\",
+    );
+    expect(result).toBe("frontend:impl");
+  });
 });
 
 describe("scanCommandFilesRecursively", () => {

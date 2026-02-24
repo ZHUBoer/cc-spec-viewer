@@ -1,6 +1,5 @@
-import { existsSync } from "node:fs";
-import { readdir } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { FileSystem, Path } from "@effect/platform";
+import { Effect } from "effect";
 
 export type DirectoryEntry = {
   name: string;
@@ -14,88 +13,112 @@ export type DirectoryListingResult = {
   currentPath: string;
 };
 
-export const getDirectoryListing = async (
+export const getDirectoryListing = (
   rootPath: string,
   basePath = "/",
   showHidden = false,
-): Promise<DirectoryListingResult> => {
-  const normalizedBasePath =
-    basePath === "/"
-      ? ""
-      : basePath.startsWith("/")
-        ? basePath.slice(1)
-        : basePath;
-  const targetPath = resolve(rootPath, normalizedBasePath);
+): Effect.Effect<
+  DirectoryListingResult,
+  Error,
+  FileSystem.FileSystem | Path.Path
+> =>
+  Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
 
-  if (!targetPath.startsWith(resolve(rootPath))) {
-    throw new Error("Invalid path: outside root directory");
-  }
+    const normalizedBasePath =
+      basePath === "/"
+        ? ""
+        : basePath.startsWith("/") || basePath.startsWith("\\")
+          ? basePath.slice(1)
+          : basePath;
+    const targetPath = path.resolve(rootPath, normalizedBasePath);
+    const resolvedRootPath = path.resolve(rootPath);
+    const relativeToRoot = path.relative(resolvedRootPath, targetPath);
+    const targetEscapesRoot =
+      relativeToRoot !== "" &&
+      (relativeToRoot === ".." ||
+        relativeToRoot.startsWith(`..${path.sep}`) ||
+        relativeToRoot.startsWith("../") ||
+        relativeToRoot.startsWith("..\\") ||
+        /^[A-Za-z]:[\\/]/.test(relativeToRoot) ||
+        relativeToRoot.startsWith("/") ||
+        relativeToRoot.startsWith("\\"));
 
-  if (!existsSync(targetPath)) {
-    return {
-      entries: [],
-      basePath: "/",
-      currentPath: rootPath,
-    };
-  }
-
-  try {
-    const dirents = await readdir(targetPath, { withFileTypes: true });
-    const entries: DirectoryEntry[] = [];
-
-    if (normalizedBasePath !== "") {
-      const parentPath = dirname(normalizedBasePath);
-      entries.push({
-        name: "..",
-        type: "directory",
-        path: parentPath === "." ? "" : parentPath,
-      });
+    if (targetEscapesRoot) {
+      return yield* Effect.fail(
+        new Error("Invalid path: outside root directory"),
+      );
     }
 
-    for (const dirent of dirents) {
-      if (!showHidden && dirent.name.startsWith(".")) {
-        continue;
-      }
+    const exists = yield* fs.exists(targetPath);
+    if (!exists) {
+      return {
+        entries: [],
+        basePath: "/",
+        currentPath: rootPath,
+      };
+    }
 
-      const entryPath = normalizedBasePath
-        ? join(normalizedBasePath, dirent.name)
-        : dirent.name;
+    try {
+      const dirents = yield* fs.readDirectory(targetPath);
+      const entries: DirectoryEntry[] = [];
 
-      if (dirent.isDirectory()) {
+      if (normalizedBasePath !== "") {
+        const parentPath = path.dirname(normalizedBasePath);
         entries.push({
-          name: dirent.name,
+          name: "..",
           type: "directory",
-          path: entryPath,
-        });
-      } else if (dirent.isFile()) {
-        entries.push({
-          name: dirent.name,
-          type: "file",
-          path: entryPath,
+          path: parentPath === "." ? "" : parentPath,
         });
       }
+
+      for (const dirent of dirents) {
+        if (!showHidden && dirent.startsWith(".")) {
+          continue;
+        }
+
+        const direntPath = path.join(targetPath, dirent);
+        const stat = yield* fs.stat(direntPath);
+        const entryPath = normalizedBasePath
+          ? path.join(normalizedBasePath, dirent)
+          : dirent;
+
+        if (stat.type === "Directory") {
+          entries.push({
+            name: dirent,
+            type: "directory",
+            path: entryPath,
+          });
+        } else if (stat.type === "File") {
+          entries.push({
+            name: dirent,
+            type: "file",
+            path: entryPath,
+          });
+        }
+      }
+
+      entries.sort((a, b) => {
+        if (a.name === "..") return -1;
+        if (b.name === "..") return 1;
+        if (a.type !== b.type) {
+          return a.type === "directory" ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name);
+      });
+
+      return {
+        entries,
+        basePath: normalizedBasePath || "/",
+        currentPath: targetPath,
+      };
+    } catch (error) {
+      console.error("Error reading directory:", error);
+      return {
+        entries: [],
+        basePath: normalizedBasePath || "/",
+        currentPath: targetPath,
+      };
     }
-
-    entries.sort((a, b) => {
-      if (a.name === "..") return -1;
-      if (b.name === "..") return 1;
-      if (a.type !== b.type) {
-        return a.type === "directory" ? -1 : 1;
-      }
-      return a.name.localeCompare(b.name);
-    });
-
-    return {
-      entries,
-      basePath: normalizedBasePath || "/",
-      currentPath: targetPath,
-    };
-  } catch (error) {
-    console.error("Error reading directory:", error);
-    return {
-      entries: [],
-      basePath: normalizedBasePath || "/",
-      currentPath: targetPath,
-    };
-  }
-};
+  });

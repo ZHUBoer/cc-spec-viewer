@@ -25,6 +25,34 @@ export const ServerEventsProvider: FC<PropsWithChildren> = ({ children }) => {
   const [, setSSEState] = useAtom(sseAtom);
   const queryClient = useQueryClient();
 
+  // Re-register all listeners to the current SSE instance
+  const registerAllListeners = useCallback(
+    (sse: ReturnType<typeof callSSE>) => {
+      const cleanups: (() => void)[] = [];
+      for (const [eventType, listeners] of listenersRef.current.entries()) {
+        for (const listener of listeners) {
+          const { removeEventListener } = sse.addEventListener(
+            eventType,
+            (event) => {
+              listener(
+                event as unknown as Extract<
+                  SSEEvent,
+                  { kind: typeof eventType }
+                >,
+              );
+            },
+          );
+          cleanups.push(removeEventListener);
+        }
+      }
+      return () =>
+        cleanups.forEach((cleanup) => {
+          cleanup();
+        });
+    },
+    [],
+  );
+
   useEffect(() => {
     const sse = callSSE({
       onOpen: async () => {
@@ -60,16 +88,21 @@ export const ServerEventsProvider: FC<PropsWithChildren> = ({ children }) => {
     });
     sseRef.current = sse;
 
+    // Register existing listeners to the new connection
+    const cleanupListeners = registerAllListeners(sse);
+
     const { removeEventListener } = sse.addEventListener("connect", (event) => {
       console.log("SSE connected", event);
     });
 
     return () => {
       // clean up
+      cleanupListeners();
       sse.cleanUp();
       removeEventListener();
+      sseRef.current = null;
     };
-  }, [setSSEState, queryClient]);
+  }, [setSSEState, queryClient, registerAllListeners]);
 
   const addEventListener = useCallback(
     <T extends SSEEvent["kind"]>(eventType: T, listener: EventListener<T>) => {
@@ -82,29 +115,17 @@ export const ServerEventsProvider: FC<PropsWithChildren> = ({ children }) => {
         listeners.add(listener as (event: SSEEvent) => void);
       }
 
-      // Register with the actual SSE connection
+      // Register with the actual SSE connection if it exists
       let sseCleanup: (() => void) | null = null;
-      let timeoutId: NodeJS.Timeout | null = null;
-
-      const registerWithSSE = () => {
-        if (sseRef.current) {
-          const { removeEventListener } = sseRef.current.addEventListener(
-            eventType,
-            (event) => {
-              // The listener expects the specific event type, so we cast it through unknown first
-              listener(event as unknown as Extract<SSEEvent, { kind: T }>);
-            },
-          );
-          sseCleanup = removeEventListener;
-        }
-      };
-
-      // Register immediately if SSE is ready, or wait for it
       if (sseRef.current) {
-        registerWithSSE();
-      } else {
-        // Use a small delay to wait for SSE to be initialized
-        timeoutId = setTimeout(registerWithSSE, 0);
+        const { removeEventListener } = sseRef.current.addEventListener(
+          eventType,
+          (event) => {
+            // The listener expects the specific event type, so we cast it through unknown first
+            listener(event as unknown as Extract<SSEEvent, { kind: T }>);
+          },
+        );
+        sseCleanup = removeEventListener;
       }
 
       // Return cleanup function
@@ -120,10 +141,6 @@ export const ServerEventsProvider: FC<PropsWithChildren> = ({ children }) => {
         // Remove from SSE connection
         if (sseCleanup) {
           sseCleanup();
-        }
-        // Clear timeout if it exists
-        if (timeoutId) {
-          clearTimeout(timeoutId);
         }
       };
     },

@@ -1,4 +1,5 @@
 import { homedir } from "node:os";
+import { join } from "node:path";
 import { Path } from "@effect/platform";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
@@ -16,7 +17,7 @@ const testPathLayer = Path.layer;
 /**
  * Helper to get claude directory path for tests
  */
-const getClaudeDir = () => `${homedir()}/.claude`;
+const getClaudeDir = () => join(homedir(), ".claude");
 
 describe("TasksService", () => {
   describe("listTasks", () => {
@@ -43,7 +44,7 @@ describe("TasksService", () => {
 
     it("returns empty array when no UUID file found in project metadata directory", async () => {
       const claudeDir = getClaudeDir();
-      const projectMetaDir = `${claudeDir}/projects/-test-project`;
+      const projectMetaDir = join(claudeDir, "projects", "-test-project");
 
       const program = Effect.gen(function* () {
         const tasksService = yield* TasksService;
@@ -93,8 +94,8 @@ describe("TasksService", () => {
     it("returns empty array when tasks directory does not exist for resolved UUID", async () => {
       const uuid = "12345678-1234-1234-1234-123456789abc";
       const claudeDir = getClaudeDir();
-      const projectMetaDir = `${claudeDir}/projects/-test-project`;
-      const tasksDir = `${claudeDir}/tasks/${uuid}`;
+      const projectMetaDir = join(claudeDir, "projects", "-test-project");
+      const tasksDir = join(claudeDir, "tasks", uuid);
 
       // Track which paths exist
       const existsMap = new Map<string, boolean>([
@@ -129,11 +130,11 @@ describe("TasksService", () => {
       expect(result).toEqual([]);
     });
 
-    it("returns tasks when tasks directory exists and contains valid task files", async () => {
+    it("returns tasks when specific session tasks directory exists and contains valid task files", async () => {
       const uuid = "12345678-1234-1234-1234-123456789abc";
       const claudeDir = getClaudeDir();
-      const projectMetaDir = `${claudeDir}/projects/-test-project`;
-      const tasksDir = `${claudeDir}/tasks/${uuid}`;
+      const projectMetaDir = join(claudeDir, "projects", "-test-project");
+      const tasksDir = join(claudeDir, "tasks", uuid);
 
       const existsMap = new Map<string, boolean>([
         [projectMetaDir, true],
@@ -151,7 +152,7 @@ describe("TasksService", () => {
 
       const program = Effect.gen(function* () {
         const tasksService = yield* TasksService;
-        return yield* tasksService.listTasks("/test/project");
+        return yield* tasksService.listTasks("/test/project", uuid);
       });
 
       const result = await Effect.runPromise(
@@ -161,9 +162,6 @@ describe("TasksService", () => {
             testFileSystemLayer({
               exists: (path) => Effect.succeed(existsMap.get(path) ?? false),
               readDirectory: (path) => {
-                if (path === projectMetaDir) {
-                  return Effect.succeed([`${uuid}.json`]);
-                }
                 if (path === tasksDir) {
                   return Effect.succeed(["1.json"]);
                 }
@@ -179,6 +177,60 @@ describe("TasksService", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]?.subject).toBe("Test task");
+    });
+
+    it("resolves Windows project path to the expected metadata directory", async () => {
+      const uuid = "12345678-1234-1234-1234-123456789abc";
+      const claudeDir = getClaudeDir();
+      const projectMetaDir = join(
+        claudeDir,
+        "projects",
+        "C--Users-me-dev-example",
+      );
+      const tasksDir = join(claudeDir, "tasks", uuid);
+      const taskFile = join(tasksDir, "1.json");
+
+      const existsMap = new Map<string, boolean>([
+        [projectMetaDir, true],
+        [tasksDir, true],
+        [taskFile, true],
+      ]);
+
+      const taskData = {
+        id: "1",
+        subject: "Windows task",
+        description: "Windows description",
+        status: "pending",
+        blocks: [],
+        blockedBy: [],
+      };
+
+      const program = Effect.gen(function* () {
+        const tasksService = yield* TasksService;
+        return yield* tasksService.getTask("C:\\Users\\me\\dev\\example", "1");
+      });
+
+      const result = await Effect.runPromise(
+        program.pipe(
+          Effect.provide(TasksService.Live),
+          Effect.provide(
+            testFileSystemLayer({
+              exists: (path) => Effect.succeed(existsMap.get(path) ?? false),
+              readDirectory: (path) => {
+                if (path === projectMetaDir) {
+                  return Effect.succeed([`${uuid}.json`]);
+                }
+                return Effect.succeed([]);
+              },
+              stat: () => Effect.succeed(createFileInfo({})),
+              readFileString: () => Effect.succeed(JSON.stringify(taskData)),
+            }),
+          ),
+          Effect.provide(testPathLayer),
+        ),
+      );
+
+      expect(result.subject).toBe("Windows task");
     });
   });
 
@@ -208,13 +260,13 @@ describe("TasksService", () => {
     it("fails when task file does not exist", async () => {
       const uuid = "12345678-1234-1234-1234-123456789abc";
       const claudeDir = getClaudeDir();
-      const projectMetaDir = `${claudeDir}/projects/-test-project`;
-      const tasksDir = `${claudeDir}/tasks/${uuid}`;
+      const projectMetaDir = join(claudeDir, "projects", "-test-project");
+      const tasksDir = join(claudeDir, "tasks", uuid);
 
       const existsMap = new Map<string, boolean>([
         [projectMetaDir, true],
         [tasksDir, true],
-        [`${tasksDir}/1.json`, false],
+        [join(tasksDir, "1.json"), false],
       ]);
 
       const program = Effect.gen(function* () {
@@ -250,8 +302,8 @@ describe("TasksService", () => {
     it("creates directory and task when directory does not exist", async () => {
       const uuid = "12345678-1234-1234-1234-123456789abc";
       const claudeDir = getClaudeDir();
-      const projectMetaDir = `${claudeDir}/projects/-test-project`;
-      const tasksDir = `${claudeDir}/tasks/${uuid}`;
+      const projectMetaDir = join(claudeDir, "projects", "-test-project");
+      const tasksDir = join(claudeDir, "tasks", uuid);
 
       let directoryCreated = false;
 

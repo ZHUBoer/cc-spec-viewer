@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { FileSystem, Path } from "@effect/platform";
+import { Effect } from "effect";
 import parseGitDiff, {
   type AnyChunk,
   type AnyFileChange,
@@ -156,49 +156,36 @@ const extractRef = (refText: string) => {
 };
 
 /**
- * Get untracked files using git status
+ * 获取未跟踪的文件（Effect 版本）
  */
-async function getUntrackedFiles(cwd: string): Promise<GitResult<string[]>> {
-  const statusResult = await executeGitCommand(
-    ["status", "--untracked-files=all", "--short"],
-    cwd,
-  );
+const getUntrackedFiles = (cwd: string) =>
+  Effect.gen(function* () {
+    const statusData = yield* executeGitCommand(
+      ["status", "--untracked-files=all", "--short"],
+      cwd,
+    );
 
-  if (!statusResult.success) {
-    return statusResult;
-  }
-
-  try {
-    const untrackedFiles = parseLines(statusResult.data)
-      .map((line) => stripAnsiColors(line)) // Remove ANSI color codes first
+    const untrackedFiles = parseLines(statusData)
+      .map((line) => stripAnsiColors(line))
       .filter((line) => line.startsWith("??"))
       .map((line) => line.slice(3));
 
-    return {
-      success: true,
-      data: untrackedFiles,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: {
-        code: "PARSE_ERROR",
-        message: `Failed to parse status output: ${error instanceof Error ? error.message : "Unknown error"}`,
-      },
-    };
-  }
-}
+    return untrackedFiles;
+  });
 
 /**
- * Create artificial diff for an untracked file (all lines as additions)
+ * 为未跟踪的文件创建人工 diff（所有行作为添加）（Effect 版本）
  */
-async function createUntrackedFileDiff(
-  cwd: string,
-  filePath: string,
-): Promise<GitDiff | null> {
-  try {
-    const fullPath = resolve(cwd, filePath);
-    const content = await readFile(fullPath, "utf8");
+const createUntrackedFileDiff = (cwd: string, filePath: string) =>
+  Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
+
+    const fullPath = path.resolve(cwd, filePath);
+
+    // 读取文件内容
+    const content = yield* fs.readFileString(fullPath);
+
     const lines = content.split("\n");
 
     const diffLines: GitDiffLine[] = lines.map((line, index) => ({
@@ -227,85 +214,74 @@ async function createUntrackedFileDiff(
       file,
       hunks: [hunk],
     };
-  } catch (error) {
-    // Skip files that can't be read (e.g., binary files, permission errors)
-    console.warn(`Failed to read untracked file ${filePath}:`, error);
-    return null;
-  }
-}
+  }).pipe(
+    Effect.catchAll((error) => {
+      // 跳过无法读取的文件（如二进制文件、权限错误）
+      console.warn(`Failed to read untracked file ${filePath}:`, error);
+      return Effect.succeed(null);
+    }),
+  );
 
 /**
- * Get Git diff between two references (branches, commits, tags)
+ * 获取两个引用（分支、提交、标签）之间的 Git diff（Effect 版本）
  */
-export const getDiff = async (
-  cwd: string,
-  fromRefText: string,
-  toRefText: string,
-): Promise<GitResult<GitComparisonResult>> => {
-  const fromRef = extractRef(fromRefText);
-  const toRef = extractRef(toRefText);
+export const getDiff = (cwd: string, fromRefText: string, toRefText: string) =>
+  Effect.gen(function* () {
+    const fromRef = extractRef(fromRefText);
+    const toRef = extractRef(toRefText);
 
-  if (fromRef === toRef) {
-    return {
-      success: true,
-      data: {
-        diffs: [],
-        files: [],
-        summary: {
-          totalFiles: 0,
-          totalAdditions: 0,
-          totalDeletions: 0,
+    if (fromRef === toRef) {
+      return {
+        success: true,
+        data: {
+          diffs: [],
+          files: [],
+          summary: {
+            totalFiles: 0,
+            totalAdditions: 0,
+            totalDeletions: 0,
+          },
         },
-      },
-    };
-  }
+      } as const satisfies GitResult<GitComparisonResult>;
+    }
 
-  if (fromRef === undefined) {
-    throw new Error(`Invalid fromRef: ${fromRefText}`);
-  }
+    if (fromRef === undefined) {
+      throw new Error(`Invalid fromRef: ${fromRefText}`);
+    }
 
-  const commandArgs = toRef === undefined ? [fromRef] : [fromRef, toRef];
+    const commandArgs = toRef === undefined ? [fromRef] : [fromRef, toRef];
 
-  // Get diff with numstat for file statistics
-  const numstatResult = await executeGitCommand(
-    ["diff", "--numstat", ...commandArgs],
-    cwd,
-  );
+    // 获取带有文件统计的 diff
+    const numstatData = yield* executeGitCommand(
+      ["diff", "--numstat", ...commandArgs],
+      cwd,
+    );
 
-  if (!numstatResult.success) {
-    return numstatResult;
-  }
+    // 获取带有完整内容的 diff
+    const diffData = yield* executeGitCommand(
+      ["diff", "--unified=5", ...commandArgs],
+      cwd,
+    );
 
-  // Get diff with full content
-  const diffResult = await executeGitCommand(
-    ["diff", "--unified=5", ...commandArgs],
-    cwd,
-  );
-
-  if (!diffResult.success) {
-    return diffResult;
-  }
-
-  try {
-    // Parse numstat output to get file statistics
+    // 解析 numstat 输出以获取文件统计信息
     const fileStats = new Map<
       string,
       { additions: number; deletions: number }
     >();
-    const numstatLines = parseLines(numstatResult.data);
+    const numstatLines = parseLines(numstatData);
 
     for (const line of numstatLines) {
       const parts = line.split("\t");
       if (parts.length >= 3 && parts[0] && parts[1] && parts[2]) {
-        const additions = parts[0] === "-" ? 0 : parseInt(parts[0], 10);
-        const deletions = parts[1] === "-" ? 0 : parseInt(parts[1], 10);
+        const additions = parts[0] === "-" ? 0 : Number.parseInt(parts[0], 10);
+        const deletions = parts[1] === "-" ? 0 : Number.parseInt(parts[1], 10);
         const filePath = parts[2];
         fileStats.set(filePath, { additions, deletions });
       }
     }
 
-    // Parse diff output using parse-git-diff
-    const parsedDiff = parseGitDiff(diffResult.data);
+    // 使用 parse-git-diff 解析 diff 输出
+    const parsedDiff = parseGitDiff(diffData);
 
     const files: GitDiffFile[] = [];
     const diffs: GitDiff[] = [];
@@ -313,11 +289,11 @@ export const getDiff = async (
     let totalDeletions = 0;
 
     for (const fileChange of parsedDiff.files) {
-      // Convert to GitDiffFile format
+      // 转换为 GitDiffFile 格式
       const file = convertToGitDiffFile(fileChange, fileStats);
       files.push(file);
 
-      // Convert chunks to hunks
+      // 将 chunks 转换为 hunks
       const hunks: GitDiffHunk[] = [];
       for (const chunk of fileChange.chunks) {
         const hunk = convertToGitDiffHunk(chunk);
@@ -333,20 +309,21 @@ export const getDiff = async (
       totalDeletions += file.deletions;
     }
 
-    // Include untracked files when comparing to working directory
+    // 当与工作目录比较时包含未跟踪的文件
     if (toRef === undefined) {
-      const untrackedResult = await getUntrackedFiles(cwd);
-      if (untrackedResult.success) {
-        for (const untrackedFile of untrackedResult.data) {
-          const untrackedDiff = await createUntrackedFileDiff(
-            cwd,
-            untrackedFile,
-          );
-          if (untrackedDiff) {
-            files.push(untrackedDiff.file);
-            diffs.push(untrackedDiff);
-            totalAdditions += untrackedDiff.file.additions;
-          }
+      const untrackedFiles = yield* getUntrackedFiles(cwd).pipe(
+        Effect.catchAll(() => Effect.succeed<string[]>([])),
+      );
+
+      for (const untrackedFile of untrackedFiles) {
+        const untrackedDiff = yield* createUntrackedFileDiff(
+          cwd,
+          untrackedFile,
+        );
+        if (untrackedDiff) {
+          files.push(untrackedDiff.file);
+          diffs.push(untrackedDiff);
+          totalAdditions += untrackedDiff.file.additions;
         }
       }
     }
@@ -362,25 +339,32 @@ export const getDiff = async (
           totalDeletions,
         },
       },
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: {
-        code: "PARSE_ERROR",
-        message: `Failed to parse diff: ${error instanceof Error ? error.message : "Unknown error"}`,
-      },
-    };
-  }
-};
+    } as const satisfies GitResult<GitComparisonResult>;
+  }).pipe(
+    Effect.catchAll((error) => {
+      // 处理所有错误并转换为 GitResult
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "message" in (error as object)
+            ? String((error as { message: unknown }).message)
+            : "Unknown error";
+
+      return Effect.succeed({
+        success: false,
+        error: {
+          code: "PARSE_ERROR" as const,
+          message: `Failed to parse diff: ${errorMessage}`,
+        },
+      } as const satisfies GitResult<GitComparisonResult>);
+    }),
+  );
 
 /**
- * Compare between two branches (shorthand for getDiff)
+ * 比较两个分支（getDiff 的快捷方式）（Effect 版本）
  */
-export async function compareBranches(
+export const compareBranches = (
   cwd: string,
   baseBranch: string,
   targetBranch: string,
-): Promise<GitResult<GitComparisonResult>> {
-  return getDiff(cwd, baseBranch, targetBranch);
-}
+) => getDiff(cwd, baseBranch, targetBranch);
