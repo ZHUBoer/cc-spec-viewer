@@ -1,6 +1,5 @@
 import { Trans } from "@lingui/react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useAtomValue } from "jotai";
 import {
   MessageSquareIcon,
   PlusIcon,
@@ -17,12 +16,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getSessionProcessBySessionId } from "@/lib/session-process/sessionProcessesState";
 import { cn } from "@/lib/utils";
 import { formatLocaleDate } from "../../../../../../../lib/date/formatLocaleDate";
 import { useConfig } from "../../../../../../hooks/useConfig";
 import { useProject } from "../../../../hooks/useProject";
-import { firstUserMessageToTitle } from "../../../../services/firstCommandToTitle";
-import { sessionProcessesAtom } from "../../store/sessionProcessesAtom";
+import { useSessionProcess } from "../../hooks/useSessionProcess";
+import { getVisibleSessionTotal } from "../sessionMetaDisplay";
 import { DeleteSessionDialog } from "./DeleteSessionDialog";
 
 export const SessionsTab: FC<{
@@ -37,8 +37,12 @@ export const SessionsTab: FC<{
     isFetchingNextPage,
   } = useProject(projectId);
   const sessions = projectData.pages.flatMap((page) => page.sessions);
+  const totalSessions = getVisibleSessionTotal(
+    projectData.pages[0]?.totalSessions,
+    sessions.length,
+  );
 
-  const sessionProcesses = useAtomValue(sessionProcessesAtom);
+  const { sessionProcesses } = useSessionProcess();
   const { config } = useConfig();
   const { openSearch } = useGlobalSearch();
   const search = useSearch({
@@ -60,12 +64,8 @@ export const SessionsTab: FC<{
 
   // Sort sessions: Running > Paused > Others, then by lastModifiedAt (newest first)
   const sortedSessions = [...sessions].sort((a, b) => {
-    const aProcess = sessionProcesses.find(
-      (process) => process.sessionId === a.id,
-    );
-    const bProcess = sessionProcesses.find(
-      (process) => process.sessionId === b.id,
-    );
+    const aProcess = getSessionProcessBySessionId(sessionProcesses, a.id);
+    const bProcess = getSessionProcessBySessionId(sessionProcesses, b.id);
 
     const aStatus = aProcess?.status;
     const bStatus = bProcess?.status;
@@ -131,7 +131,7 @@ export const SessionsTab: FC<{
                   onClick={openSearch}
                   className={cn(
                     "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
-                    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    "hover:bg-sidebar-accent hover:text-sidebar-foreground",
                     "text-sidebar-foreground/70 cursor-pointer",
                   )}
                 >
@@ -147,7 +147,7 @@ export const SessionsTab: FC<{
           </TooltipProvider>
         </div>
         <p className="text-xs text-sidebar-foreground/70">
-          {sessions.length} <Trans id="sessions.total" />
+          {totalSessions} <Trans id="sessions.total" />
         </p>
       </div>
 
@@ -157,9 +157,9 @@ export const SessionsTab: FC<{
           params={{ projectId }}
           search={{ tab: currentTab }}
           className={cn(
-            "block rounded-lg p-2.5 transition-all duration-200 border-2 border-dashed border-sidebar-border/60 hover:border-blue-400/80 hover:bg-blue-50/50 dark:hover:bg-blue-950/40 bg-sidebar/10",
+            "block rounded-lg border border-dashed border-sidebar-border bg-sidebar/10 p-2.5 transition-all duration-200 hover:border-primary/30 hover:bg-muted/20",
             isNewChatActive &&
-              "bg-blue-100 dark:bg-blue-900/40 border-blue-400 dark:border-blue-500 shadow-sm",
+              "border-primary/30 bg-muted/20 text-sidebar-foreground ring-1 ring-primary/12",
           )}
         >
           <div className="flex items-center gap-3">
@@ -175,13 +175,12 @@ export const SessionsTab: FC<{
         </Link>
         {sortedSessions.map((session) => {
           const isActive = session.id === currentSessionId;
-          const title =
-            session.meta.firstUserMessage !== null
-              ? firstUserMessageToTitle(session.meta.firstUserMessage)
-              : session.id;
+          const title = session.displayMeta.title;
+          const messageCount = session.displayMeta.visibleMessageCount;
 
-          const sessionProcess = sessionProcesses.find(
-            (task) => task.sessionId === session.id,
+          const sessionProcess = getSessionProcessBySessionId(
+            sessionProcesses,
+            session.id,
           );
           const isRunning = sessionProcess?.status === "running";
           const isPaused = sessionProcess?.status === "paused";
@@ -193,9 +192,9 @@ export const SessionsTab: FC<{
               params={{ projectId }}
               search={{ tab: currentTab, sessionId: session.id }}
               className={cn(
-                "group relative block rounded-lg p-2.5 transition-all duration-200 hover:bg-blue-50/60 dark:hover:bg-blue-950/40 hover:border-blue-300/60 dark:hover:border-blue-700/60 hover:shadow-sm border border-sidebar-border/40 bg-sidebar/30",
+                "group relative block rounded-lg border border-sidebar-border/60 bg-sidebar/30 p-2.5 transition-all duration-200 hover:border-primary/25 hover:bg-muted/20",
                 isActive &&
-                  "bg-blue-100 dark:bg-blue-900/50 border-blue-400 dark:border-blue-600 shadow-md ring-1 ring-blue-200/50 dark:ring-blue-700/50 hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:border-blue-400 dark:hover:border-blue-600",
+                  "border-primary/30 bg-muted/20 ring-1 ring-primary/12 hover:border-primary/30 hover:bg-muted/20",
               )}
             >
               {/* Delete button - shown on hover */}
@@ -233,7 +232,7 @@ export const SessionsTab: FC<{
                   <div className="flex items-center gap-3 text-xs text-sidebar-foreground/70">
                     <div className="flex items-center gap-1">
                       <MessageSquareIcon className="w-3 h-3" />
-                      <span>{session.meta.messageCount}</span>
+                      <span>{messageCount}</span>
                     </div>
                   </div>
                   {session.lastModifiedAt && (

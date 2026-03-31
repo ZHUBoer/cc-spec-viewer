@@ -6,31 +6,40 @@ export type ControllablePromise<T> = {
 };
 
 export const controllablePromise = <T>(): ControllablePromise<T> => {
-  let promiseResolve: ((value: T) => void) | undefined;
-  let promiseReject: ((reason?: unknown) => void) | undefined;
-
-  const promiseRef = {
-    status: "pending",
-  } as ControllablePromise<T>;
+  let status: ControllablePromise<T>["status"] = "pending";
+  let promiseResolve: (value: T) => void = () => {
+    throw new Error("Illegal state: Promise not created");
+  };
+  let promiseReject: (reason?: unknown) => void = () => {
+    throw new Error("Illegal state: Promise not created");
+  };
+  let isInitialized = false;
 
   const promise = new Promise<T>((resolve, reject) => {
     promiseResolve = (value) => {
-      promiseRef.status = "resolved";
+      status = "resolved";
       resolve(value);
     };
     promiseReject = (reason) => {
-      promiseRef.status = "rejected";
+      status = "rejected";
       reject(reason);
     };
+    isInitialized = true;
   });
 
-  if (!promiseResolve || !promiseReject) {
+  if (!isInitialized) {
     throw new Error("Illegal state: Promise not created");
   }
 
-  promiseRef.promise = promise;
-  promiseRef.resolve = promiseResolve;
-  promiseRef.reject = promiseReject;
-
-  return promiseRef;
+  return {
+    promise,
+    resolve: promiseResolve,
+    reject: promiseReject,
+    get status() {
+      return status;
+    },
+    set status(nextStatus) {
+      status = nextStatus;
+    },
+  };
 };

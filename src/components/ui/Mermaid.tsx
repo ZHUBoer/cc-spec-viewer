@@ -1,14 +1,16 @@
 "use client";
 
 import mermaid from "mermaid";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "../../hooks/useTheme";
+import { isMermaidErrorSvg } from "./mermaidError";
 
 // Initialize mermaid
 mermaid.initialize({
   startOnLoad: false,
   securityLevel: "loose",
   fontFamily: "inherit",
+  suppressErrorRendering: true,
 });
 interface MermaidProps {
   chart: string;
@@ -24,7 +26,9 @@ function parsedColor(varName: string): string {
   el.style.color = `var(${varName})`;
   document.body.appendChild(el);
   const computedColor = window.getComputedStyle(el).color;
-  document.body.removeChild(el);
+  if (el.parentNode === document.body) {
+    document.body.removeChild(el);
+  }
 
   if (!computedColor) return "";
 
@@ -70,7 +74,6 @@ import { MermaidModal } from "./MermaidModal";
 
 export const Mermaid = ({ chart }: MermaidProps) => {
   const { resolvedTheme } = useTheme();
-  const containerRef = useRef<HTMLButtonElement>(null);
   const [svg, setSvg] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,7 +82,7 @@ export const Mermaid = ({ chart }: MermaidProps) => {
     let mounted = true;
 
     const initAndRender = async () => {
-      if (!chart || !containerRef.current) return;
+      if (!chart) return;
 
       try {
         // Initialize with current theme variables
@@ -89,6 +92,7 @@ export const Mermaid = ({ chart }: MermaidProps) => {
           theme: resolvedTheme === "dark" ? "dark" : "default",
           securityLevel: "loose",
           fontFamily: "inherit",
+          suppressErrorRendering: true,
           themeVariables: {
             fontFamily: "inherit",
             darkMode: resolvedTheme === "dark",
@@ -108,19 +112,36 @@ export const Mermaid = ({ chart }: MermaidProps) => {
 
         if (mounted) {
           setError(null);
+          setSvg("");
         }
 
         const cleanChart = chart.trim();
         const id = `mermaid-${Math.random().toString(36).substring(7)}`;
+        const renderContainer = document.createElement("div");
+        renderContainer.style.cssText =
+          "position:absolute;left:-99999px;top:-99999px;width:0;height:0;overflow:hidden;";
+        document.body.appendChild(renderContainer);
 
-        const { svg } = await mermaid.render(id, cleanChart);
+        try {
+          await mermaid.parse(cleanChart);
+          const { svg } = await mermaid.render(id, cleanChart, renderContainer);
 
-        if (mounted) {
-          setSvg(svg);
+          if (isMermaidErrorSvg(svg)) {
+            throw new Error("Invalid Mermaid syntax");
+          }
+
+          if (mounted) {
+            setSvg(svg);
+          }
+        } finally {
+          if (renderContainer.parentNode) {
+            renderContainer.parentNode.removeChild(renderContainer);
+          }
         }
       } catch (err) {
         // console.error("Failed to render mermaid chart:", err);
         if (mounted) {
+          setSvg("");
           setError(err instanceof Error ? err.message : "Unknown error");
         }
       }
@@ -135,7 +156,10 @@ export const Mermaid = ({ chart }: MermaidProps) => {
 
   if (error) {
     return (
-      <div className="p-4 rounded-md bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-mono border border-red-200 dark:border-red-900/50">
+      <div
+        className="notranslate p-4 rounded-md bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-mono border border-red-200 dark:border-red-900/50"
+        translate="no"
+      >
         <div className="font-semibold mb-1">Failed to render diagram</div>
         <div className="whitespace-pre-wrap">{error}</div>
         <pre className="mt-2 text-xs opacity-75 overflow-auto">{chart}</pre>
@@ -145,10 +169,9 @@ export const Mermaid = ({ chart }: MermaidProps) => {
 
   return (
     <>
-      <div className="relative group my-6">
+      <div className="notranslate relative group my-6" translate="no">
         <button
           type="button"
-          ref={containerRef}
           onClick={() => setIsModalOpen(true)}
           className="mermaid-chart w-full flex justify-center p-4 bg-white dark:bg-neutral-900/50 rounded-lg border border-border overflow-x-auto cursor-zoom-in hover:border-primary/50 hover:shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
           // biome-ignore lint/security/noDangerouslySetInnerHtml: Mermaid generates safe SVG

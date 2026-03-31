@@ -9,6 +9,7 @@ fi
 pnpm lingui:compile
 pnpm build:frontend
 pnpm build:backend
+node ./scripts/verify-static-assets.mjs
 
 # 复制模板目录到 dist，排除 .DS_Store 等系统文件
 echo "正在复制模板目录，排除系统文件..."

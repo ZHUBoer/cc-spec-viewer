@@ -1,18 +1,23 @@
-import { useAtomValue } from "jotai";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { sessionProcessesAtom } from "../store/sessionProcessesAtom";
+import {
+  createEmptySessionProcessesState,
+  getSessionProcessBySessionId,
+  sessionProcessesStateQuery,
+} from "@/lib/session-process/sessionProcessesState";
 
 export const useSessionProcess = () => {
-  const sessionProcesses = useAtomValue(sessionProcessesAtom);
+  const { data } = useQuery({
+    queryKey: sessionProcessesStateQuery.queryKey,
+    queryFn: async () => createEmptySessionProcessesState(),
+    initialData: createEmptySessionProcessesState(),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+  const sessionProcesses = data.processes;
 
   const getSessionProcess = useCallback(
-    (sessionId: string) => {
-      const targetProcess = sessionProcesses.find(
-        (process) => process.sessionId === sessionId,
-      );
-
-      return targetProcess;
-    },
+    (sessionId: string) =>
+      getSessionProcessBySessionId(sessionProcesses, sessionId),
     [sessionProcesses],
   );
 

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { honoClient } from "@/lib/api/client";
 import { projectDetailQuery } from "@/lib/api/queries";
+import { getErrorMessage, hasSuccessTrue } from "@/lib/api/responseGuards";
 
 /**
  * Hook to delete a session
@@ -43,7 +44,11 @@ export const useDeleteSession = () => {
         throw new Error("Failed to delete session");
       }
 
-      return response.json();
+      const data = await response.json();
+      if (!hasSuccessTrue(data)) {
+        throw new Error(getErrorMessage(data) ?? "Failed to delete session");
+      }
+      return data;
     },
     onSuccess: (_, { projectId }) => {
       // Invalidate project detail query to refresh the session list

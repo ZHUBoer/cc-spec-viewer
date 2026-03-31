@@ -40,7 +40,7 @@ type TaskModalProps = {
 
 /**
  * Task modal component with fallback logic.
- * Always shows the "View Task" button for Task tools.
+ * Always shows the "View Task" button for Task/Agent tools.
  *
  * Fallback strategy:
  * 1. Check sidechain data by agentId (new Claude Code versions)

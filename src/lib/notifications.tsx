@@ -44,6 +44,10 @@ const soundConfigs: Record<
   },
 };
 
+const isAudioContextConstructor = (
+  value: unknown,
+): value is typeof AudioContext => typeof value === "function";
+
 /**
  * Play a notification sound based on the sound type
  */
@@ -59,11 +63,19 @@ export function playNotificationSound(soundType: NotificationSoundType) {
       return;
     }
 
-    const audioContext = new (
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext })
-        .webkitAudioContext
-    )();
+    const maybeWebkitAudioContext = Reflect.get(window, "webkitAudioContext");
+    const webkitAudioContext = isAudioContextConstructor(
+      maybeWebkitAudioContext,
+    )
+      ? maybeWebkitAudioContext
+      : undefined;
+    const AudioContextConstructor = window.AudioContext ?? webkitAudioContext;
+    if (!AudioContextConstructor) {
+      console.warn("当前浏览器不支持 Web Audio API");
+      return;
+    }
+
+    const audioContext = new AudioContextConstructor();
 
     // Play multiple frequencies if specified (for chords/sequences)
     config.frequency.forEach((freq, index) => {

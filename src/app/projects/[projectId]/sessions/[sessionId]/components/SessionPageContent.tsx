@@ -1,5 +1,4 @@
 import { type FC, useEffect, useState } from "react";
-import { useConfigCheckDialog } from "@/components/spec-dashboard/ConfigCheckProvider";
 import { useConfigCheck } from "@/components/spec-dashboard/hooks/useConfigCheck";
 import { useWorkspacePanel } from "@/hooks/useWorkspacePanel";
 
@@ -10,14 +9,15 @@ export const SessionPageContent: FC<{
   projectId: string;
   sessionId?: string;
   tab: Tab;
-}> = ({ projectId, sessionId, tab }) => {
+  focusMessageId?: string;
+  focusSource?: "search";
+}> = ({ projectId, sessionId, tab, focusMessageId, focusSource }) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { activeMode, panelWidth } = useWorkspacePanel();
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1200,
   );
-  const { isConfigured } = useConfigCheck(projectId);
-  const { openInitRequiredDialog } = useConfigCheckDialog();
+  const { isConfigured, handleGoToInit } = useConfigCheck(projectId);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -29,9 +29,9 @@ export const SessionPageContent: FC<{
   // 检查配置状态，如果未初始化则弹出弹窗
   useEffect(() => {
     if (isConfigured === false) {
-      openInitRequiredDialog(projectId);
+      handleGoToInit();
     }
-  }, [isConfigured, projectId, openInitRequiredDialog]);
+  }, [isConfigured, handleGoToInit]);
 
   const mainContentWidth = activeMode !== "none" ? 100 - panelWidth : 100;
 
@@ -53,6 +53,8 @@ export const SessionPageContent: FC<{
         projectId={projectId}
         sessionId={sessionId}
         tab={tab}
+        focusMessageId={focusMessageId}
+        focusSource={focusSource}
         isMobileSidebarOpen={isMobileSidebarOpen}
         setIsMobileSidebarOpen={setIsMobileSidebarOpen}
         forceCollapsed={shouldCollapseSidebar}

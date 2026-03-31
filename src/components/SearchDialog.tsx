@@ -78,7 +78,11 @@ export function SearchDialog({
       navigate({
         to: "/projects/$projectId/session",
         params: { projectId: result.projectId },
-        search: { sessionId: result.sessionId },
+        search: {
+          sessionId: result.sessionId,
+          focusMessageId: `message-${result.conversationUuid}`,
+          focusSource: "search",
+        },
       });
     },
     [navigate, onOpenChange],

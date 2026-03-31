@@ -27,7 +27,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/MobileSidebar.tsx",
-        153
+        174
       ]
     ],
     "translation": "关闭侧边栏"
@@ -93,7 +93,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        411
+        532
       ]
     ],
     "translation": "带补全支持的消息输入"
@@ -104,7 +104,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpTab.tsx",
-        51
+        64
       ]
     ],
     "translation": "重新加载 MCP 服务器"
@@ -126,7 +126,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        221
+        319
       ]
     ],
     "translation": "选择回车键行为"
@@ -137,7 +137,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        332
+        475
       ]
     ],
     "translation": "选择语言"
@@ -148,7 +148,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        289
+        387
       ]
     ],
     "translation": "选择权限模式"
@@ -159,7 +159,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        256
+        354
       ]
     ],
     "translation": "选择搜索快捷键"
@@ -170,7 +170,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        358
+        501
       ]
     ],
     "translation": "选择主题"
@@ -186,13 +186,29 @@
     ],
     "translation": "未提交的更改"
   },
+  "assistant.process_group.title": {
+    "message": "过程 {count} 条",
+    "placeholders": {
+      "count": [
+        "items.length"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
+        165
+      ]
+    ],
+    "translation": ""
+  },
   "assistant.thinking": {
     "placeholders": {},
     "comments": [],
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        114
+        245
       ]
     ],
     "translation": "思考"
@@ -203,113 +219,139 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AskUserQuestionCard.tsx",
-        129
+        73
       ]
     ],
     "translation": "自定义答案"
   },
-  "assistant.tool.ask_user_question.hint_multi": {
+  "assistant.tool.ask_user_question.next": {
+    "message": "Next",
     "placeholders": {},
     "comments": [],
     "origin": [
       [
         "src/components/AskUserQuestionInteractive.tsx",
-        129
+        507
       ]
     ],
-    "translation": "可以选择一个或多个选项，或在下方输入自定义答案"
+    "translation": "下一个"
   },
-  "assistant.tool.ask_user_question.hint_single": {
+  "assistant.tool.ask_user_question.other_option": {
+    "message": "Something else",
     "placeholders": {},
     "comments": [],
     "origin": [
       [
         "src/components/AskUserQuestionInteractive.tsx",
-        131
+        387
       ]
     ],
-    "translation": "请选择一个选项，或在下方输入自定义答案"
+    "translation": "其他"
   },
-  "assistant.tool.ask_user_question.multi_select": {
+  "assistant.tool.ask_user_question.placeholder": {
+    "message": "Enter custom answer...",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/AskUserQuestionInteractive.tsx",
+        418
+      ]
+    ],
+    "translation": "输入自定义答案..."
+  },
+  "assistant.tool.ask_user_question.skip": {
+    "message": "Skip",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/AskUserQuestionInteractive.tsx",
+        487
+      ]
+    ],
+    "translation": "跳过"
+  },
+  "assistant.tool.ask_user_question.skipped": {
     "placeholders": {},
     "comments": [],
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AskUserQuestionCard.tsx",
-        65
-      ],
-      [
-        "src/components/AskUserQuestionInteractive.tsx",
-        116
+        80
       ]
     ],
-    "translation": "多选题"
-  },
-  "assistant.tool.ask_user_question.other_option": {
-    "placeholders": {},
-    "comments": [],
-    "origin": [
-      [
-        "src/components/AskUserQuestionInteractive.tsx",
-        187
-      ]
-    ],
-    "translation": "其他（自定义输入）"
-  },
-  "assistant.tool.ask_user_question.other_placeholder": {
-    "placeholders": {},
-    "comments": [],
-    "origin": [
-      [
-        "src/components/AskUserQuestionInteractive.tsx",
-        197
-      ]
-    ],
-    "translation": "请输入自定义答案..."
+    "translation": "已跳过"
   },
   "assistant.tool.ask_user_question.submit": {
+    "message": "Submit",
     "placeholders": {},
     "comments": [],
     "origin": [
       [
         "src/components/AskUserQuestionInteractive.tsx",
-        219
+        502
       ]
     ],
     "translation": "提交答案"
   },
-  "assistant.tool.ask_user_question.submitting": {
+  "assistant.tool.ask_user_question.submit_hint_mac": {
+    "message": "Press Cmd+Enter to submit",
     "placeholders": {},
     "comments": [],
     "origin": [
       [
         "src/components/AskUserQuestionInteractive.tsx",
-        217
+        428
       ]
     ],
-    "translation": "提交中..."
+    "translation": "按 Cmd+Enter 提交"
   },
-  "assistant.tool.ask_user_question.title": {
+  "assistant.tool.ask_user_question.submit_hint_other": {
+    "message": "Press Ctrl+Enter to submit",
     "placeholders": {},
     "comments": [],
     "origin": [
       [
-        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        183
+        "src/components/AskUserQuestionInteractive.tsx",
+        432
       ]
     ],
-    "translation": "用户问答"
+    "translation": "按 Ctrl+Enter 提交"
   },
-  "assistant.tool.ask_user_question.user_selected": {
+  "assistant.tool.ask_user_question.submitting": {
+    "message": "Submitting...",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/AskUserQuestionInteractive.tsx",
+        497
+      ]
+    ],
+    "translation": "提交中..."
+  },
+  "assistant.tool.ask_user_question.unanswered": {
     "placeholders": {},
     "comments": [],
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AskUserQuestionCard.tsx",
-        117
+        87
       ]
     ],
-    "translation": "用户选择"
+    "translation": "尚未回答"
+  },
+  "assistant.tool.ask_user_question.waiting": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AskUserQuestionCard.tsx",
+        85
+      ]
+    ],
+    "translation": "等待用户作答中..."
   },
   "assistant.tool.error_loading_task": {
     "placeholders": {},
@@ -328,7 +370,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        272
+        427
       ]
     ],
     "translation": "输入参数"
@@ -379,7 +421,7 @@
         207
       ]
     ],
-    "translation": "此 subagent 的数据不可用"
+    "translation": "subagent 可能尚未运行结束，请稍后查看。"
   },
   "assistant.tool.result": {
     "placeholders": {},
@@ -387,7 +429,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        286
+        438
       ]
     ],
     "translation": "工具结果"
@@ -420,7 +462,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/AssistantConversationContent.tsx",
-        264
+        419
       ]
     ],
     "translation": "工具 ID"
@@ -453,7 +495,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        507
+        636
       ]
     ],
     "translation": "附加"
@@ -464,7 +506,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        67
+        124
       ]
     ],
     "translation": "开始对话"
@@ -475,7 +517,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        375
+        501
       ]
     ],
     "translation": "发送消息失败。请重试。"
@@ -486,11 +528,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        241
+        381
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        512
+        675
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
@@ -499,6 +541,190 @@
     ],
     "translation": "开始新对话"
   },
+  "chat.model_switch.blocked_running_task": {
+    "message": "Cannot switch model while a session process is running.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        79
+      ]
+    ],
+    "translation": "当前有运行中的会话进程，暂时无法切换模型。"
+  },
+  "chat.model_switch.confirm_existing.confirm": {
+    "message": "Switch model",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        291
+      ]
+    ],
+    "translation": "切换模型"
+  },
+  "chat.model_switch.confirm_existing.description": {
+    "message": "Switching model will start a new session and clear current session context.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        271
+      ]
+    ],
+    "translation": "切换模型将开启全新会话，并清空当前会话上下文。"
+  },
+  "chat.model_switch.confirm_existing.title": {
+    "message": "Switch team model?",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        265
+      ]
+    ],
+    "translation": "确认切换团队模型？"
+  },
+  "chat.model_switch.current": {
+    "message": "Select model",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        208
+      ]
+    ],
+    "translation": "选择模型"
+  },
+  "chat.model_switch.force_new_session": {
+    "message": "Switched model and started a new session context.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        66
+      ]
+    ],
+    "translation": "模型已切换，并已进入新会话上下文。"
+  },
+  "chat.model_switch.load_failed": {
+    "message": "Failed to switch model",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        100
+      ]
+    ],
+    "translation": "模型切换失败"
+  },
+  "chat.model_switch.missing_ada_cli": {
+    "message": "Install ada-cli to enable team model switching.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        229
+      ]
+    ],
+    "translation": "需安装 ada-cli 以支持团队模型切换。"
+  },
+  "chat.model_switch.personal_title": {
+    "message": "Personal Model",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        169
+      ]
+    ],
+    "translation": "个人模型"
+  },
+  "chat.model_switch.personal_unsupported": {
+    "message": "Model: {model} (model switch is not supported)",
+    "placeholders": {
+      "model": [
+        "personalModelLabel"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        175
+      ]
+    ],
+    "translation": "模型名称：{model}（不支持模型切换）"
+  },
+  "chat.model_switch.success": {
+    "message": "Model switched successfully",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        61
+      ]
+    ],
+    "translation": "模型切换成功"
+  },
+  "chat.model_switch.switching": {
+    "message": "Switching...",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        200
+      ]
+    ],
+    "translation": "切换中..."
+  },
+  "chat.model_switch.title": {
+    "message": "Team Model",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        185
+      ]
+    ],
+    "translation": "团队模型"
+  },
+  "chat.model_switch.unknown_model": {
+    "message": "Unknown model",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        153
+      ]
+    ],
+    "translation": "未知模型"
+  },
+  "chat.model_switch.unsupported_mode": {
+    "message": "Model switch is available only in team mode.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        91
+      ]
+    ],
+    "translation": "仅团队模式支持模型切换。"
+  },
   "chat.placeholder.continue.command_enter": {
     "message": "Type your message... (Start with / for commands, @ for files, Command+Enter to send)",
     "placeholders": {},
@@ -506,11 +732,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ContinueChat.tsx",
-        47
+        53
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        46
+        101
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Command+Enter 发送)"
@@ -522,11 +748,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ContinueChat.tsx",
-        40
+        46
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        39
+        94
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Enter 发送)"
@@ -538,11 +764,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ContinueChat.tsx",
-        53
+        59
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/StartNewChat.tsx",
-        52
+        107
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Shift+Enter 发送)"
@@ -554,7 +780,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ResumeChat.tsx",
-        45
+        51
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Command+Enter 发送)"
@@ -566,7 +792,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ResumeChat.tsx",
-        38
+        44
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Enter 发送)"
@@ -578,7 +804,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ResumeChat.tsx",
-        51
+        57
       ]
     ],
     "translation": "输入消息...(输入 / 使用命令,@ 使用文件,Shift+Enter 发送)"
@@ -589,7 +815,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ResumeChat.tsx",
-        58
+        64
       ]
     ],
     "translation": "继续"
@@ -601,7 +827,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        221
+        271
       ]
     ],
     "translation": "定时发送消息失败"
@@ -613,7 +839,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        205
+        254
       ]
     ],
     "translation": "消息定时发送成功"
@@ -625,7 +851,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        210
+        259
       ]
     ],
     "translation": "您可以在定时任务选项卡中查看和管理"
@@ -636,7 +862,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ContinueChat.tsx",
-        70
+        87
       ]
     ],
     "translation": "发送"
@@ -647,11 +873,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        464
+        585
       ],
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        544
+        673
       ]
     ],
     "translation": "立即发送"
@@ -662,11 +888,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        447
+        568
       ],
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        527
+        656
       ]
     ],
     "translation": "发送模式"
@@ -677,15 +903,15 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        467
+        588
       ],
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        547
+        676
       ],
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        564
+        693
       ]
     ],
     "translation": "定时发送"
@@ -696,7 +922,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        474
+        595
       ]
     ],
     "translation": "定时发送时间"
@@ -707,7 +933,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/components/chatForm/ChatInput.tsx",
-        583
+        715
       ]
     ],
     "translation": "处理中..."
@@ -719,25 +945,42 @@
       [
         "src/app/projects/components/SetupProjectDialog.tsx",
         93
+      ],
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        316
+      ],
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        386
       ]
     ],
     "translation": "取消"
   },
   "common.cancel": {
+    "message": "Cancel",
     "placeholders": {},
     "comments": [],
     "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        284
+      ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/scheduler/SchedulerJobDialog.tsx",
         349
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/DeleteSessionDialog.tsx",
-        89
+        97
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SchedulerTab.tsx",
         335
+      ],
+      [
+        "src/components/spec-dashboard/InitRequiredDialog.tsx",
+        70
       ]
     ],
     "translation": "取消"
@@ -759,7 +1002,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/DeleteSessionDialog.tsx",
-        100
+        108
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SchedulerTab.tsx",
@@ -774,7 +1017,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/DeleteSessionDialog.tsx",
-        98
+        106
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SchedulerTab.tsx",
@@ -808,7 +1051,7 @@
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        264
+        263
       ]
     ],
     "translation": "加载中..."
@@ -818,6 +1061,10 @@
     "placeholders": {},
     "comments": [],
     "origin": [
+      [
+        "src/app/projects/[projectId]/components/chatForm/ModelSwitchBar.tsx",
+        244
+      ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SchedulerTab.tsx",
         175
@@ -853,11 +1100,11 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        291
+        436
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        389
+        534
       ]
     ],
     "translation": "分支"
@@ -868,7 +1115,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        75
+        76
       ]
     ],
     "translation": "Git"
@@ -879,7 +1126,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        365
+        510
       ]
     ],
     "translation": "元数据"
@@ -890,33 +1137,26 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        416
+        561
       ]
     ],
     "translation": "模型"
   },
-  "control.new": {
+  "control.new_change": {
+    "message": "新建 Change",
     "placeholders": {},
     "comments": [],
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        111
-      ]
-    ],
-    "translation": "新建"
-  },
-  "control.new_chat": {
-    "message": "New Chat",
-    "placeholders": {},
-    "comments": [],
-    "origin": [
+        101
+      ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        100
+        112
       ]
     ],
-    "translation": "新建对话"
+    "translation": ""
   },
   "control.open_browser": {
     "message": "Open Browser",
@@ -925,10 +1165,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        86
+        87
       ]
     ],
-    "translation": "在浏览器中打开"
+    "translation": "打开浏览器"
   },
   "control.open_git_dialog": {
     "message": "Open Git Dialog",
@@ -937,7 +1177,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        68
+        69
       ]
     ],
     "translation": "打开 Git 对话框"
@@ -948,7 +1188,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        371
+        516
       ]
     ],
     "translation": "项目路径"
@@ -960,7 +1200,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        138
+        163
       ]
     ],
     "translation": "滚动到底部"
@@ -972,7 +1212,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        122
+        147
       ]
     ],
     "translation": "滚动到顶部"
@@ -983,14 +1223,293 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        306
+        451
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        403
+        548
       ]
     ],
     "translation": "会话 ID"
+  },
+  "conversation.api_error.copied": {
+    "message": "Copied",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        225
+      ]
+    ],
+    "translation": "已复制"
+  },
+  "conversation.api_error.copy_failed": {
+    "message": "Failed to copy incident report",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        181
+      ]
+    ],
+    "translation": "复制报障信息失败"
+  },
+  "conversation.api_error.copy_report": {
+    "message": "Copy Incident Report",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        229
+      ]
+    ],
+    "translation": "复制报障信息"
+  },
+  "conversation.api_error.description": {
+    "message": "This error is returned by the upstream model service or platform, not a local SpecForge parsing error. Please contact your model provider or platform team for investigation.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        204
+      ]
+    ],
+    "translation": "这是上游模型服务或平台返回的错误，不是 SpecForge 本地解析错误。请联系模型服务商或平台团队排查。"
+  },
+  "conversation.api_error.report.cwd": {
+    "message": "CWD: {cwd}",
+    "placeholders": {
+      "cwd": [
+        "conversation.cwd"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        136
+      ]
+    ],
+    "translation": "CWD: {cwd}"
+  },
+  "conversation.api_error.report.error": {
+    "message": "Error: {error}",
+    "placeholders": {
+      "error": [
+        "errorMsg"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        126
+      ]
+    ],
+    "translation": "Error: {error}"
+  },
+  "conversation.api_error.report.git_branch": {
+    "message": "Git Branch: {gitBranch}",
+    "placeholders": {
+      "gitBranch": [
+        "conversation.gitBranch ?? \"N/A\""
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        141
+      ]
+    ],
+    "translation": "Git Branch: {gitBranch}"
+  },
+  "conversation.api_error.report.header": {
+    "message": "Incident Report",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        88
+      ]
+    ],
+    "translation": "【报障信息】"
+  },
+  "conversation.api_error.report.http_status": {
+    "message": "HTTP Status: {status}",
+    "placeholders": {
+      "status": [
+        "error.status ?? \"N/A\""
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        121
+      ]
+    ],
+    "translation": "HTTP Status: {status}"
+  },
+  "conversation.api_error.report.issue_type": {
+    "message": "Issue Type: Upstream API Error",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        92
+      ]
+    ],
+    "translation": "问题类型: 上游服务端 API 错误"
+  },
+  "conversation.api_error.report.message_uuid": {
+    "message": "Message UUID: {uuid}",
+    "placeholders": {
+      "uuid": [
+        "conversation.uuid"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        106
+      ]
+    ],
+    "translation": "Message UUID: {uuid}"
+  },
+  "conversation.api_error.report.parent_uuid": {
+    "message": "Parent UUID: {parentUuid}",
+    "placeholders": {
+      "parentUuid": [
+        "conversation.parentUuid ?? \"null\""
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        111
+      ]
+    ],
+    "translation": "Parent UUID: {parentUuid}"
+  },
+  "conversation.api_error.report.request_id": {
+    "message": "Request ID: {requestId}",
+    "placeholders": {
+      "requestId": [
+        "error.requestID ?? \"N/A\""
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        116
+      ]
+    ],
+    "translation": "Request ID: {requestId}"
+  },
+  "conversation.api_error.report.retry": {
+    "message": "Retry: {attempt}/{maxRetries}",
+    "placeholders": {
+      "attempt": [
+        "conversation.retryAttempt"
+      ],
+      "maxRetries": [
+        "conversation.maxRetries"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        147
+      ]
+    ],
+    "translation": "Retry: {attempt}/{maxRetries}"
+  },
+  "conversation.api_error.report.retry_in": {
+    "message": "Retry In: {seconds}s",
+    "placeholders": {
+      "seconds": [
+        "(conversation.retryInMs / 1000).toFixed(2)"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        157
+      ]
+    ],
+    "translation": "Retry In: {seconds}s"
+  },
+  "conversation.api_error.report.session_id": {
+    "message": "Session ID: {sessionId}",
+    "placeholders": {
+      "sessionId": [
+        "conversation.sessionId"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        101
+      ]
+    ],
+    "translation": "Session ID: {sessionId}"
+  },
+  "conversation.api_error.report.time": {
+    "message": "Error Time: {timestamp}",
+    "placeholders": {
+      "timestamp": [
+        "conversation.timestamp"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        96
+      ]
+    ],
+    "translation": "错误时间: {timestamp}"
+  },
+  "conversation.api_error.report.version": {
+    "message": "Version: {version}",
+    "placeholders": {
+      "version": [
+        "conversation.version"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        131
+      ]
+    ],
+    "translation": "Version: {version}"
+  },
+  "conversation.api_error.title": {
+    "message": "Server Error (API Error)",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationItem.tsx",
+        198
+      ]
+    ],
+    "translation": "服务端错误（API Error）"
   },
   "conversation.error.raw_content": {
     "placeholders": {},
@@ -998,7 +1517,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        117
+        83
       ]
     ],
     "translation": "原始数据:"
@@ -1009,7 +1528,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        110
+        76
       ]
     ],
     "translation": "报告此问题"
@@ -1020,7 +1539,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        85
+        51
       ]
     ],
     "translation": "模式错误"
@@ -1031,7 +1550,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        100
+        66
       ]
     ],
     "translation": "模式验证错误"
@@ -1042,10 +1561,21 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/ConversationList.tsx",
-        103
+        69
       ]
     ],
     "translation": "无法解析此对话条目。这可能是由于格式更改或解析问题。"
+  },
+  "conversation.system_message.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/conversationList/SystemConversationContent.tsx",
+        18
+      ]
+    ],
+    "translation": "系统消息"
   },
   "cron_builder.cron_expression": {
     "placeholders": {},
@@ -1462,6 +1992,109 @@
     ],
     "translation": "显示隐藏文件"
   },
+  "mcp.config.button.cancel": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpConfigDialog.tsx",
+        137
+      ]
+    ],
+    "translation": "取消"
+  },
+  "mcp.config.button.edit": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpTab.tsx",
+        54
+      ]
+    ],
+    "translation": "编辑配置"
+  },
+  "mcp.config.button.format": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpConfigDialog.tsx",
+        129
+      ]
+    ],
+    "translation": "格式化"
+  },
+  "mcp.config.button.save": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpConfigDialog.tsx",
+        147
+      ]
+    ],
+    "translation": "保存"
+  },
+  "mcp.config.button.saving": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpConfigDialog.tsx",
+        145
+      ]
+    ],
+    "translation": "保存中..."
+  },
+  "mcp.config.dialog.description": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpConfigDialog.tsx",
+        90
+      ]
+    ],
+    "translation": "编辑项目的 .mcp.json 配置文件"
+  },
+  "mcp.config.dialog.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpConfigDialog.tsx",
+        87
+      ]
+    ],
+    "translation": "编辑 MCP 配置"
+  },
+  "mcp.config.error.invalid_json": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpConfigDialog.tsx",
+        68
+      ],
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpConfigDialog.tsx",
+        78
+      ]
+    ],
+    "translation": "无效的 JSON 格式"
+  },
+  "mcp.config.loading": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpConfigDialog.tsx",
+        103
+      ]
+    ],
+    "translation": "加载中..."
+  },
   "mcp.error.load_failed": {
     "placeholders": {
       "error": [
@@ -1472,7 +2105,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpTab.tsx",
-        71
+        85
       ]
     ],
     "translation": "加载 MCP 服务器失败:{error}"
@@ -1483,7 +2116,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpTab.tsx",
-        80
+        94
       ]
     ],
     "translation": "未找到 MCP 服务器"
@@ -1494,7 +2127,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/McpTab.tsx",
-        43
+        46
       ]
     ],
     "translation": "MCP 服务器"
@@ -1538,7 +2171,7 @@
     "origin": [
       [
         "src/routes/projects/$projectId/session.tsx",
-        21
+        23
       ]
     ],
     "translation": "您查找的会话不存在。"
@@ -1549,7 +2182,7 @@
     "origin": [
       [
         "src/routes/projects/$projectId/session.tsx",
-        20
+        22
       ]
     ],
     "translation": "会话未找到"
@@ -1560,7 +2193,7 @@
     "origin": [
       [
         "src/lib/notifications.tsx",
-        104
+        116
       ]
     ],
     "translation": "哔哔声"
@@ -1571,7 +2204,7 @@
     "origin": [
       [
         "src/lib/notifications.tsx",
-        105
+        117
       ]
     ],
     "translation": "铃声"
@@ -1593,7 +2226,7 @@
     "origin": [
       [
         "src/lib/notifications.tsx",
-        103
+        115
       ]
     ],
     "translation": "无"
@@ -1604,7 +2237,7 @@
     "origin": [
       [
         "src/lib/notifications.tsx",
-        106
+        118
       ]
     ],
     "translation": "Ping 音"
@@ -1615,7 +2248,7 @@
     "origin": [
       [
         "src/lib/notifications.tsx",
-        107
+        119
       ]
     ],
     "translation": "Pop 音"
@@ -1692,7 +2325,7 @@
     "origin": [
       [
         "src/app/projects/components/ProjectList.tsx",
-        54
+        82
       ]
     ],
     "translation": "最后修改时间:"
@@ -1703,7 +2336,7 @@
     "origin": [
       [
         "src/app/projects/components/ProjectList.tsx",
-        63
+        91
       ]
     ],
     "translation": "消息数:"
@@ -1714,7 +2347,7 @@
     "origin": [
       [
         "src/app/projects/components/ProjectList.tsx",
-        31
+        33
       ]
     ],
     "translation": "在您的 ~/.claude/projects 目录中未找到 Claude Code 项目。与 Claude Code 开始对话以创建您的第一个项目。"
@@ -1725,7 +2358,7 @@
     "origin": [
       [
         "src/app/projects/components/ProjectList.tsx",
-        28
+        30
       ]
     ],
     "translation": "未找到项目"
@@ -1736,7 +2369,7 @@
     "origin": [
       [
         "src/app/projects/components/ProjectList.tsx",
-        72
+        99
       ]
     ],
     "translation": "查看对话"
@@ -1747,10 +2380,10 @@
     "origin": [
       [
         "src/app/projects/page.tsx",
-        27
+        28
       ]
     ],
-    "translation": "查看 Claude Code 对话历史和项目操作"
+    "translation": "查看对话历史和项目操作"
   },
   "projects.page.loading": {
     "placeholders": {},
@@ -1758,7 +2391,7 @@
     "origin": [
       [
         "src/app/projects/page.tsx",
-        43
+        47
       ]
     ],
     "translation": "正在加载项目..."
@@ -1769,7 +2402,7 @@
     "origin": [
       [
         "src/app/projects/page.tsx",
-        35
+        36
       ]
     ],
     "translation": "项目"
@@ -2156,7 +2789,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        169
+        194
       ]
     ],
     "translation": "中止"
@@ -2168,10 +2801,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/resumeChat/ChatActionMenu.tsx",
-        164
+        189
       ]
     ],
-    "translation": ""
+    "translation": "中止中..."
   },
   "session.conversation.paused": {
     "placeholders": {},
@@ -2179,7 +2812,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        326
+        471
       ]
     ],
     "translation": "已暂停"
@@ -2190,7 +2823,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        317
+        462
       ]
     ],
     "translation": "运行中"
@@ -2201,7 +2834,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        451
+        601
       ]
     ],
     "translation": "缓存创建"
@@ -2212,7 +2845,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        459
+        611
       ]
     ],
     "translation": "缓存读取"
@@ -2223,7 +2856,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        435
+        581
       ]
     ],
     "translation": "输入令牌"
@@ -2234,7 +2867,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        429
+        575
       ]
     ],
     "translation": "会话成本"
@@ -2245,7 +2878,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        443
+        591
       ]
     ],
     "translation": "输出令牌"
@@ -2274,12 +2907,9 @@
     ],
     "translation": "会话已删除"
   },
-  "session.delete_dialog.description": {
-    "placeholders": {
-      "title": [
-        "sessionTitle"
-      ]
-    },
+  "session.delete_dialog.description.compact": {
+    "message": "确定要删除这个会话吗？下方展示的是将被删除的会话标题。",
+    "placeholders": {},
     "comments": [],
     "origin": [
       [
@@ -2287,7 +2917,7 @@
         76
       ]
     ],
-    "translation": "确定要删除会话「{title}」吗？此操作无法撤销。"
+    "translation": ""
   },
   "session.delete_dialog.title": {
     "placeholders": {},
@@ -2295,11 +2925,15 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        480
+        639
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/DeleteSessionDialog.tsx",
         73
+      ],
+      [
+        "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/DeleteSessionDialog.tsx",
+        84
       ]
     ],
     "translation": "删除会话"
@@ -2310,10 +2944,10 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        515
+        678
       ]
     ],
-    "translation": "开始新对话以展开交流"
+    "translation": "请从侧边栏选择已有会话,或在下方开始新的对话。"
   },
   "session.processing": {
     "placeholders": {},
@@ -2321,7 +2955,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/SessionPageMain.tsx",
-        529
+        692
       ]
     ],
     "translation": "Claude Code 正在处理..."
@@ -2365,7 +2999,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        227
+        226
       ]
     ],
     "translation": "已暂停"
@@ -2376,7 +3010,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        225
+        224
       ]
     ],
     "translation": "运行中"
@@ -2387,7 +3021,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionsTab.tsx",
-        266
+        265
       ]
     ],
     "translation": "加载更多"
@@ -2414,6 +3048,114 @@
     ],
     "translation": "总计"
   },
+  "settings.claude_code.executable_path": {
+    "message": "Claude Code 可执行路径",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SettingsControls.tsx",
+        422
+      ]
+    ],
+    "translation": "Claude Code 可执行路径"
+  },
+  "settings.claude_code.executable_path.description": {
+    "message": "用于手动指定 claude.exe 或 cli.js 路径；不要填写 .cmd/.ps1；留空则自动检测。",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SettingsControls.tsx",
+        453
+      ]
+    ],
+    "translation": "用于手动指定 claude.exe 或 cli.js 路径；不要填写 .cmd/.ps1；留空则自动检测。"
+  },
+  "settings.claude_code.executable_path.placeholder": {
+    "message": "例如：C:\\Program Files\\Claude\\claude.exe",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SettingsControls.tsx",
+        434
+      ]
+    ],
+    "translation": "例如：C:\\Program Files\\Claude\\claude.exe"
+  },
+  "settings.claude_code.executable_path.unknown": {
+    "message": "未知",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SettingsControls.tsx",
+        184
+      ]
+    ],
+    "translation": "未知"
+  },
+  "settings.claude_code.executable_path.validate": {
+    "message": "校验",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SettingsControls.tsx",
+        445
+      ]
+    ],
+    "translation": "校验"
+  },
+  "settings.claude_code.executable_path.validate_detected": {
+    "message": "检测到：{path}",
+    "placeholders": {
+      "path": [
+        "executablePath"
+      ]
+    },
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SettingsControls.tsx",
+        194
+      ]
+    ],
+    "translation": "检测到：{path}"
+  },
+  "settings.claude_code.executable_path.validate_failed": {
+    "message": "校验失败",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SettingsControls.tsx",
+        171
+      ],
+      [
+        "src/components/SettingsControls.tsx",
+        203
+      ],
+      [
+        "src/components/SettingsControls.tsx",
+        211
+      ]
+    ],
+    "translation": "校验失败"
+  },
+  "settings.claude_code.executable_path.validate_success": {
+    "message": "校验成功",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SettingsControls.tsx",
+        189
+      ]
+    ],
+    "translation": "校验成功"
+  },
   "settings.description": {
     "placeholders": {},
     "comments": [],
@@ -2431,7 +3173,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        213
+        311
       ]
     ],
     "translation": "回车键行为"
@@ -2442,7 +3184,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        231
+        329
       ]
     ],
     "translation": "使用 Command+Enter 发送"
@@ -2453,7 +3195,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        237
+        335
       ]
     ],
     "translation": "选择消息输入的回车键行为"
@@ -2464,7 +3206,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        228
+        326
       ]
     ],
     "translation": "使用 Enter 发送"
@@ -2475,7 +3217,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        225
+        323
       ]
     ],
     "translation": "使用 Shift+Enter 发送(默认)"
@@ -2486,7 +3228,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        248
+        346
       ]
     ],
     "translation": "搜索快捷键"
@@ -2497,7 +3239,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        263
+        361
       ]
     ],
     "translation": "Command+K"
@@ -2508,7 +3250,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        260
+        358
       ]
     ],
     "translation": "Ctrl+K"
@@ -2519,7 +3261,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        269
+        367
       ]
     ],
     "translation": "选择打开搜索对话框的快捷键"
@@ -2530,7 +3272,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/MobileSidebar.tsx",
-        102
+        123
       ],
       [
         "src/components/GlobalSidebar.tsx",
@@ -2545,7 +3287,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        324
+        467
       ]
     ],
     "translation": "语言"
@@ -2556,7 +3298,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        345
+        488
       ]
     ],
     "translation": "选择您偏好的语言"
@@ -2567,7 +3309,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        336
+        479
       ]
     ],
     "translation": "英语"
@@ -2578,7 +3320,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        339
+        482
       ]
     ],
     "translation": "简体中文"
@@ -2589,7 +3331,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/MobileSidebar.tsx",
-        117
+        138
       ]
     ],
     "translation": "通知"
@@ -2600,7 +3342,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        280
+        378
       ]
     ],
     "translation": "权限模式"
@@ -2611,7 +3353,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        296
+        394
       ]
     ],
     "translation": "接受编辑(自动批准文件编辑)"
@@ -2622,7 +3364,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        299
+        397
       ]
     ],
     "translation": "跳过权限(无提示)"
@@ -2633,7 +3375,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        293
+        391
       ]
     ],
     "translation": "默认(确认权限)"
@@ -2644,7 +3386,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        308
+        406
       ]
     ],
     "translation": "控制如何处理文件操作权限请求"
@@ -2655,7 +3397,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        302
+        400
       ]
     ],
     "translation": "计划模式(仅规划)"
@@ -2666,7 +3408,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        313
+        411
       ]
     ],
     "translation": "此功能在您的 Claude Code 版本中不可用。所有工具都会自动批准。"
@@ -2710,7 +3452,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        197
+        295
       ]
     ],
     "translation": "达到速率限制时自动调度继续"
@@ -2721,7 +3463,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        203
+        301
       ]
     ],
     "translation": "当 Claude 达到速率限制时,自动调度继续消息"
@@ -2732,7 +3474,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/MobileSidebar.tsx",
-        110
+        131
       ]
     ],
     "translation": "会话显示"
@@ -2743,7 +3485,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        155
+        253
       ]
     ],
     "translation": "隐藏无用户消息的会话"
@@ -2754,7 +3496,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        161
+        259
       ]
     ],
     "translation": "仅显示包含用户命令或消息的会话"
@@ -2765,7 +3507,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        176
+        274
       ]
     ],
     "translation": "合并同名会话"
@@ -2776,7 +3518,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        182
+        280
       ]
     ],
     "translation": "当多个会话标题相同时,仅显示最新的会话"
@@ -2787,7 +3529,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/MobileSidebar.tsx",
-        249
+        270
       ],
       [
         "src/components/GlobalSidebar.tsx",
@@ -2802,7 +3544,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        353
+        496
       ]
     ],
     "translation": "主题"
@@ -2813,7 +3555,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        365
+        508
       ]
     ],
     "translation": "深色"
@@ -2824,7 +3566,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        374
+        517
       ]
     ],
     "translation": "选择您偏好的颜色主题"
@@ -2835,7 +3577,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        362
+        505
       ]
     ],
     "translation": "浅色"
@@ -2846,7 +3588,7 @@
     "origin": [
       [
         "src/components/SettingsControls.tsx",
-        368
+        511
       ]
     ],
     "translation": "跟随系统"
@@ -2860,7 +3602,7 @@
         68
       ]
     ],
-    "translation": "设置"
+    "translation": "Claude Code 设置"
   },
   "sidebar.back.to.projects": {
     "placeholders": {},
@@ -2868,7 +3610,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/MobileSidebar.tsx",
-        177
+        198
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
@@ -2883,7 +3625,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/MobileSidebar.tsx",
-        226
+        247
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
@@ -2909,7 +3651,7 @@
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/MobileSidebar.tsx",
-        202
+        223
       ],
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/SessionSidebar.tsx",
@@ -2929,13 +3671,85 @@
     ],
     "translation": "显示 TaskList"
   },
+  "spec_dashboard.dialog.init_required.description": {
+    "message": "Before using SpecForge features, you need to finish project initialization. Click \"Go initialize\" to continue.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/spec-dashboard/InitRequiredDialog.tsx",
+        56
+      ]
+    ],
+    "translation": "在使用 SpecForge 功能之前，需要先完成项目初始化。点击“去初始化”继续。"
+  },
+  "spec_dashboard.dialog.init_required.go": {
+    "message": "Go initialize",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/spec-dashboard/InitRequiredDialog.tsx",
+        86
+      ]
+    ],
+    "translation": "去初始化"
+  },
+  "spec_dashboard.dialog.init_required.title": {
+    "message": "Initialization required",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/spec-dashboard/InitRequiredDialog.tsx",
+        42
+      ]
+    ],
+    "translation": "需要初始化配置"
+  },
+  "spec_dashboard.dialog.workflow_upgrade.description": {
+    "message": "This project is not on the latest workflow version. Upgrade first to get the latest capabilities; your current profile configuration will be preserved.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/spec-dashboard/InitRequiredDialog.tsx",
+        51
+      ]
+    ],
+    "translation": "当前项目不是最新工作流版本。请先升级工作流版本以获得最新能力，升级时会保留当前 Profile 配置。"
+  },
+  "spec_dashboard.dialog.workflow_upgrade.go": {
+    "message": "Go upgrade workflow version",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/spec-dashboard/InitRequiredDialog.tsx",
+        81
+      ]
+    ],
+    "translation": "去升级工作流版本"
+  },
+  "spec_dashboard.dialog.workflow_upgrade.title": {
+    "message": "Workflow version update detected",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/spec-dashboard/InitRequiredDialog.tsx",
+        37
+      ]
+    ],
+    "translation": "检测到工作流版本更新"
+  },
   "system.info.tab.title": {
     "placeholders": {},
     "comments": [],
     "origin": [
       [
         "src/app/projects/[projectId]/sessions/[sessionId]/components/sessionSidebar/MobileSidebar.tsx",
-        271
+        292
       ]
     ],
     "translation": "显示系统信息"
@@ -2946,7 +3760,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        145
+        348
       ]
     ],
     "translation": "可用功能"
@@ -2957,7 +3771,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        111
+        241
       ]
     ],
     "translation": "Claude Code"
@@ -2968,7 +3782,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        88
+        218
       ]
     ],
     "translation": "版本和功能信息"
@@ -2979,7 +3793,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        116
+        246
       ]
     ],
     "translation": "可执行文件路径"
@@ -2990,7 +3804,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        37
+        48
       ]
     ],
     "translation": "使用 @anthropic-ai/claude-agent-sdk 而非 @anthropic-ai/claude-code"
@@ -3001,7 +3815,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        36
+        47
       ]
     ],
     "translation": "扩展 Agent 模式"
@@ -3012,7 +3826,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        57
+        68
       ]
     ],
     "translation": "启用直接执行技能功能"
@@ -3023,7 +3837,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        55
+        66
       ]
     ],
     "translation": "直接执行技能"
@@ -3034,7 +3848,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        43
+        54
       ]
     ],
     "translation": "侧链对话将单独存储在 agent-*.jsonl 文件中"
@@ -3045,7 +3859,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        41
+        52
       ]
     ],
     "translation": "侧链分离"
@@ -3056,7 +3870,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        31
+        42
       ]
     ],
     "translation": "在 Claude 执行工具前批准或拒绝,让您完全掌控操作"
@@ -3067,7 +3881,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        29
+        40
       ]
     ],
     "translation": "工具审批"
@@ -3078,7 +3892,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        63
+        74
       ]
     ],
     "translation": "功能信息不可用"
@@ -3089,7 +3903,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        50
+        61
       ]
     ],
     "translation": "SDK 消息包含 UUID 用于跟踪"
@@ -3100,7 +3914,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        48
+        59
       ]
     ],
     "translation": "SDK 消息 UUID"
@@ -3111,7 +3925,7 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        85
+        215
       ]
     ],
     "translation": "系统信息"
@@ -3122,11 +3936,11 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        121
+        251
       ],
       [
         "src/components/SystemInfoCard.tsx",
-        133
+        263
       ]
     ],
     "translation": "未知"
@@ -3137,11 +3951,11 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        100
+        230
       ],
       [
         "src/components/SystemInfoCard.tsx",
-        129
+        259
       ]
     ],
     "translation": "版本"
@@ -3152,10 +3966,130 @@
     "origin": [
       [
         "src/components/SystemInfoCard.tsx",
-        96
+        226
       ]
     ],
     "translation": "SpecForge Viewer"
+  },
+  "system_info.workflow.checking": {
+    "message": "Checking workflow status...",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SystemInfoCard.tsx",
+        277
+      ]
+    ],
+    "translation": "检查工作流状态中..."
+  },
+  "system_info.workflow.current_version": {
+    "message": "Current workflow version",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SystemInfoCard.tsx",
+        286
+      ]
+    ],
+    "translation": "当前工作流版本"
+  },
+  "system_info.workflow.up_to_date": {
+    "message": "Current workflow version is up to date.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SystemInfoCard.tsx",
+        332
+      ]
+    ],
+    "translation": "当前工作流版本已是最新。"
+  },
+  "system_info.workflow.update_available": {
+    "message": "A workflow version update is available. You can upgrade here directly.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SystemInfoCard.tsx",
+        300
+      ]
+    ],
+    "translation": "检测到工作流版本更新，可在此直接升级。"
+  },
+  "system_info.workflow.upgrade.failed": {
+    "message": "Workflow version upgrade failed.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SystemInfoCard.tsx",
+        201
+      ]
+    ],
+    "translation": "升级工作流版本失败。"
+  },
+  "system_info.workflow.upgrade.failed_retry": {
+    "message": "Workflow version upgrade failed, please retry.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SystemInfoCard.tsx",
+        182
+      ]
+    ],
+    "translation": "升级工作流版本失败，请重试。"
+  },
+  "system_info.workflow.upgrade.profile_not_found": {
+    "message": "Current profile configuration is missing. Save it in Spec Dashboard first.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SystemInfoCard.tsx",
+        163
+      ]
+    ],
+    "translation": "未找到当前 Profile 配置，请先在 Spec Dashboard 保存配置。"
+  },
+  "system_info.workflow.upgrade.success": {
+    "message": "Workflow version upgraded successfully.",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SystemInfoCard.tsx",
+        192
+      ]
+    ],
+    "translation": "工作流版本升级完成。"
+  },
+  "system_info.workflow.upgrade_button": {
+    "message": "Upgrade workflow version",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SystemInfoCard.tsx",
+        323
+      ]
+    ],
+    "translation": "升级工作流版本"
+  },
+  "system_info.workflow.upgrading": {
+    "message": "Upgrading...",
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/components/SystemInfoCard.tsx",
+        318
+      ]
+    ],
+    "translation": "升级中..."
   },
   "tasks.action.create_failed": {
     "message": "Failed to create task",
@@ -3167,7 +4101,7 @@
         217
       ]
     ],
-    "translation": ""
+    "translation": "创建任务失败"
   },
   "tasks.action.created": {
     "message": "Task created",
@@ -3179,7 +4113,7 @@
         212
       ]
     ],
-    "translation": ""
+    "translation": "任务创建成功"
   },
   "tasks.action.update_failed": {
     "message": "Failed to update task",
@@ -3191,7 +4125,7 @@
         234
       ]
     ],
-    "translation": ""
+    "translation": "更新任务失败"
   },
   "user.content.document.pdf": {
     "placeholders": {},
@@ -3269,5 +4203,274 @@
       ]
     ],
     "translation": "不支持显示此媒体格式"
+  },
+  "workspace.badge": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/ProjectList.tsx",
+        66
+      ]
+    ],
+    "translation": "工作区"
+  },
+  "workspace.new": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        169
+      ]
+    ],
+    "translation": "新建工作区"
+  },
+  "workspace.setup.action.back": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        411
+      ],
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        428
+      ]
+    ],
+    "translation": "上一步"
+  },
+  "workspace.setup.action.create": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        441
+      ]
+    ],
+    "translation": "创建工作区"
+  },
+  "workspace.setup.action.creating": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        438
+      ]
+    ],
+    "translation": "正在创建..."
+  },
+  "workspace.setup.action.next": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        393
+      ],
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        414
+      ]
+    ],
+    "translation": "下一步"
+  },
+  "workspace.setup.description": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        178
+      ]
+    ],
+    "translation": "创建一个新的工作区文件夹，然后添加要关联的项目目录。"
+  },
+  "workspace.setup.directories.add": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        336
+      ]
+    ],
+    "translation": "添加目录"
+  },
+  "workspace.setup.directories.confirm_add": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        324
+      ]
+    ],
+    "translation": "确认添加"
+  },
+  "workspace.setup.directories.duplicate": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        115
+      ]
+    ],
+    "translation": "该目录已添加"
+  },
+  "workspace.setup.directories.empty": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        278
+      ],
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        361
+      ]
+    ],
+    "translation": "尚未添加目录"
+  },
+  "workspace.setup.directories.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        273
+      ]
+    ],
+    "translation": "关联目录"
+  },
+  "workspace.setup.name.invalid": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        251
+      ]
+    ],
+    "translation": "名称包含非法字符（\\ / : * ? \" < > |）"
+  },
+  "workspace.setup.name.label": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        238
+      ]
+    ],
+    "translation": "工作区名称"
+  },
+  "workspace.setup.name.preview": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        261
+      ]
+    ],
+    "translation": "将创建于："
+  },
+  "workspace.setup.name.reserved": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        256
+      ]
+    ],
+    "translation": "该名称为系统保留名"
+  },
+  "workspace.setup.step1.parent_dir": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        232
+      ]
+    ],
+    "translation": "父目录"
+  },
+  "workspace.setup.step1.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        153
+      ]
+    ],
+    "translation": "位置"
+  },
+  "workspace.setup.step2.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        154
+      ]
+    ],
+    "translation": "目录"
+  },
+  "workspace.setup.step3.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        155
+      ],
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        346
+      ]
+    ],
+    "translation": "确认"
+  },
+  "workspace.setup.summary.directories": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        357
+      ]
+    ],
+    "translation": "关联目录"
+  },
+  "workspace.setup.summary.path": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        351
+      ]
+    ],
+    "translation": "工作区路径"
+  },
+  "workspace.setup.title": {
+    "placeholders": {},
+    "comments": [],
+    "origin": [
+      [
+        "src/app/projects/components/SetupWorkspaceDialog.tsx",
+        175
+      ]
+    ],
+    "translation": "创建新工作区"
   }
 }

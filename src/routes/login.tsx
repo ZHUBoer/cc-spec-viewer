@@ -54,17 +54,17 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/25 p-6 sm:p-8">
       {/* Decorative background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-r from-primary/3 to-transparent rounded-full blur-3xl" />
+        <div className="absolute -top-32 -right-24 h-72 w-72 rounded-full bg-primary/6 blur-3xl" />
+        <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-muted/70 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/4 blur-3xl" />
       </div>
 
-      <Card className="w-full max-w-md relative backdrop-blur-sm bg-card/95 border-border/50 shadow-xl animate-in fade-in-0 zoom-in-95 duration-300">
+      <Card className="relative w-full max-w-md border-border/80 bg-card/95 backdrop-blur-sm animate-in fade-in-0 zoom-in-95 duration-300">
         <CardHeader className="space-y-4 text-center pb-2">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 shadow-inner">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/8">
             <KeyRound className="w-8 h-8 text-primary" />
           </div>
           <div className="space-y-2">

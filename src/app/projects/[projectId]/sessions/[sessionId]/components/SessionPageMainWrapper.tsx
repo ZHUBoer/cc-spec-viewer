@@ -13,6 +13,8 @@ export const SessionPageMainWrapper: FC<{
   isMobileSidebarOpen: boolean;
   setIsMobileSidebarOpen: (open: boolean) => void;
   tab: Tab;
+  focusMessageId?: string;
+  focusSource?: "search";
   forceCollapsed?: boolean;
 }> = ({
   projectId,
@@ -20,6 +22,8 @@ export const SessionPageMainWrapper: FC<{
   isMobileSidebarOpen,
   setIsMobileSidebarOpen,
   tab,
+  focusMessageId,
+  focusSource,
   forceCollapsed,
 }) => {
   const { data: projectData } = useProject(projectId);
@@ -51,6 +55,8 @@ export const SessionPageMainWrapper: FC<{
         <SessionPageMain
           projectId={projectId}
           sessionId={sessionId}
+          focusMessageId={focusMessageId}
+          focusSource={focusSource}
           setIsMobileSidebarOpen={setIsMobileSidebarOpen}
           projectPath={projectPath}
           currentBranch={currentBranch}

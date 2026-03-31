@@ -1,0 +1,7 @@
+{
+  "app_id": "000000000",
+  "type": "SLNFES",
+  "node": "18",
+  "pm": "npm@9.9.1",
+  "overrides": true
+}

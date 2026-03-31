@@ -19,21 +19,23 @@ export function AuthenticatedProviders({
 }: AuthenticatedProvidersProps) {
   const { isAuthenticated } = useAuth();
 
-  // When not authenticated or still loading, render children without SSE providers
   if (!isAuthenticated) {
-    return <>{children}</>;
+    return (
+      <SearchProvider>
+        <ConfigCheckProvider>{children}</ConfigCheckProvider>
+      </SearchProvider>
+    );
   }
 
-  // When authenticated, wrap with SSE providers
   return (
-    <SSEProvider>
-      <SSEEventListeners>
-        <SyncSessionProcess>
-          <SearchProvider>
-            <ConfigCheckProvider>{children}</ConfigCheckProvider>
-          </SearchProvider>
-        </SyncSessionProcess>
-      </SSEEventListeners>
-    </SSEProvider>
+    <SearchProvider>
+      <ConfigCheckProvider>
+        <SSEProvider>
+          <SSEEventListeners>
+            <SyncSessionProcess>{children}</SyncSessionProcess>
+          </SSEEventListeners>
+        </SSEProvider>
+      </ConfigCheckProvider>
+    </SearchProvider>
   );
 }

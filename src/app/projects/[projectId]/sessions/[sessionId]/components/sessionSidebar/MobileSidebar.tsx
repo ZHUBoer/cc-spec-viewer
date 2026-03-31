@@ -29,6 +29,7 @@ interface MobileSidebarProps {
   projectId: string;
   isOpen: boolean;
   onClose: () => void;
+  onOpen?: () => void;
 }
 
 export const MobileSidebar: FC<MobileSidebarProps> = ({
@@ -36,6 +37,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
   projectId,
   isOpen,
   onClose,
+  onOpen,
 }) => {
   const { i18n } = useLingui();
   const [activeTab, setActiveTab] = useState<
@@ -80,6 +82,25 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
     }
   };
 
+  useEffect(() => {
+    const handleOpenSystemInfo = (event: CustomEvent) => {
+      if (event.detail?.projectId === projectId) {
+        setActiveTab("system-info");
+        onOpen?.();
+      }
+    };
+    window.addEventListener(
+      "specforge:open-system-info",
+      handleOpenSystemInfo as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "specforge:open-system-info",
+        handleOpenSystemInfo as EventListener,
+      );
+    };
+  }, [projectId, onOpen]);
+
   const renderContent = () => {
     switch (activeTab) {
       case "sessions":
@@ -123,7 +144,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
           </div>
         );
       case "system-info":
-        return <SystemInfoCard />;
+        return <SystemInfoCard projectId={projectId} />;
       default:
         return null;
     }
@@ -167,7 +188,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
               <TooltipTrigger asChild>
                 <Link
                   to="/projects"
-                  className="w-12 h-12 flex items-center justify-center border-b border-sidebar-border hover:bg-sidebar-accent transition-colors"
+                  className="w-12 h-12 flex items-center justify-center border-b border-sidebar-border hover:bg-muted/20 transition-colors"
                 >
                   <ArrowLeftIcon className="w-4 h-4 text-sidebar-foreground/70" />
                 </Link>
@@ -187,9 +208,9 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                     onClick={() => handleTabClick("sessions")}
                     className={cn(
                       "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
-                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      "hover:bg-sidebar-accent hover:text-sidebar-foreground",
                       activeTab === "sessions"
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                        ? "bg-muted/20 text-primary ring-1 ring-primary/12"
                         : "text-sidebar-foreground/70",
                     )}
                     data-testid="sessions-tab-button-mobile"
@@ -211,9 +232,9 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                     onClick={() => handleTabClick("mcp")}
                     className={cn(
                       "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
-                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      "hover:bg-sidebar-accent hover:text-sidebar-foreground",
                       activeTab === "mcp"
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                        ? "bg-muted/20 text-primary ring-1 ring-primary/12"
                         : "text-sidebar-foreground/70",
                     )}
                     data-testid="mcp-tab-button-mobile"
@@ -235,9 +256,9 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                     onClick={() => handleTabClick("settings")}
                     className={cn(
                       "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
-                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      "hover:bg-sidebar-accent hover:text-sidebar-foreground",
                       activeTab === "settings"
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                        ? "bg-muted/20 text-primary ring-1 ring-primary/12"
                         : "text-sidebar-foreground/70",
                     )}
                     data-testid="settings-tab-button-mobile"
@@ -257,9 +278,9 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
                     onClick={() => handleTabClick("system-info")}
                     className={cn(
                       "w-8 h-8 flex items-center justify-center rounded-md transition-colors cursor-pointer",
-                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      "hover:bg-sidebar-accent hover:text-sidebar-foreground",
                       activeTab === "system-info"
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                        ? "bg-muted/20 text-primary ring-1 ring-primary/12"
                         : "text-sidebar-foreground/70",
                     )}
                     data-testid="system-info-tab-button-mobile"
@@ -284,7 +305,7 @@ export const MobileSidebar: FC<MobileSidebarProps> = ({
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-8 w-8 p-0 hover:bg-sidebar-accent/50 cursor-pointer"
+              className="h-8 w-8 p-0 hover:bg-muted/20 cursor-pointer"
             >
               <XIcon className="w-4 h-4" />
             </Button>

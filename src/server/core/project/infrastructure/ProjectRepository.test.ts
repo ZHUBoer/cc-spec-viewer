@@ -20,6 +20,7 @@ describe("ProjectRepository", () => {
         projectName: "Test Project",
         projectPath: "/workspace",
         sessionCount: 5,
+        isWorkspace: false,
       };
 
       const FileSystemMock = testFileSystemLayer({
@@ -63,6 +64,7 @@ describe("ProjectRepository", () => {
         projectName: null,
         projectPath: null,
         sessionCount: 0,
+        isWorkspace: false,
       };
 
       const FileSystemMock = testFileSystemLayer({
@@ -104,6 +106,7 @@ describe("ProjectRepository", () => {
         projectName: null,
         projectPath: null,
         sessionCount: 0,
+        isWorkspace: false,
       };
 
       const program = Effect.gen(function* () {

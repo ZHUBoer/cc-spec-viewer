@@ -17,58 +17,60 @@ import {
 } from "../SSEContext";
 import { sseAtom } from "../store/sseAtom";
 
+type ListenerRegistration = {
+  id: symbol;
+  register: (sse: ReturnType<typeof callSSE>) => () => void;
+};
+
 export const ServerEventsProvider: FC<PropsWithChildren> = ({ children }) => {
   const sseRef = useRef<ReturnType<typeof callSSE> | null>(null);
-  const listenersRef = useRef<
-    Map<SSEEvent["kind"], Set<(event: SSEEvent) => void>>
-  >(new Map());
+  const listenersRef = useRef<Map<symbol, ListenerRegistration>>(new Map());
+  const activeCleanupRef = useRef<Map<symbol, () => void>>(new Map());
   const [, setSSEState] = useAtom(sseAtom);
   const queryClient = useQueryClient();
 
-  // Re-register all listeners to the current SSE instance
+  const unregisterAllListeners = useCallback(() => {
+    for (const cleanup of activeCleanupRef.current.values()) {
+      cleanup();
+    }
+    activeCleanupRef.current.clear();
+  }, []);
+
   const registerAllListeners = useCallback(
     (sse: ReturnType<typeof callSSE>) => {
-      const cleanups: (() => void)[] = [];
-      for (const [eventType, listeners] of listenersRef.current.entries()) {
-        for (const listener of listeners) {
-          const { removeEventListener } = sse.addEventListener(
-            eventType,
-            (event) => {
-              listener(
-                event as unknown as Extract<
-                  SSEEvent,
-                  { kind: typeof eventType }
-                >,
-              );
-            },
-          );
-          cleanups.push(removeEventListener);
-        }
+      unregisterAllListeners();
+      for (const registration of listenersRef.current.values()) {
+        const cleanup = registration.register(sse);
+        activeCleanupRef.current.set(registration.id, cleanup);
       }
-      return () =>
-        cleanups.forEach((cleanup) => {
-          cleanup();
-        });
     },
-    [],
+    [unregisterAllListeners],
   );
 
   useEffect(() => {
     const sse = callSSE({
       onOpen: async () => {
-        // 连接成功，更新状态
         setSSEState({
           isConnected: true,
         });
 
-        // Cannot subscribe to events during reconnection
-        // So invalidate uniformly when connection opens
         await queryClient.invalidateQueries({
           queryKey: projectListQuery.queryKey,
         });
-        // Also invalidate session detail queries to ensure current session is refreshed
-        // Pattern: ["projects", projectId, "sessions", sessionId]
         await queryClient.invalidateQueries({
+          type: "active",
+          predicate: (query) => {
+            const key = query.queryKey;
+            return (
+              Array.isArray(key) &&
+              key[0] === "projects" &&
+              typeof key[1] === "string" &&
+              key.length === 2
+            );
+          },
+        });
+        await queryClient.invalidateQueries({
+          type: "active",
           predicate: (query) => {
             const key = query.queryKey;
             return (
@@ -80,7 +82,6 @@ export const ServerEventsProvider: FC<PropsWithChildren> = ({ children }) => {
         });
       },
       onError: () => {
-        // 连接错误，更新状态
         setSSEState({
           isConnected: false,
         });
@@ -88,60 +89,50 @@ export const ServerEventsProvider: FC<PropsWithChildren> = ({ children }) => {
     });
     sseRef.current = sse;
 
-    // Register existing listeners to the new connection
-    const cleanupListeners = registerAllListeners(sse);
+    registerAllListeners(sse);
 
     const { removeEventListener } = sse.addEventListener("connect", (event) => {
       console.log("SSE connected", event);
     });
 
     return () => {
-      // clean up
-      cleanupListeners();
+      unregisterAllListeners();
       sse.cleanUp();
       removeEventListener();
       sseRef.current = null;
     };
-  }, [setSSEState, queryClient, registerAllListeners]);
+  }, [setSSEState, queryClient, registerAllListeners, unregisterAllListeners]);
 
   const addEventListener = useCallback(
     <T extends SSEEvent["kind"]>(eventType: T, listener: EventListener<T>) => {
-      // Store the listener in our internal map
-      if (!listenersRef.current.has(eventType)) {
-        listenersRef.current.set(eventType, new Set());
-      }
-      const listeners = listenersRef.current.get(eventType);
-      if (listeners) {
-        listeners.add(listener as (event: SSEEvent) => void);
-      }
+      const registrationId = Symbol(`sse-listener-${eventType}`);
+      const registration: ListenerRegistration = {
+        id: registrationId,
+        register: (sse) => {
+          const { removeEventListener } = sse.addEventListener(
+            eventType,
+            (event) => {
+              listener(event);
+            },
+          );
+          return removeEventListener;
+        },
+      };
 
-      // Register with the actual SSE connection if it exists
-      let sseCleanup: (() => void) | null = null;
+      listenersRef.current.set(registrationId, registration);
+
       if (sseRef.current) {
-        const { removeEventListener } = sseRef.current.addEventListener(
-          eventType,
-          (event) => {
-            // The listener expects the specific event type, so we cast it through unknown first
-            listener(event as unknown as Extract<SSEEvent, { kind: T }>);
-          },
-        );
-        sseCleanup = removeEventListener;
+        const cleanup = registration.register(sseRef.current);
+        activeCleanupRef.current.set(registrationId, cleanup);
       }
 
-      // Return cleanup function
       return () => {
-        // Remove from internal listeners
-        const listeners = listenersRef.current.get(eventType);
-        if (listeners) {
-          listeners.delete(listener as (event: SSEEvent) => void);
-          if (listeners.size === 0) {
-            listenersRef.current.delete(eventType);
-          }
+        const cleanup = activeCleanupRef.current.get(registrationId);
+        if (cleanup) {
+          cleanup();
+          activeCleanupRef.current.delete(registrationId);
         }
-        // Remove from SSE connection
-        if (sseCleanup) {
-          sseCleanup();
-        }
+        listenersRef.current.delete(registrationId);
       };
     },
     [],

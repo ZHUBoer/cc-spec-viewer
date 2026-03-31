@@ -5,14 +5,23 @@ import type {
   UpdateSchedulerJob,
 } from "@/server/core/scheduler/schema";
 import { honoClient } from "../lib/api/client";
+import {
+  getErrorMessage,
+  hasSuccessTrue,
+  isErrorResponseWithoutSuccessFlag,
+} from "../lib/api/responseGuards";
 
 /**
  * Query key factory for scheduler-related queries
  */
+type SchedulerAllKey = readonly ["scheduler"];
+type SchedulerJobsKey = readonly ["scheduler", "jobs"];
+type SchedulerJobKey = readonly ["scheduler", "job", string];
+
 const schedulerKeys = {
-  all: ["scheduler"] as const,
-  jobs: () => [...schedulerKeys.all, "jobs"] as const,
-  job: (id: string) => [...schedulerKeys.all, "job", id] as const,
+  all: ["scheduler"] satisfies SchedulerAllKey,
+  jobs: (): SchedulerJobsKey => ["scheduler", "jobs"],
+  job: (id: string): SchedulerJobKey => ["scheduler", "job", id],
 };
 
 /**
@@ -31,7 +40,11 @@ export const useSchedulerJobs = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch scheduler jobs");
       }
-      return response.json();
+      const data = await response.json();
+      if (isErrorResponseWithoutSuccessFlag(data)) {
+        throw new Error(data.error);
+      }
+      return data;
     },
   });
 };
@@ -69,7 +82,11 @@ export const useCreateSchedulerJob = () => {
         throw new Error("Failed to create scheduler job");
       }
 
-      return response.json();
+      const data = await response.json();
+      if (isErrorResponseWithoutSuccessFlag(data)) {
+        throw new Error(data.error);
+      }
+      return data;
     },
     onSuccess: () => {
       // Invalidate jobs list to refetch
@@ -117,7 +134,11 @@ export const useUpdateSchedulerJob = () => {
         throw new Error("Failed to update scheduler job");
       }
 
-      return response.json();
+      const data = await response.json();
+      if (isErrorResponseWithoutSuccessFlag(data)) {
+        throw new Error(data.error);
+      }
+      return data;
     },
     onSuccess: (data) => {
       // Invalidate specific job and jobs list
@@ -159,7 +180,13 @@ export const useDeleteSchedulerJob = () => {
         throw new Error("Failed to delete scheduler job");
       }
 
-      return response.json();
+      const data = await response.json();
+      if (!hasSuccessTrue(data)) {
+        throw new Error(
+          getErrorMessage(data) ?? "Failed to delete scheduler job",
+        );
+      }
+      return data;
     },
     onSuccess: (_, deletedId) => {
       // Invalidate specific job and jobs list

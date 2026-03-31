@@ -37,7 +37,7 @@ export const aggregateTokenUsageAndCost = (
   let totalOutputTokensUsd = 0;
   let totalCacheCreationUsd = 0;
   let totalCacheReadUsd = 0;
-  let lastModelName = "claude-3.5-sonnet"; // Default model
+  let lastModelName = "claude-sonnet-4.5"; // Default model
 
   // Process each file content
   for (const content of fileContents) {

@@ -13,6 +13,7 @@ import {
 import type { SessionMeta } from "../../types";
 import { aggregateTokenUsageAndCost } from "../functions/aggregateTokenUsageAndCost";
 import { getAgentSessionFilesForSession } from "../functions/getAgentSessionFilesForSession";
+import { countVisibleConversations } from "../functions/getVisibleSessionMeta";
 import { decodeSessionId } from "../functions/id";
 import { extractFirstUserMessage } from "../functions/isValidFirstMessage";
 
@@ -92,7 +93,10 @@ export class SessionMetaService extends Context.Tag("SessionMetaService")<
 
           const sessionPath = decodeSessionId(projectId, sessionId);
           const content = yield* fs.readFileString(sessionPath);
-          const lines = content.split("\n");
+          const lines = content
+            .split("\n")
+            .filter((line) => line.trim().length > 0);
+          const conversations = parseJsonl(content);
 
           const firstUserMessage = yield* getFirstUserMessage(
             sessionPath,
@@ -150,7 +154,7 @@ export class SessionMetaService extends Context.Tag("SessionMetaService")<
             aggregateTokenUsageAndCost(fileContents);
 
           const sessionMeta: SessionMeta = {
-            messageCount: lines.length,
+            messageCount: countVisibleConversations(conversations),
             firstUserMessage: firstUserMessage,
             cost: {
               totalUsd: totalCost.totalUsd,
@@ -158,6 +162,7 @@ export class SessionMetaService extends Context.Tag("SessionMetaService")<
               tokenUsage: totalCost.tokenUsage,
             },
             modelName: modelName,
+            isCostPending: false,
           };
 
           yield* Ref.update(sessionMetaCacheRef, (cache) => {

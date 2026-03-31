@@ -10,6 +10,8 @@ import { ProtectedRoute } from "../../../components/ProtectedRoute";
 const sessionSearchSchema = z.object({
   sessionId: z.string().optional(),
   tab: tabSchema.optional().default("sessions"),
+  focusMessageId: z.string().optional(),
+  focusSource: z.enum(["search"]).optional(),
 });
 
 export const Route = createFileRoute("/projects/$projectId/session")({
@@ -29,7 +31,7 @@ function RouteComponent() {
   const { data } = useProject(params.projectId);
   const projectName = data.pages[0]?.project.meta.projectName;
 
-  const { sessionId, tab } = search;
+  const { sessionId, tab, focusMessageId, focusSource } = search;
 
   const title = projectName
     ? `${projectName} - SpecForge Viewer`
@@ -42,6 +44,8 @@ function RouteComponent() {
         projectId={params.projectId}
         sessionId={sessionId}
         tab={tab}
+        focusMessageId={focusMessageId}
+        focusSource={focusSource}
       />
     </ProtectedRoute>
   );

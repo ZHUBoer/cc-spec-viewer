@@ -109,8 +109,7 @@ describe("TemplateProcessor - 变量替换", () => {
 
     const result = service.replaceVariables(content, variables);
 
-    expect(result).toContain("Hello Alice!");
-    expect(result).toContain("{{AGE}}"); // 未定义的变量保持原样
+    expect(result).toBe("Hello Alice! Your age is ."); // 未定义变量会被清理为空
   });
 
   it("应该处理特殊字符", async () => {

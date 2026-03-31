@@ -2,6 +2,7 @@ import {
   AlertCircle,
   FileText,
   HelpCircle,
+  Layers,
   Loader2,
   Minus,
   Plus,
@@ -25,15 +26,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { BuiltInProfile } from "./SpecDashboardService";
 import type { ProfileInfraCatalogSchema } from "./schemas";
 
 type ProfileInfraCatalog = z.infer<typeof ProfileInfraCatalogSchema>;
 
 export interface ProfileFormData {
+  displayName?: string;
+  custom_variables?: Record<string, string>;
   infra_catalog: ProfileInfraCatalog;
 }
 
@@ -133,28 +144,28 @@ const McpServerEditor: FC<{
         <button
           type="button"
           onClick={addEntry}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gradient-to-r from-primary/10 to-primary/5 text-primary hover:from-primary/20 hover:to-primary/10 border border-primary/30 rounded-lg transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
+          className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-primary transition-all duration-200 hover:border-primary/25 hover:bg-muted/35 active:scale-[0.99]"
         >
           <Plus className="w-4 h-4" />
           添加服务
         </button>
       </div>
       {entries.length === 0 ? (
-        <div className="text-sm text-sidebar-foreground/50 py-6 text-center border-2 border-dashed border-sidebar-border/40 rounded-xl bg-sidebar-accent/5 hover:bg-sidebar-accent/10 transition-colors duration-200">
+        <div className="py-6 text-center text-sm text-sidebar-foreground/50 border-2 border-dashed border-sidebar-border/40 rounded-xl bg-background hover:bg-muted/20 transition-colors duration-200">
           暂无 MCP 服务，点击上方"添加服务"按钮添加
         </div>
       ) : (
         entries.map(([key, server]) => (
           <div
             key={key}
-            className="p-5 bg-gradient-to-br from-sidebar-accent/15 to-sidebar-accent/5 border border-sidebar-border/50 rounded-xl space-y-3 shadow-sm hover:shadow-md transition-all duration-200 hover:border-sidebar-border/70"
+            className="space-y-3 rounded-xl border border-sidebar-border/50 bg-background p-5 transition-all duration-200 hover:border-sidebar-border/70"
           >
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={key}
                 onChange={(e) => updateEntry(key, e.target.value, server)}
-                className="flex-1 px-3.5 py-2.5 text-sm font-mono bg-sidebar-accent/10 border border-sidebar-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="flex-1 rounded-lg border border-sidebar-border/60 bg-background px-3.5 py-2.5 text-sm font-mono transition-all duration-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="服务名称"
               />
               <select
@@ -169,7 +180,7 @@ const McpServerEditor: FC<{
                     updateEntry(key, key, { ...server, type: newType });
                   }
                 }}
-                className="px-3.5 py-2.5 text-sm bg-sidebar-accent/10 border border-sidebar-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md"
+                className="cursor-pointer rounded-lg border border-sidebar-border/60 bg-background px-3.5 py-2.5 text-sm transition-all duration-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 <option value="http">HTTP</option>
                 <option value="sse">SSE</option>
@@ -190,7 +201,7 @@ const McpServerEditor: FC<{
                 onChange={(e) =>
                   updateEntry(key, key, { ...server, url: e.target.value })
                 }
-                className="w-full px-3.5 py-2.5 text-sm font-mono bg-sidebar-accent/10 border border-sidebar-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="w-full rounded-lg border border-sidebar-border/60 bg-background px-3.5 py-2.5 text-sm font-mono transition-all duration-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="URL"
               />
             )}
@@ -205,7 +216,7 @@ const McpServerEditor: FC<{
                       command: e.target.value,
                     })
                   }
-                  className="w-full px-3.5 py-2.5 text-sm font-mono bg-sidebar-accent/10 border border-sidebar-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-lg border border-sidebar-border/60 bg-background px-3.5 py-2.5 text-sm font-mono transition-all duration-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   placeholder="command"
                 />
                 <input
@@ -219,7 +230,7 @@ const McpServerEditor: FC<{
                         : undefined,
                     })
                   }
-                  className="w-full px-3.5 py-2.5 text-sm font-mono bg-sidebar-accent/10 border border-sidebar-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full rounded-lg border border-sidebar-border/60 bg-background px-3.5 py-2.5 text-sm font-mono transition-all duration-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   placeholder="args（空格分隔）"
                 />
               </>
@@ -256,7 +267,7 @@ const ToolDefinitionEditor: FC<{
       : "mcp__mcp名称__工具名称";
 
   return (
-    <div className="p-5 bg-gradient-to-br from-sidebar-accent/10 to-sidebar-accent/5 border border-sidebar-border/50 rounded-xl space-y-4 shadow-sm hover:shadow-md transition-all duration-200">
+    <div className="space-y-4 rounded-xl border border-sidebar-border/50 bg-background p-5 transition-all duration-200">
       <div className="space-y-2 pb-3 border-b border-sidebar-border/30">
         <span className="block text-sm font-semibold text-sidebar-foreground/90 tracking-wide">
           {label}
@@ -301,7 +312,7 @@ const StringListEditor: FC<{
               updated[index] = e.target.value;
               onChange(updated);
             }}
-            className="flex-1 px-3.5 py-2.5 text-sm font-mono bg-sidebar-accent/10 border border-sidebar-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 shadow-sm hover:shadow-md"
+            className="flex-1 rounded-lg border border-sidebar-border/60 bg-background px-3.5 py-2.5 text-sm font-mono transition-all duration-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             placeholder={placeholder}
           />
           <button
@@ -316,7 +327,7 @@ const StringListEditor: FC<{
       <button
         type="button"
         onClick={() => onChange([...items, ""])}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-gradient-to-r from-primary/10 to-primary/5 text-primary hover:from-primary/20 hover:to-primary/10 border border-primary/30 rounded-lg transition-all duration-200 cursor-pointer w-full justify-center shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-primary transition-all duration-200 hover:border-primary/25 hover:bg-muted/35 active:scale-[0.99]"
       >
         <Plus className="w-4 h-4" />
         添加项
@@ -375,6 +386,7 @@ const CodeExamplesEditor: FC<{
 
 // 创建空表单数据的辅助函数
 const createEmptyFormData = (): ProfileFormData => ({
+  custom_variables: {},
   infra_catalog: {
     mcp_server_providers: {},
     mcp_tool_definitions: {
@@ -412,9 +424,18 @@ export const ProfileConfigDialog: FC<{
   onClose: () => void;
   initialData: ProfileFormData | null;
   loading?: boolean;
-  onSave: (data: ProfileFormData) => void;
+  onSave: (data: ProfileFormData) => void | Promise<void>;
   saving?: boolean;
-}> = ({ open, onClose, initialData, loading, onSave, saving }) => {
+  availableProfiles?: BuiltInProfile[];
+}> = ({
+  open,
+  onClose,
+  initialData,
+  loading,
+  onSave,
+  saving,
+  availableProfiles = [],
+}) => {
   const [formData, setFormData] = useState<ProfileFormData>(() =>
     initialData
       ? JSON.parse(JSON.stringify(initialData))
@@ -423,25 +444,34 @@ export const ProfileConfigDialog: FC<{
   const [error, setError] = useState<string | null>(null);
   const [jsonInput, setJsonInput] = useState("");
   const [showJsonImport, setShowJsonImport] = useState(false);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dsGitId = useId();
   const dsSkillsId = useId();
 
   // 当弹窗打开且 initialData 变化时重置表单
-  // 只在弹窗打开时同步数据，避免在用户编辑过程中被旧数据覆盖
-  // 保存过程中（saving 为 true）不更新 formData，避免保存时数据被覆盖
   useEffect(() => {
     if (!open) return;
-    // 保存过程中不更新 formData
     if (saving) return;
     if (initialData) {
-      // 深拷贝防止修改原数据
       setFormData(JSON.parse(JSON.stringify(initialData)));
     } else {
-      // 没有 initialData 时，初始化空表单
       setFormData(createEmptyFormData());
     }
   }, [open, initialData, saving]);
+
+  // 处理 Profile 切换
+  const handleProfileChange = (profileId: string) => {
+    setSelectedProfileId(profileId);
+    const profile = availableProfiles.find((p) => p.id === profileId);
+    if (profile) {
+      setFormData({
+        displayName: profile.displayName,
+        custom_variables: profile.custom_variables || {},
+        infra_catalog: JSON.parse(JSON.stringify(profile.infra_catalog)),
+      });
+    }
+  };
 
   const updateInfraCatalog = useCallback(
     (patch: Partial<ProfileInfraCatalog>) => {
@@ -463,8 +493,10 @@ export const ProfileConfigDialog: FC<{
         return;
       }
 
-      // 验证并设置表单数据，强制使用默认 description
+      // 验证并设置表单数据
       const importedData: ProfileFormData = {
+        displayName: parsed.displayName,
+        custom_variables: parsed.custom_variables || {},
         infra_catalog: parsed.infra_catalog,
       };
 
@@ -537,7 +569,6 @@ export const ProfileConfigDialog: FC<{
       };
       reader.readAsText(file);
 
-      // 重置 input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -547,63 +578,48 @@ export const ProfileConfigDialog: FC<{
 
   if (!open) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setError(null);
-
-    // 基本校验
-    const { mcp_tool_definitions } = formData.infra_catalog;
-    if (
-      mcp_tool_definitions.overview.tools.length === 0 &&
-      mcp_tool_definitions.search.tools.length === 0 &&
-      mcp_tool_definitions.specifications.tools.length === 0
-    ) {
-      setError("至少需要配置一个 MCP Tool");
-      return;
+    try {
+      await onSave(formData);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
     }
-
-    onSave(formData);
   };
 
   return (
     <Dialog
       open={open}
       onOpenChange={(isOpen) => {
-        // 不允许通过点击背景或 ESC 键关闭，只能通过取消/保存按钮关闭
         if (!isOpen) {
-          // 不执行任何操作，保持弹窗打开
           return;
         }
       }}
     >
       <DialogContent
-        className="max-w-[720px] max-h-[85vh] flex flex-col p-0 bg-sidebar/95 backdrop-blur-sm border border-sidebar-border/60 shadow-2xl shadow-black/20"
+        className="max-h-[85vh] max-w-[720px] flex flex-col border border-sidebar-border/60 bg-sidebar/95 p-0 shadow-[0_22px_60px_-34px_rgba(7,17,31,0.55)] backdrop-blur-sm"
         showCloseButton={false}
         onInteractOutside={(e) => {
-          // 阻止点击背景关闭
           e.preventDefault();
         }}
         onEscapeKeyDown={(e) => {
-          // 阻止 ESC 键关闭
           e.preventDefault();
         }}
       >
         {/* 标题栏 */}
-        <DialogHeader className="px-6 py-4 border-b border-sidebar-border/40 bg-gradient-to-b from-sidebar-accent/5 to-transparent shrink-0">
+        <DialogHeader className="px-6 py-4 border-b border-sidebar-border/40 bg-background shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-3 text-lg font-semibold tracking-tight">
-              <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
+              <div className="rounded-lg border border-primary/20 bg-primary/8 p-1.5">
                 <Settings2 className="w-5 h-5 text-primary" />
               </div>
-              <span className="bg-gradient-to-r from-sidebar-foreground to-sidebar-foreground/80 bg-clip-text text-transparent">
-                Profile 配置
-              </span>
+              <span>Profile 配置</span>
             </DialogTitle>
             <div className="flex items-center gap-2">
-              {/* JSON 导入按钮 */}
               <button
                 type="button"
                 onClick={() => setShowJsonImport(!showJsonImport)}
-                className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 rounded-lg transition-all duration-200 cursor-pointer border border-sidebar-border/40 hover:border-sidebar-border/60 hover:shadow-sm"
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-sidebar-border/40 px-3.5 py-2 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:border-sidebar-border/60 hover:bg-muted/25 hover:text-sidebar-foreground"
               >
                 <FileText className="w-4 h-4" />
                 {showJsonImport ? "表单编辑" : "JSON 导入"}
@@ -636,7 +652,7 @@ export const ProfileConfigDialog: FC<{
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-primary hover:bg-sidebar-accent/50 rounded-md transition-colors cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-primary hover:bg-muted/30 rounded-md transition-colors cursor-pointer"
                   >
                     <Upload className="w-4 h-4" />
                     上传文件
@@ -645,13 +661,46 @@ export const ProfileConfigDialog: FC<{
                 <textarea
                   value={jsonInput}
                   onChange={(e) => setJsonInput(e.target.value)}
-                  className="w-full h-96 px-4 py-3 text-sm font-mono bg-sidebar-accent/10 border border-sidebar-border/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 resize-none shadow-sm hover:shadow-md"
+                  className="h-96 w-full resize-none rounded-xl border border-sidebar-border/60 bg-background px-4 py-3 text-sm font-mono transition-all duration-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   placeholder="粘贴 JSON 配置或点击上方按钮上传文件..."
                 />
               </div>
             </div>
           ) : (
             <>
+              {/* Profile 选择器 */}
+              {availableProfiles.length > 0 && (
+                <section className="space-y-3 pb-6 border-b border-sidebar-border/40">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-sidebar-foreground/90 uppercase tracking-wider mb-2">
+                    <Layers className="w-4 h-4 text-primary" />
+                    选择预设 Profile
+                  </div>
+                  <Select
+                    value={selectedProfileId}
+                    onValueChange={handleProfileChange}
+                  >
+                    <SelectTrigger className="w-full bg-background border-sidebar-border/60 hover:bg-muted/25 transition-all duration-200">
+                      <SelectValue placeholder="从内置列表中选择一个 Profile 进行初始化" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableProfiles.map((profile) => (
+                        <SelectItem key={profile.id} value={profile.id}>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-medium">
+                              {profile.displayName}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-sidebar-foreground/50">
+                    选择预设 Profile
+                    会自动填充下方的配置。你也可以在填充后手动修改。
+                  </p>
+                </section>
+              )}
+
               {/* MCP Server Providers */}
               <section className="space-y-5 pb-7 border-b border-sidebar-border/40">
                 <h3 className="text-base font-semibold text-sidebar-foreground/90 uppercase tracking-wider">
@@ -764,7 +813,7 @@ export const ProfileConfigDialog: FC<{
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <div className="p-5 bg-gradient-to-br from-sidebar-accent/10 to-sidebar-accent/5 border border-sidebar-border/50 rounded-xl space-y-4 shadow-sm hover:shadow-md transition-all duration-200">
+                <div className="space-y-4 rounded-xl border border-sidebar-border/50 bg-background p-5 transition-all duration-200">
                   <div className="flex items-start gap-2 pb-2 border-b border-sidebar-border/30">
                     <span className="text-sm font-semibold text-sidebar-foreground/90 shrink-0">
                       描述：
@@ -797,7 +846,7 @@ export const ProfileConfigDialog: FC<{
                           },
                         })
                       }
-                      className="w-full px-3.5 py-2.5 text-sm font-mono bg-sidebar-accent/10 border border-sidebar-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 shadow-sm hover:shadow-md"
+                      className="w-full rounded-lg border border-sidebar-border/60 bg-background px-3.5 py-2.5 text-sm font-mono transition-all duration-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
                       placeholder="http://git.example.com/repo.git"
                     />
                   </div>
@@ -849,7 +898,7 @@ export const ProfileConfigDialog: FC<{
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <div className="p-5 bg-gradient-to-br from-sidebar-accent/10 to-sidebar-accent/5 border border-sidebar-border/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                <div className="rounded-xl border border-sidebar-border/50 bg-background p-5 transition-all duration-200">
                   <CodeExamplesEditor
                     paths={
                       formData.infra_catalog.code_examples?.examples?.[0]
@@ -876,7 +925,7 @@ export const ProfileConfigDialog: FC<{
         </div>
 
         {/* 底部操作栏 */}
-        <div className="px-6 py-4 border-t border-sidebar-border/40 bg-gradient-to-b from-transparent to-sidebar-accent/5 flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 border-t border-sidebar-border/40 bg-background flex items-center justify-between shrink-0">
           <div className="flex-1">
             {error && (
               <div className="flex items-center gap-2 text-sm text-red-500 font-medium animate-in fade-in slide-in-from-left-2 duration-200">
@@ -889,7 +938,7 @@ export const ProfileConfigDialog: FC<{
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 rounded-lg transition-all duration-200 cursor-pointer border border-sidebar-border/40 hover:border-sidebar-border/60 hover:shadow-sm"
+              className="cursor-pointer rounded-lg border border-sidebar-border/40 px-5 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-all duration-200 hover:border-sidebar-border/60 hover:bg-muted/25 hover:text-sidebar-foreground"
             >
               取消
             </button>
@@ -898,7 +947,7 @@ export const ProfileConfigDialog: FC<{
                 type="button"
                 onClick={() => handleJsonImport(jsonInput)}
                 disabled={!jsonInput.trim() || saving || loading}
-                className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-lg hover:from-primary/90 hover:to-primary/80 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-primary/80 bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-200 hover:border-primary hover:bg-primary/92 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.99]"
               >
                 {saving ? (
                   <>
@@ -917,7 +966,7 @@ export const ProfileConfigDialog: FC<{
                 type="button"
                 onClick={handleSave}
                 disabled={saving || loading}
-                className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-lg hover:from-primary/90 hover:to-primary/80 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-primary/80 bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-200 hover:border-primary hover:bg-primary/92 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.99]"
               >
                 {saving ? (
                   <>

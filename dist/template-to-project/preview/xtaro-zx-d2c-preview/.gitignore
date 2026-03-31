@@ -1,0 +1,16 @@
+pnpm-lock.yaml
+node_modules/
+package-lock.json
+
+dist
+**/.xtaro_temp/
+jest_cache
+coverage
+
+.logdev.txt
+.logdebug.txt
+
+xtaro_performance_mini.json
+xtaro_performance_h5.json
+xtaro_performance_crn.json
+.next/

@@ -1,20 +1,10 @@
 {
   "mcpServers": {
-    "xtaro-zx-library": {
-      "type": "http",
-      "url": "http://xtaro-zx-mcp-function.fws.faas.qa.nt.ctripcorp.com/mcp"
-    },
-    "ztrip-nfes-mcp": {
-      "type": "http",
-      "url": "http://ztrip-nfes-mcp-function.fws.faas.qa.nt.ctripcorp.com/mcp"
-    },
-    "contract-doc": {
-      "url": "http://trn-tool-mcp-server-function.faas.ctripcorp.com/mcp",
-      "type": "http"
-    },
-    "mermaid-mcp": {
-      "type": "http",
-      "url": "http://ticket.fws.tripqate.com/api/mcp/mermaid-mcp/mcp"
+    "gitnexus": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "gitnexus@latest", "mcp"],
+      "env": {}
     }
   }
 }

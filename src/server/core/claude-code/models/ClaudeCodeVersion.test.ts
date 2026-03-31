@@ -18,6 +18,36 @@ describe("ClaudeCodeVersion.fromCLIString", () => {
       expect(version).toBeNull();
     });
   });
+
+  describe("with Windows CLI output formats", () => {
+    it("should parse version with \\r\\n line endings", () => {
+      const version = ClaudeCodeVersion.fromCLIString(
+        "2.1.68 (Claude Code)\r\n",
+      );
+      expect(version).toStrictEqual({ major: 2, minor: 1, patch: 68 });
+    });
+
+    it("should parse version from multi-line output with command prompt prefix", () => {
+      const version = ClaudeCodeVersion.fromCLIString(
+        "C:\\Users\\HW_Liu>claude --version\r\n2.1.68 (Claude Code)\r\n",
+      );
+      expect(version).toStrictEqual({ major: 2, minor: 1, patch: 68 });
+    });
+
+    it("should parse version from Unix multi-line output", () => {
+      const version = ClaudeCodeVersion.fromCLIString(
+        "some preamble line\n1.0.125 (Claude Code)\n",
+      );
+      expect(version).toStrictEqual({ major: 1, minor: 0, patch: 125 });
+    });
+
+    it("should return null when multi-line output contains no valid version", () => {
+      const version = ClaudeCodeVersion.fromCLIString(
+        "C:\\Users\\HW_Liu>claude --version\r\nno version here\r\n",
+      );
+      expect(version).toBeNull();
+    });
+  });
 });
 
 describe("ClaudeCodeVersion.versionText", () => {

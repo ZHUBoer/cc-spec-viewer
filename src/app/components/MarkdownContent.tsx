@@ -1,21 +1,127 @@
 import { type FC, memo, useMemo } from "react";
 import Markdown from "react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  oneDark,
-  oneLight,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
+import { generateMarkdownHeadingId } from "../../components/spec-dashboard/views/document-utils";
 import { Mermaid } from "../../components/ui/Mermaid";
-import { useTheme } from "../../hooks/useTheme";
+import { CodeBlock } from "./CodeBlock";
 import { MarkdownLink } from "./MarkdownLink";
+import { SpecNotificationCard } from "./SpecNotificationCard";
 
-// Utility to generate IDs from text
-const generateId = (text: string) => {
-  return text
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\u4e00-\u9fa5-]/g, ""); // Keep Chinese characters
+type SpecArtifact = "spec" | "proposal" | "design" | "tasks";
+type ParsedSegment =
+  | { type: "markdown"; key: string; content: string }
+  | {
+      type: "spec-card";
+      key: string;
+      artifact: SpecArtifact;
+      changeId?: string;
+      title: string;
+      description: string;
+    };
+
+const SPEC_NOTIFICATION_REGEX =
+  /<spec-notification\b([\s\S]*?)(?:\s*\/>|>\s*<\/spec-notification>)/gi;
+const SPEC_NOTIFICATION_ATTR_REGEX = /(\w+)=(?:"([^"]*)"|'([^']*)')/g;
+
+const isSpecArtifact = (value: string | undefined): value is SpecArtifact => {
+  return (
+    value === "spec" ||
+    value === "proposal" ||
+    value === "design" ||
+    value === "tasks"
+  );
+};
+
+const parseSpecNotificationAttributes = (
+  attrsStr: string,
+): {
+  artifact?: SpecArtifact;
+  changeId?: string;
+  title?: string;
+  description?: string;
+} => {
+  const attrs: Record<string, string> = {};
+  SPEC_NOTIFICATION_ATTR_REGEX.lastIndex = 0;
+  let attrMatch = SPEC_NOTIFICATION_ATTR_REGEX.exec(attrsStr);
+
+  while (attrMatch !== null) {
+    const m = attrMatch;
+    if (m[1] !== undefined && (m[2] !== undefined || m[3] !== undefined)) {
+      attrs[m[1]] = m[2] ?? m[3] ?? "";
+    }
+    attrMatch = SPEC_NOTIFICATION_ATTR_REGEX.exec(attrsStr);
+  }
+
+  const artifact = attrs.artifact;
+
+  return {
+    artifact: isSpecArtifact(artifact) ? artifact : undefined,
+    changeId: attrs.changeId ?? attrs.changeid,
+    title: attrs.title,
+    description: attrs.description,
+  };
+};
+
+const splitBySpecNotification = (content: string): ParsedSegment[] => {
+  const segments: ParsedSegment[] = [];
+  let lastIndex = 0;
+  SPEC_NOTIFICATION_REGEX.lastIndex = 0;
+  let match = SPEC_NOTIFICATION_REGEX.exec(content);
+
+  while (match !== null) {
+    const fullTag = match[0] ?? "";
+    const attrsStr = match[1] ?? "";
+
+    if (match.index > lastIndex) {
+      const markdownStart = lastIndex;
+      const markdownEnd = match.index;
+      segments.push({
+        type: "markdown",
+        key: `md-${markdownStart}-${markdownEnd}`,
+        content: content.slice(markdownStart, markdownEnd),
+      });
+    }
+
+    const { artifact, changeId, title, description } =
+      parseSpecNotificationAttributes(attrsStr);
+
+    if (
+      artifact !== undefined &&
+      title !== undefined &&
+      description !== undefined &&
+      ["spec", "proposal", "design", "tasks"].includes(artifact)
+    ) {
+      segments.push({
+        type: "spec-card",
+        key: `spec-${match.index}-${match.index + fullTag.length}`,
+        artifact,
+        changeId,
+        title,
+        description,
+      });
+    } else {
+      segments.push({
+        type: "markdown",
+        key: `md-${match.index}-${match.index + fullTag.length}`,
+        content: fullTag,
+      });
+    }
+
+    lastIndex = match.index + fullTag.length;
+    match = SPEC_NOTIFICATION_REGEX.exec(content);
+  }
+
+  if (lastIndex < content.length) {
+    segments.push({
+      type: "markdown",
+      key: `md-${lastIndex}-${content.length}`,
+      content: content.slice(lastIndex),
+    });
+  }
+
+  return segments.length > 0
+    ? segments
+    : [{ type: "markdown", key: "md-0-root", content }];
 };
 
 interface MarkdownContentProps {
@@ -24,10 +130,13 @@ interface MarkdownContentProps {
 }
 
 // 将 components 对象提取到组件外部，避免每次渲染都重新创建
-const createMarkdownComponents = (syntaxTheme: typeof oneDark) => ({
+const createMarkdownComponents = () => ({
   // biome-ignore lint/suspicious/noExplicitAny: React Markdown 组件 props 类型由库动态提供
   h1({ children, ...props }: any) {
-    const id = typeof children === "string" ? generateId(children) : undefined;
+    const id =
+      typeof children === "string"
+        ? generateMarkdownHeadingId(children)
+        : undefined;
     return (
       <h1
         id={id}
@@ -40,7 +149,10 @@ const createMarkdownComponents = (syntaxTheme: typeof oneDark) => ({
   },
   // biome-ignore lint/suspicious/noExplicitAny: React Markdown 组件 props 类型由库动态提供
   h2({ children, ...props }: any) {
-    const id = typeof children === "string" ? generateId(children) : undefined;
+    const id =
+      typeof children === "string"
+        ? generateMarkdownHeadingId(children)
+        : undefined;
     return (
       <h2
         id={id}
@@ -53,7 +165,10 @@ const createMarkdownComponents = (syntaxTheme: typeof oneDark) => ({
   },
   // biome-ignore lint/suspicious/noExplicitAny: React Markdown 组件 props 类型由库动态提供
   h3({ children, ...props }: any) {
-    const id = typeof children === "string" ? generateId(children) : undefined;
+    const id =
+      typeof children === "string"
+        ? generateMarkdownHeadingId(children)
+        : undefined;
     return (
       <h3
         id={id}
@@ -66,7 +181,10 @@ const createMarkdownComponents = (syntaxTheme: typeof oneDark) => ({
   },
   // biome-ignore lint/suspicious/noExplicitAny: React Markdown 组件 props 类型由库动态提供
   h4({ children, ...props }: any) {
-    const id = typeof children === "string" ? generateId(children) : undefined;
+    const id =
+      typeof children === "string"
+        ? generateMarkdownHeadingId(children)
+        : undefined;
     return (
       <h4
         id={id}
@@ -79,7 +197,10 @@ const createMarkdownComponents = (syntaxTheme: typeof oneDark) => ({
   },
   // biome-ignore lint/suspicious/noExplicitAny: React Markdown 组件 props 类型由库动态提供
   h5({ children, ...props }: any) {
-    const id = typeof children === "string" ? generateId(children) : undefined;
+    const id =
+      typeof children === "string"
+        ? generateMarkdownHeadingId(children)
+        : undefined;
     return (
       <h5
         id={id}
@@ -92,7 +213,10 @@ const createMarkdownComponents = (syntaxTheme: typeof oneDark) => ({
   },
   // biome-ignore lint/suspicious/noExplicitAny: React Markdown 组件 props 类型由库动态提供
   h6({ children, ...props }: any) {
-    const id = typeof children === "string" ? generateId(children) : undefined;
+    const id =
+      typeof children === "string"
+        ? generateMarkdownHeadingId(children)
+        : undefined;
     return (
       <h6
         id={id}
@@ -106,7 +230,10 @@ const createMarkdownComponents = (syntaxTheme: typeof oneDark) => ({
   // biome-ignore lint/suspicious/noExplicitAny: React Markdown 组件 props 类型由库动态提供
   p({ children, ...props }: any) {
     return (
-      <p className="mb-2 leading-7 text-foreground break-all" {...props}>
+      <p
+        className="mb-2 leading-7 text-foreground break-all whitespace-pre-wrap"
+        {...props}
+      >
         {children}
       </p>
     );
@@ -136,9 +263,10 @@ const createMarkdownComponents = (syntaxTheme: typeof oneDark) => ({
     );
   },
   // biome-ignore lint/suspicious/noExplicitAny: React Markdown 组件 props 类型由库动态提供
-  code({ className, children, ...props }: any) {
+  code({ className, children, node, ...props }: any) {
     const match = /language-(\w+)/.exec(className || "");
-    const isInline = !match;
+    const isInline =
+      node?.position?.start.line === node?.position?.end.line && !match;
     const language = match ? match[1] : "";
 
     if (isInline) {
@@ -156,35 +284,13 @@ const createMarkdownComponents = (syntaxTheme: typeof oneDark) => ({
       return <Mermaid chart={String(children)} />;
     }
 
-    return (
-      <div className="relative my-2">
-        <div className="flex items-center justify-between bg-muted/30 px-4 py-2 border-b border-border rounded-t-lg">
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {language}
-          </span>
-        </div>
-        <SyntaxHighlighter
-          style={syntaxTheme}
-          language={language}
-          PreTag="div"
-          className="!mt-0 !rounded-t-none !rounded-b-lg !border-t-0 !border !border-border"
-          customStyle={{
-            margin: 0,
-            borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
-          }}
-          wrapLines={false}
-          wrapLongLines={false}
-          showLineNumbers={false}
-        >
-          {String(children).replace(/\n$/, "")}
-        </SyntaxHighlighter>
-      </div>
-    );
+    return <CodeBlock code={String(children)} language={language} />;
   },
   // biome-ignore lint/suspicious/noExplicitAny: React Markdown 组件 props 类型由库动态提供
-  pre({ children, ...props }: any) {
-    return <pre {...props}>{children}</pre>;
+  pre({ children }: any) {
+    // code 渲染器已经完整处理 fenced code/mermaid，继续包一层 pre
+    // 会产生 <pre><div /></pre> 这类非法 DOM 结构。
+    return children;
   },
   // biome-ignore lint/suspicious/noExplicitAny: React Markdown 组件 props 类型由库动态提供
   blockquote({ children, ...props }: any) {
@@ -270,25 +376,42 @@ const createMarkdownComponents = (syntaxTheme: typeof oneDark) => ({
 
 export const MarkdownContent: FC<MarkdownContentProps> = memo(
   ({ content, className = "" }) => {
-    const { resolvedTheme } = useTheme();
-    const syntaxTheme = useMemo(
-      () => (resolvedTheme === "dark" ? oneDark : oneLight),
-      [resolvedTheme],
-    );
-
-    // 使用 useMemo 缓存 components 对象，只有当 syntaxTheme 变化时才重新创建
-    const components = useMemo(
-      () => createMarkdownComponents(syntaxTheme),
-      [syntaxTheme],
-    );
+    const components = useMemo(() => createMarkdownComponents(), []);
+    const segments = useMemo(() => splitBySpecNotification(content), [content]);
 
     return (
       <div
-        className={`prose prose-neutral dark:prose-invert max-w-none ${className}`}
+        className={`notranslate prose prose-neutral dark:prose-invert w-full min-w-0 max-w-full ${className}`}
+        translate="no"
       >
-        <Markdown remarkPlugins={[remarkGfm]} components={components}>
-          {content}
-        </Markdown>
+        {segments.map((segment) => {
+          if (segment.type === "spec-card") {
+            return (
+              <div key={segment.key} className="my-4">
+                <SpecNotificationCard
+                  artifact={segment.artifact}
+                  changeId={segment.changeId}
+                  title={segment.title}
+                  description={segment.description}
+                />
+              </div>
+            );
+          }
+
+          if (segment.content.length === 0) {
+            return null;
+          }
+
+          return (
+            <Markdown
+              key={segment.key}
+              remarkPlugins={[remarkGfm]}
+              components={components}
+            >
+              {segment.content}
+            </Markdown>
+          );
+        })}
       </div>
     );
   },

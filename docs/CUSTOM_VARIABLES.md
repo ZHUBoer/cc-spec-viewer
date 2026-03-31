@@ -115,7 +115,7 @@ API 基础 URL：{{API_BASE_URL}}
 
 1. **类型限制**：所有变量值必须是字符串（Zod Schema 强制验证）
 2. **大小写敏感**：`{{VAR}}` 和 `{{var}}` 是不同的变量
-3. **未定义变量**：如果模板中使用了未定义的变量，该变量占位符会原样保留（不会被替换）
+3. **未定义变量**：如果模板中使用了未定义的变量，占位符会被清理为空字符串（避免残留模板语法）
 4. **JSON 格式**：确保 Profile JSON 格式正确，否则加载会失败
 
 ## 技术实现
@@ -175,6 +175,7 @@ pnpm fix        # 修复格式问题
 |------|------|
 | `src/server/core/openspec/services/ProfileConfigService.ts` | Profile 配置管理 |
 | `src/server/core/openspec/services/TemplateProcessor.ts` | 模板处理引擎 |
+| `docs/TEMPLATE_VARIABLE_MODEL.md` | 模板变量分层模型与默认值策略 |
 | `template-to-project/profiles/example-custom-variables.json` | 示例 Profile |
 | `template-to-project/.claude/agents/quality-gate-agent.md` | 使用变量的模板示例 |
 

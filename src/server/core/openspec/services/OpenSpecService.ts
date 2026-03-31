@@ -1,5 +1,12 @@
 import { FileSystem, Path } from "@effect/platform";
 import { Context, Data, Effect, Layer, Option } from "effect";
+import {
+  type D2CArtifactFile,
+  type D2CInfo,
+  extractD2CInfoFromSpec,
+  mergeD2CInfo,
+  parseD2CManifest,
+} from "../../../../lib/openspec/d2c";
 import { ProjectRepository } from "../../project/infrastructure/ProjectRepository";
 
 class ProjectPathNotFoundError extends Data.TaggedError(
@@ -27,21 +34,43 @@ export interface OpenSpecChangeItem {
     | "archived";
   description?: string;
   updatedAt: string;
+  d2c?: D2CInfo;
 }
 
 export interface OpenSpecChangeDetails extends OpenSpecChangeItem {
+  specContent?: string;
   proposalContent?: string;
   designContent?: string;
   tasksContent?: string;
   testsContent?: string; // New: Tests content
   specsContent?: string; // New: Root specs content
   specFiles: { name: string; content: string }[];
+  d2c?: D2CInfo;
 }
 
 const LayerImpl = Effect.gen(function* () {
   const projectRepository = yield* ProjectRepository;
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
+
+  const readPrimarySpecContent = (dirPath: string) =>
+    Effect.gen(function* () {
+      const specPath = path.join(dirPath, "spec.md");
+      const proposalPath = path.join(dirPath, "proposal.md");
+
+      const specContent = (yield* fs.exists(specPath))
+        ? yield* fs.readFileString(specPath)
+        : undefined;
+      const proposalContent = (yield* fs.exists(proposalPath))
+        ? yield* fs.readFileString(proposalPath)
+        : undefined;
+
+      return {
+        specContent,
+        proposalContent,
+        primaryContent: specContent ?? proposalContent,
+      };
+    });
 
   /**
    * 检查 tasks.md 中的所有任务是否已完成
@@ -124,12 +153,11 @@ const LayerImpl = Effect.gen(function* () {
         const stat = yield* fs.stat(entryPath);
 
         if (stat.type === "Directory") {
-          // Try to extract description from proposal.md
+          // Try to extract description from spec.md, fallback to proposal.md
           let description = "";
-          const proposalPath = path.join(entryPath, "proposal.md");
-          if (yield* fs.exists(proposalPath)) {
-            const content = yield* fs.readFileString(proposalPath);
-            const lines = content.split("\n");
+          const { primaryContent } = yield* readPrimarySpecContent(entryPath);
+          if (primaryContent) {
+            const lines = primaryContent.split("\n");
             for (const line of lines) {
               const trimmed = line.trim();
               if (
@@ -142,6 +170,8 @@ const LayerImpl = Effect.gen(function* () {
               }
             }
           }
+
+          const d2c = extractD2CInfoFromSpec(primaryContent);
 
           // Read design content for status inference
           const designPath = path.join(entryPath, "design.md");
@@ -169,6 +199,7 @@ const LayerImpl = Effect.gen(function* () {
               () => new Date(),
             ).toISOString(),
             description: description,
+            d2c,
           });
         }
       }
@@ -268,16 +299,14 @@ const LayerImpl = Effect.gen(function* () {
       const stat = yield* fs.stat(changeDir);
       const isArchived = /[\\/]archive[\\/]/.test(changeDir);
 
-      // Read proposal.md
-      const proposalPath = path.join(changeDir, "proposal.md");
-      const proposalContent = (yield* fs.exists(proposalPath))
-        ? yield* fs.readFileString(proposalPath)
-        : undefined;
+      // Read spec.md first, fallback to proposal.md for compatibility
+      const { specContent, proposalContent, primaryContent } =
+        yield* readPrimarySpecContent(changeDir);
 
-      // Extract description from proposal content
+      // Extract description from primary spec content
       let description = "";
-      if (proposalContent) {
-        const lines = proposalContent.split("\n");
+      if (primaryContent) {
+        const lines = primaryContent.split("\n");
         for (const line of lines) {
           const trimmed = line.trim();
           if (
@@ -365,20 +394,84 @@ const LayerImpl = Effect.gen(function* () {
         );
       }
 
-      return {
+      const d2cDir = path.join(changeDir, "d2c");
+      const d2cManifestPath = path.join(d2cDir, "manifest.json");
+
+      const readArtifactFiles = (): Effect.Effect<
+        D2CArtifactFile[],
+        Error,
+        FileSystem.FileSystem | Path.Path
+      > =>
+        Effect.gen(function* () {
+          if (!(yield* fs.exists(d2cDir))) {
+            return [];
+          }
+
+          const entries = yield* fs.readDirectory(d2cDir);
+          const result: D2CArtifactFile[] = [];
+
+          for (const entry of entries) {
+            const entryPath = path.join(d2cDir, entry);
+            const stat = yield* fs.stat(entryPath);
+            if (stat.type !== "Directory") {
+              continue;
+            }
+
+            const tsxPath = path.join(entryPath, "index.tsx");
+            const scssPath = path.join(entryPath, "index.module.scss");
+            const tsxExists = yield* fs.exists(tsxPath);
+            const scssExists = yield* fs.exists(scssPath);
+            if (!tsxExists || !scssExists) {
+              continue;
+            }
+
+            const tsxContent = yield* fs.readFileString(tsxPath);
+            const scssContent = yield* fs.readFileString(scssPath);
+            result.push({
+              name: path.relative(d2cDir, tsxPath),
+              content: tsxContent,
+            } satisfies D2CArtifactFile);
+            result.push({
+              name: path.relative(d2cDir, scssPath),
+              content: scssContent,
+            } satisfies D2CArtifactFile);
+          }
+
+          return result;
+        });
+
+      const specD2C = extractD2CInfoFromSpec(specContent ?? proposalContent);
+      const d2cManifest = parseD2CManifest(
+        (yield* fs.exists(d2cManifestPath))
+          ? yield* fs.readFileString(d2cManifestPath)
+          : undefined,
+      );
+      const generatedFiles = yield* readArtifactFiles();
+      const previewFiles: D2CArtifactFile[] = [];
+      const d2c = mergeD2CInfo({
+        specInfo: specD2C,
+        manifest: d2cManifest,
+        generatedFiles,
+        previewFiles,
+      });
+
+      const details: OpenSpecChangeDetails = {
         name: changeId,
         status: isArchived
           ? "archived"
           : inferStatus(designContent, tasksContent),
         updatedAt: Option.getOrElse(stat.mtime, () => new Date()).toISOString(),
         description: description,
+        specContent,
         proposalContent,
         designContent,
         tasksContent,
         testsContent,
         specsContent,
         specFiles,
-      } as OpenSpecChangeDetails;
+        d2c,
+      };
+      return details;
     });
 
   const updateChangeFile = (
@@ -396,6 +489,7 @@ const LayerImpl = Effect.gen(function* () {
       // Validate fileName to prevent directory traversal
       const allowedFiles = [
         "design.md",
+        "spec.md",
         "proposal.md",
         "tasks.md",
         "tests.md",
@@ -445,7 +539,18 @@ const LayerImpl = Effect.gen(function* () {
         );
       }
 
-      const filePath = path.join(changeDir, fileName);
+      const specPath = path.join(changeDir, "spec.md");
+      const proposalPath = path.join(changeDir, "proposal.md");
+      const normalizedFileName =
+        fileName === "proposal.md" ? "spec.md" : fileName;
+      const writeLegacyProposalFile =
+        normalizedFileName === "spec.md" &&
+        !(yield* fs.exists(specPath)) &&
+        (yield* fs.exists(proposalPath));
+      const targetFileName = writeLegacyProposalFile
+        ? "proposal.md"
+        : normalizedFileName;
+      const filePath = path.join(changeDir, targetFileName);
       yield* fs.writeFileString(filePath, content);
     });
 

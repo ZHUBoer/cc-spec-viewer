@@ -25,6 +25,7 @@ export function createMockSessionMeta(
       },
     },
     modelName: null,
+    isCostPending: false,
     ...overrides,
   };
 }

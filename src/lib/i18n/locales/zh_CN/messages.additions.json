@@ -73,5 +73,65 @@
   },
   "settings.maxBudgetUsd.label": {
     "translation": "最大预算 (USD)"
+  },
+  "chat.model_switch.title": {
+    "translation": "团队模型"
+  },
+  "chat.model_switch.current": {
+    "translation": "选择模型"
+  },
+  "chat.model_switch.switching": {
+    "translation": "切换中..."
+  },
+  "chat.model_switch.success": {
+    "translation": "模型切换成功"
+  },
+  "chat.model_switch.force_new_session": {
+    "translation": "模型已切换，并已进入新会话上下文。"
+  },
+  "chat.model_switch.blocked_running_task": {
+    "translation": "当前有运行中的会话进程，暂时无法切换模型。"
+  },
+  "chat.model_switch.load_failed": {
+    "translation": "模型切换失败"
+  },
+  "chat.model_switch.confirm_existing.title": {
+    "translation": "确认切换团队模型？"
+  },
+  "chat.model_switch.confirm_existing.description": {
+    "translation": "切换模型将开启全新会话，并清空当前会话上下文。"
+  },
+  "chat.model_switch.confirm_existing.confirm": {
+    "translation": "切换模型"
+  },
+  "chat.model_switch.personal_title": {
+    "translation": "个人模型"
+  },
+  "chat.model_switch.personal_unsupported": {
+    "translation": "模型名称：{model}（不支持模型切换）"
+  },
+  "chat.model_switch.unknown_model": {
+    "translation": "未知模型"
+  },
+  "chat.model_switch.missing_ada_cli": {
+    "translation": "需安装 ada-cli 以支持团队模型切换。"
+  },
+  "chat.model_switch.unsupported_mode": {
+    "translation": "仅团队模式支持模型切换。"
+  },
+  "session.connect.loading": {
+    "translation": "正在建立会话连接，需重新连接 MCP server..."
+  },
+  "session.connect.initializing": {
+    "translation": "正在初始化会话环境..."
+  },
+  "session.connect.mcp_connecting": {
+    "translation": "正在建立 MCP server 连接..."
+  },
+  "session.connect.success": {
+    "translation": "会话连接建立成功"
+  },
+  "session.connect.failed": {
+    "translation": "会话连接失败"
   }
 }

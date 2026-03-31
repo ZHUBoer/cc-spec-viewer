@@ -5,6 +5,7 @@ import { GlobalSidebar } from "@/components/GlobalSidebar";
 import { useWorkspacePanel } from "@/hooks/useWorkspacePanel";
 import { ProjectList } from "./components/ProjectList";
 import { SetupProjectDialog } from "./components/SetupProjectDialog";
+import { SetupWorkspaceDialog } from "./components/SetupWorkspaceDialog";
 
 export const ProjectsPage: FC = () => {
   const { closePanel } = useWorkspacePanel();
@@ -34,7 +35,10 @@ export const ProjectsPage: FC = () => {
                 <h2 className="text-xl font-semibold">
                   <Trans id="projects.page.title" />
                 </h2>
-                <SetupProjectDialog />
+                <div className="flex gap-2">
+                  <SetupWorkspaceDialog />
+                  <SetupProjectDialog />
+                </div>
               </div>
               <Suspense
                 fallback={

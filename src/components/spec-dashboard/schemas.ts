@@ -1,5 +1,42 @@
 import { z } from "zod";
 
+const D2CArtifactFileSchema = z.object({
+  name: z.string(),
+  content: z.string(),
+});
+
+const D2CMaterialSchema = z.object({
+  link: z.string(),
+  description: z.string().optional(),
+  scope: z.enum(["page", "module", "component", "unknown"]),
+  artifactId: z.string().optional(),
+});
+
+const D2CInfoSchema = z.object({
+  enabled: z.boolean(),
+  changeKind: z.enum(["new", "modify", "unknown"]),
+  materials: z.array(D2CMaterialSchema),
+  targetScope: z.enum(["page", "module", "component", "unknown"]),
+  baselineFrozen: z.boolean(),
+  baselineFrozenAt: z.string().optional(),
+  reviewOverride: z.boolean(),
+  reviewOverrideAt: z.string().optional(),
+  reviewOverrideReason: z.string().optional(),
+  reviewStatus: z.enum(["passed", "failed", "unknown"]),
+  canEnterDesign: z.boolean(),
+  effectiveCanEnterDesign: z.boolean(),
+  reviewSummary: z.string().optional(),
+  generatedAt: z.string().optional(),
+  generator: z.string().optional(),
+  previewPath: z.string().optional(),
+  reviewPath: z.string().optional(),
+  entryFiles: z.array(z.string()),
+  hasManifest: z.boolean(),
+  hasGeneratedFiles: z.boolean(),
+  generatedFiles: z.array(D2CArtifactFileSchema),
+  previewFiles: z.array(D2CArtifactFileSchema),
+});
+
 /**
  * OpenSpecChange Schema
  */
@@ -16,6 +53,7 @@ export const OpenSpecChangeSchema = z.object({
   ]),
   description: z.string().optional(),
   updatedAt: z.string(),
+  specContent: z.string().optional(),
   proposalContent: z.string().optional(),
   designContent: z.string().optional(),
   tasksContent: z.string().optional(),
@@ -29,6 +67,7 @@ export const OpenSpecChangeSchema = z.object({
       }),
     )
     .optional(),
+  d2c: D2CInfoSchema.optional(),
 });
 
 /**
@@ -36,7 +75,8 @@ export const OpenSpecChangeSchema = z.object({
  */
 export const EnvironmentStatusSchema = z.object({
   cliInstalled: z.boolean(),
-  cliVersion: z.string().nullable(),
+  // 兼容历史/异常响应缺失 cliVersion 的情况，统一归一化为 null
+  cliVersion: z.string().nullable().optional().default(null),
   cliInstallType: z.enum(["global", "project", "npx"]).nullish(),
   scenario: z.enum([
     "S1_NEW",
@@ -52,14 +92,17 @@ export const EnvironmentStatusSchema = z.object({
   hasSpecforgeMarker: z.boolean(),
   specforgeConfig: z
     .object({
-      version: z.string(),
       profile: z.string(),
       initializedAt: z.string(),
+      templateVersion: z.string().optional(),
     })
     .nullish(), // 允许 null、undefined 或字段缺失
+  templateUpgradeAvailable: z.boolean().default(false),
   isConfigCorrupted: z.boolean(), // 配置是否损坏
   configErrors: z.array(z.string()), // 配置错误列表
   missingSpecforgeSkills: z.array(z.string()),
+  missingSpecforgeAgents: z.array(z.string()).default([]),
+  missingManagedFiles: z.array(z.string()).default([]),
   missingMcpServers: z.array(z.string()),
   recommendedAction: z.enum([
     "full_init",
@@ -126,6 +169,7 @@ export const ProfileInfraCatalogSchema = z.object({
 export const BuiltInProfileSchema = z.object({
   id: z.string(),
   displayName: z.string(),
+  custom_variables: z.record(z.string(), z.string()).optional(),
   infra_catalog: ProfileInfraCatalogSchema,
 });
 
@@ -134,6 +178,7 @@ export const BuiltInProfileSchema = z.object({
  */
 export const ProjectProfileConfigSchema = z.object({
   displayName: z.string(),
+  custom_variables: z.record(z.string(), z.string()).optional(),
   infra_catalog: ProfileInfraCatalogSchema,
 });
 
@@ -161,6 +206,7 @@ export const InjectionResultSchema = z.object({
   created: z.array(z.string()),
   skipped: z.array(z.string()),
   updated: z.array(z.string()),
+  removed: z.array(z.string()).default([]),
   errors: z.array(
     z.object({
       file: z.string(),

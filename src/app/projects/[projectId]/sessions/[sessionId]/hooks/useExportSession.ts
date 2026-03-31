@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { honoClient } from "@/lib/api/client";
+import { getErrorMessage, hasStringHtml } from "@/lib/api/responseGuards";
 
 export const useExportSession = () => {
   return useMutation({
@@ -18,6 +19,9 @@ export const useExportSession = () => {
       }
 
       const data = await response.json();
+      if (!hasStringHtml(data)) {
+        throw new Error(getErrorMessage(data) ?? "Failed to export session");
+      }
       return data;
     },
     onSuccess: (data, variables) => {

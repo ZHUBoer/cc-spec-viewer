@@ -1,0 +1,7 @@
+dist
+node_modules
+examples
+lib
+build
+scripts
+configgen

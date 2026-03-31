@@ -1,0 +1,54 @@
+{
+  "author": "",
+  "config": {
+    "env": "fat",
+    "port": 8123,
+    "proxy-bypass-list": []
+  },
+  "dependencies": {
+    "@ctrip/function-nfes-helper": "1.0.6",
+    "@ctrip/nfes": "^6.12.0",
+    "@ctrip/serverless-compose": "^0.1.1",
+    "@ctrip/serverless-nfes": "^0.2.2",
+    "@ctrip/serverless-streamify": "^0.1.0",
+    "@ctrip/xtaro-zx-h5": "^2.0.0",
+    "@ctrip/ztrip-util": "^1.0.35",
+    "lottie-web": "^5.12.2",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-no-ssr": "^1.1.0"
+  },
+  "description": "",
+  "devDependencies": {
+    "@ctrip/babel-plugin-zxtaro-import": "^1.0.1",
+    "@ctrip/babel-preset-xtaro-nfes": "^1.5.4",
+    "@ctrip/postcss-zxtaro-px-multiple": "^1.0.2",
+    "@types/react": "19.2.14",
+    "encoding": "^0.1.13",
+    "postcss": "^8.4.33",
+    "postcss-pxtorem": "^6.1.0"
+  },
+  "license": "ISC",
+  "main": "index.js",
+  "name": "nfes-preview",
+  "scripts": {
+    "build": "slnfes build",
+    "dev": "nfes start NODE_ENV=development NOOPEN=1",
+    "predev": "node scripts/ensure-exclusive-port.js",
+    "dev_exp": "node --inspect index_express.js NODE_ENV=development NOOPEN=1",
+    "dev_no": "nfes start NODE_ENV=development",
+    "dev_open": "nfes start NODE_ENV=development",
+    "export": "nfes export",
+    "inspect": "nodemon",
+    "onlinebuild": "nfes onlinebuild NODE_ENV=production",
+    "pub": "nfes pub NODE_ENV=production NOOPEN=1",
+    "prestart": "node scripts/ensure-exclusive-port.js",
+    "start": "nfes start NODE_ENV=production",
+    "test": "nfes test NODEENV=Test coverage=true",
+    "localbuild": "nfes build NODE_ENV=production"
+  },
+  "serverless": {
+    "handler": "handler.handler"
+  },
+  "version": "1.0.0"
+}

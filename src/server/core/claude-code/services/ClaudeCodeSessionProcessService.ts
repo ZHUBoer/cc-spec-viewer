@@ -219,10 +219,20 @@ const LayerImpl = Effect.gen(function* () {
     });
   };
 
-  const changeTaskState = <T extends CCTask.ClaudeCodeTaskState>(options: {
+  const isTaskStateWithStatus = <
+    Status extends CCTask.ClaudeCodeTaskState["status"],
+  >(
+    task: CCTask.ClaudeCodeTaskState,
+    status: Status,
+  ): task is Extract<CCTask.ClaudeCodeTaskState, { status: Status }> =>
+    task.status === status;
+
+  const changeTaskState = <
+    Status extends CCTask.ClaudeCodeTaskState["status"],
+  >(options: {
     sessionProcessId: string;
     taskId: string;
-    nextTask: T;
+    nextTask: Extract<CCTask.ClaudeCodeTaskState, { status: Status }>;
   }) => {
     const { sessionProcessId, taskId, nextTask } = options;
 
@@ -247,7 +257,13 @@ const LayerImpl = Effect.gen(function* () {
         throw new Error("Unreachable: updatedProcess is undefined");
       }
 
-      return updated.task as T;
+      if (!isTaskStateWithStatus(updated.task, nextTask.status)) {
+        throw new Error(
+          `Unexpected task status after update: expected ${nextTask.status}, got ${updated.task.status}`,
+        );
+      }
+
+      return updated.task;
     });
   };
 

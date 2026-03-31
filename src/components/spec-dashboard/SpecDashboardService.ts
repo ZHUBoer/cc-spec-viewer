@@ -1,5 +1,6 @@
 import { hc } from "hono/client";
 import type { z } from "zod";
+import type { OpenSpecChangeDetails } from "@/server/core/openspec/services/OpenSpecService";
 import type { RouteType } from "@/server/hono/route";
 import {
   type BuiltInProfileSchema,
@@ -35,6 +36,7 @@ export interface OpenSpecChange {
     | "archived";
   description?: string;
   updatedAt: string;
+  specContent?: string;
   proposalContent?: string;
   // Details
   designContent?: string;
@@ -42,6 +44,7 @@ export interface OpenSpecChange {
   testsContent?: string;
   specsContent?: string;
   specFiles?: { name: string; content: string }[];
+  d2c?: OpenSpecChangeDetails["d2c"];
 }
 
 export const specDashboardService = {
@@ -329,6 +332,7 @@ export interface InitializeOptions {
   force?: boolean;
   profile: {
     displayName: string;
+    custom_variables?: Record<string, string>;
     infra_catalog: z.infer<typeof BuiltInProfileSchema>["infra_catalog"];
   };
 }

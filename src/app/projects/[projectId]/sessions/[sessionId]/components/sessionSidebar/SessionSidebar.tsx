@@ -118,6 +118,7 @@ export const SessionSidebar: FC<{
         currentSessionId={activeSessionId}
         projectId={projectId}
         isOpen={isMobileOpen}
+        onOpen={() => onMobileOpenChange?.(true)}
         onClose={() => onMobileOpenChange?.(false)}
       />
     </>

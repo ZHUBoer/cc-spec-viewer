@@ -25,8 +25,8 @@ export const QueueOperationConversationContent: FC<{
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="bg-background rounded border p-3 mt-2">
-          <div className="space-y-2 text-xs">
+        <div className="mt-2 min-w-0 max-w-full rounded border bg-background p-3">
+          <div className="min-w-0 max-w-full space-y-2 text-xs">
             <div>
               <span className="font-medium text-muted-foreground">
                 Operation:
@@ -50,7 +50,7 @@ export const QueueOperationConversationContent: FC<{
                 <span className="font-medium text-muted-foreground">
                   Content:
                 </span>
-                <pre className="mt-1 overflow-x-auto whitespace-pre-wrap">
+                <pre className="mt-1 min-w-0 max-w-full overflow-x-auto whitespace-pre-wrap break-all">
                   {normalizeQueueOperationContent(conversation.content)}
                 </pre>
               </div>

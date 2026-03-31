@@ -15,6 +15,9 @@ describe("FileWatcherService", () => {
         // Start watching
         yield* watcher.startWatching();
 
+        // Stop watching to avoid resource leakage between tests
+        yield* watcher.stop();
+
         // Confirm successful start (no errors)
         return true;
       });
@@ -62,6 +65,9 @@ describe("FileWatcherService", () => {
         yield* watcher.startWatching();
         yield* watcher.startWatching();
         yield* watcher.startWatching();
+
+        // Stop watching to avoid resource leakage between tests
+        yield* watcher.stop();
 
         // Confirm no errors occur
         return true;
@@ -157,28 +163,33 @@ describe("FileWatcherService", () => {
   });
 
   describe("error handling", () => {
-    it("continues processing without throwing errors even with invalid directories", async () => {
+    it("returns startup error when watcher cannot initialize", async () => {
+      const invalidRootPath = "\u0000invalid-project-root";
       const program = Effect.gen(function* () {
         const watcher = yield* FileWatcherService;
 
-        // Start watching (catches errors and continues even with invalid directories)
+        // Startup should fail for invalid watch path.
         yield* watcher.startWatching();
-
-        // Confirm no errors occur and processing continues normally
-        yield* watcher.stop();
-
         return true;
       });
 
       const result = await Effect.runPromise(
-        program.pipe(
-          Effect.provide(FileWatcherService.Live),
-          Effect.provide(testPlatformLayer()),
-          Effect.provide(Path.layer),
+        Effect.exit(
+          program.pipe(
+            Effect.provide(FileWatcherService.Live),
+            Effect.provide(
+              testPlatformLayer({
+                claudeCodePaths: {
+                  claudeProjectsDirPath: invalidRootPath,
+                },
+              }),
+            ),
+            Effect.provide(Path.layer),
+          ),
         ),
       );
 
-      expect(result).toBe(true);
+      expect(result._tag).toBe("Failure");
     });
   });
 });

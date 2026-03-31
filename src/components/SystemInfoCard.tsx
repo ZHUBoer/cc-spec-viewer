@@ -1,9 +1,20 @@
-import { Trans } from "@lingui/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { CheckCircle2, ChevronDown, ChevronRight, XCircle } from "lucide-react";
-import { type FC, type ReactNode, useState } from "react";
+import { Trans, useLingui } from "@lingui/react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Loader2,
+  RefreshCw,
+  XCircle,
+} from "lucide-react";
+import { type FC, type ReactNode, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { claudeCodeMetaQuery, systemVersionQuery } from "@/lib/api/queries";
+import { useSpecForgeInitialization } from "./spec-dashboard/hooks/useSpecForgeInitialization";
+import { specDashboardService } from "./spec-dashboard/SpecDashboardService";
 import { Badge } from "./ui/badge";
 import {
   Collapsible,
@@ -65,18 +76,137 @@ const getFeatureInfo = (featureName: string): FeatureInfo => {
   }
 };
 
-export const SystemInfoCard: FC = () => {
+export const SystemInfoCard: FC<{ projectId?: string }> = ({ projectId }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+  const { i18n } = useLingui();
 
-  const { data: versionData } = useSuspenseQuery({
+  const { data: versionData } = useQuery({
     ...systemVersionQuery,
   });
 
-  const { data: claudeCodeMetaData } = useSuspenseQuery({
+  const { data: claudeCodeMetaData } = useQuery({
     ...claudeCodeMetaQuery,
   });
 
   const { flags } = useFeatureFlags();
+  const { handlePostInitialization } = useSpecForgeInitialization(
+    projectId ?? "",
+  );
+  const {
+    data: environment,
+    isLoading: envLoading,
+    refetch: refetchEnvironment,
+  } = useQuery({
+    queryKey: ["specforge", "environment", projectId],
+    queryFn: () => specDashboardService.getEnvironment(projectId ?? ""),
+    enabled: Boolean(projectId),
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (!projectId) return;
+    const handleInitComplete = (event: CustomEvent) => {
+      if (event.detail?.projectId === projectId) {
+        refetchEnvironment();
+      }
+    };
+    window.addEventListener(
+      "specforge:init-complete",
+      handleInitComplete as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "specforge:init-complete",
+        handleInitComplete as EventListener,
+      );
+    };
+  }, [projectId, refetchEnvironment]);
+
+  const handleTemplateUpgrade = async () => {
+    if (!projectId || !environment?.specforgeConfig) return;
+
+    setUpgrading(true);
+    try {
+      const [savedConfig, profilesData] = await Promise.all([
+        specDashboardService.getProjectProfileConfig(projectId),
+        specDashboardService.getProfiles(projectId),
+      ]);
+
+      let profileToUse: {
+        displayName: string;
+        custom_variables?: Record<string, string>;
+        infra_catalog: (typeof profilesData.profiles)[number]["infra_catalog"];
+      } | null = null;
+
+      if (savedConfig) {
+        profileToUse = {
+          displayName: savedConfig.displayName,
+          custom_variables: savedConfig.custom_variables,
+          infra_catalog: savedConfig.infra_catalog,
+        };
+      } else {
+        const matched = profilesData.profiles.find(
+          (profile) => profile.id === environment.specforgeConfig?.profile,
+        );
+        if (matched) {
+          profileToUse = {
+            displayName: matched.displayName,
+            custom_variables: matched.custom_variables,
+            infra_catalog: matched.infra_catalog,
+          };
+        }
+      }
+
+      if (!profileToUse) {
+        toast.error(
+          i18n._({
+            id: "system_info.workflow.upgrade.profile_not_found",
+            message:
+              "Current profile configuration is missing. Save it in Spec Dashboard first.",
+          }),
+        );
+        return;
+      }
+
+      const result = await specDashboardService.initialize(projectId, {
+        scenario: environment.scenario,
+        force: true,
+        profile: profileToUse,
+      });
+
+      if (!result.success) {
+        const primary = result.errors[0];
+        toast.error(
+          primary?.error ??
+            i18n._({
+              id: "system_info.workflow.upgrade.failed_retry",
+              message: "Workflow version upgrade failed, please retry.",
+            }),
+        );
+        return;
+      }
+
+      await handlePostInitialization();
+      toast.success(
+        i18n._({
+          id: "system_info.workflow.upgrade.success",
+          message: "Workflow version upgraded successfully.",
+        }),
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : i18n._({
+              id: "system_info.workflow.upgrade.failed",
+              message: "Workflow version upgrade failed.",
+            }),
+      );
+    } finally {
+      setUpgrading(false);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -136,6 +266,79 @@ export const SystemInfoCard: FC = () => {
             </div>
           </div>
         </div>
+
+        {projectId && (
+          <div className="space-y-3">
+            <h3 className="font-medium text-sm text-sidebar-foreground">
+              SpecForge
+            </h3>
+            {envLoading ? (
+              <div className="pl-2 text-xs text-sidebar-foreground/50">
+                <Trans
+                  id="system_info.workflow.checking"
+                  message="Checking workflow status..."
+                />
+              </div>
+            ) : (
+              <div className="space-y-2 pl-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-sidebar-foreground/70">
+                    <Trans
+                      id="system_info.workflow.current_version"
+                      message="Current workflow version"
+                    />
+                  </span>
+                  <Badge variant="secondary" className="text-xs font-mono">
+                    {environment?.specforgeConfig?.templateVersion || "Unknown"}
+                  </Badge>
+                </div>
+                {environment?.templateUpgradeAvailable ? (
+                  <>
+                    <div className="flex items-start gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 p-2">
+                      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
+                      <span className="text-xs text-blue-700 dark:text-blue-300">
+                        <Trans
+                          id="system_info.workflow.update_available"
+                          message="A workflow version update is available. You can upgrade here directly."
+                        />
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleTemplateUpgrade}
+                      disabled={upgrading}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-sidebar-border bg-background px-3 py-1.5 text-xs text-sidebar-foreground transition-colors hover:bg-muted/25 disabled:opacity-50 cursor-pointer"
+                    >
+                      {upgrading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      )}
+                      {upgrading ? (
+                        <Trans
+                          id="system_info.workflow.upgrading"
+                          message="Upgrading..."
+                        />
+                      ) : (
+                        <Trans
+                          id="system_info.workflow.upgrade_button"
+                          message="Upgrade workflow version"
+                        />
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-xs text-sidebar-foreground/60">
+                    <Trans
+                      id="system_info.workflow.up_to_date"
+                      message="Current workflow version is up to date."
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Available Features */}
         <div className="space-y-3">

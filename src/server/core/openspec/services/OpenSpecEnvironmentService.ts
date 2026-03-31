@@ -3,6 +3,7 @@ import { Context, Data, Duration, Effect, Either, Layer } from "effect";
 import type { InferEffect } from "../../../lib/effect/types";
 import { ProjectRepository } from "../../project/infrastructure/ProjectRepository";
 import { CliDetectionService } from "./CliDetectionService";
+import { extractSpecforgeMarkerBlock } from "./specforgeMarker";
 
 // ============================================================================
 // Error Types
@@ -34,15 +35,21 @@ export type RecommendedAction =
   | "none"; // 无需操作
 
 export interface SpecforgeConfig {
-  version: string;
   profile: string;
   initializedAt: string;
+  templateVersion?: string;
+}
+
+interface OpenspecConfigInfo {
+  hasMarker: boolean;
+  specforgeConfig?: SpecforgeConfig;
+  schema?: string;
 }
 
 export interface EnvironmentStatus {
   // CLI 状态
   cliInstalled: boolean;
-  cliVersion?: string;
+  cliVersion: string | null;
   cliInstallType?: "global" | "project" | "npx";
 
   // 场景识别
@@ -54,6 +61,7 @@ export interface EnvironmentStatus {
   hasClaudeDir: boolean;
   hasSpecforgeMarker: boolean;
   specforgeConfig: SpecforgeConfig | null; // 明确使用 null 而不是 optional
+  templateUpgradeAvailable: boolean;
 
   // 配置验证
   isConfigCorrupted: boolean; // 配置是否损坏
@@ -61,6 +69,8 @@ export interface EnvironmentStatus {
 
   // 缺失项分析
   missingSpecforgeSkills: string[];
+  missingSpecforgeAgents: string[]; // 缺失的框架托管 agent 文件
+  missingManagedFiles: string[]; // 缺失的其他托管文件（如 schemas）
   missingMcpServers: string[];
 
   // 推荐操作
@@ -75,10 +85,127 @@ export interface EnvironmentStatus {
  * SpecForge 必需的 Skills 列表
  */
 const SPECFORGE_REQUIRED_SKILLS = [
-  "design-generation",
-  "querying-infra-catalog",
   "task-planning",
+] satisfies ReadonlyArray<string>;
+
+/**
+ * SpecForge 框架托管的全量 Skills 列表（用于 S6_PARTIAL 完整性检测）
+ */
+const SPECFORGE_MANAGED_SKILLS = [
+  "task-planning",
+  "gitnexus",
+  "d2c-baseline",
+  "d2c-stitching",
+  "spec-process",
+  "design-process",
+] satisfies ReadonlyArray<string>;
+
+/**
+ * SpecForge 框架托管的 agent 文件名（精确匹配）
+ */
+const SPECFORGE_MANAGED_AGENTS = [
+  "format-compliance-agent.md",
+  "quality-gate-agent.md",
 ] as const;
+
+const OPENSPEC_PINNED_VERSION = "1.2.0";
+const DEFAULT_TEMPLATE_VERSION = "1.0.0";
+const NPM_EXECUTABLE = process.platform === "win32" ? "npm.cmd" : "npm";
+const NPX_EXECUTABLE = process.platform === "win32" ? "npx.cmd" : "npx";
+const OPENSPEC_EXECUTABLE =
+  process.platform === "win32" ? "openspec.cmd" : "openspec";
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const readStringField = (
+  value: Record<string, unknown>,
+  field: string,
+): string | undefined => {
+  const target = value[field];
+  if (typeof target !== "string") {
+    return undefined;
+  }
+  const trimmed = target.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const formatUnknownError = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+};
+
+const joinPathForPlatform = (
+  platform: NodeJS.Platform,
+  ...parts: string[]
+): string => {
+  const separator = platform === "win32" ? "\\" : "/";
+  const sanitizedParts = parts
+    .map((part, index) =>
+      index === 0
+        ? part.replace(/[\\/]+$/g, "")
+        : part.replace(/^[\\/]+|[\\/]+$/g, ""),
+    )
+    .filter((part) => part.length > 0);
+  return sanitizedParts.join(separator);
+};
+
+/**
+ * 解析 OpenSpec 全局配置基目录（不含 openspec 子目录）
+ * - 优先 XDG_CONFIG_HOME（与 OpenSpec 约定一致）
+ * - Windows 回退 APPDATA / USERPROFILE\\AppData\\Roaming
+ * - 其他平台回退 HOME/.config
+ */
+export const resolveOpenSpecConfigHome = (options?: {
+  env?: NodeJS.ProcessEnv;
+  platform?: NodeJS.Platform;
+}): string | undefined => {
+  // biome-ignore lint/style/noProcessEnv: 需要读取进程环境变量来解析配置目录
+  const env = options?.env ?? process.env;
+  const platform = options?.platform ?? process.platform;
+
+  const xdgConfigHome = env.XDG_CONFIG_HOME?.trim();
+  if (xdgConfigHome) return xdgConfigHome;
+
+  if (platform === "win32") {
+    const appData = env.APPDATA?.trim();
+    if (appData) return appData;
+    const userProfile = env.USERPROFILE?.trim();
+    if (userProfile) {
+      return joinPathForPlatform(platform, userProfile, "AppData", "Roaming");
+    }
+  }
+
+  const homeDir = env.HOME?.trim();
+  if (homeDir) {
+    return joinPathForPlatform(platform, homeDir, ".config");
+  }
+
+  return undefined;
+};
+
+const OPENSPEC_ALL_WORKFLOWS = [
+  "propose",
+  "explore",
+  "new",
+  "continue",
+  "apply",
+  "ff",
+  "sync",
+  "archive",
+  "bulk-archive",
+  "verify",
+  "onboard",
+] satisfies ReadonlyArray<string>;
 
 /**
  * 场景描述映射
@@ -115,23 +242,126 @@ const LayerImpl = Effect.gen(function* () {
   const path = yield* Path.Path;
   const cliDetection = yield* CliDetectionService;
 
+  const ensureSpecforgeGlobalOpenspecConfig = () =>
+    Effect.gen(function* () {
+      const configHome = resolveOpenSpecConfigHome();
+
+      if (!configHome) {
+        return {
+          success: false,
+          error:
+            "无法定位用户配置目录（XDG_CONFIG_HOME/APPDATA/USERPROFILE/HOME 均为空）",
+        };
+      }
+
+      const configDir = path.join(configHome, "openspec");
+      const configPath = path.join(configDir, "config.json");
+
+      const desiredConfig = {
+        profile: "custom",
+        delivery: "both",
+        workflows: [...OPENSPEC_ALL_WORKFLOWS],
+      };
+
+      const dirExists = yield* fs.exists(configDir);
+      if (!dirExists) {
+        yield* fs.makeDirectory(configDir, { recursive: true });
+      }
+
+      let mergedConfig: Record<string, unknown> = desiredConfig;
+      const fileExists = yield* fs.exists(configPath);
+      if (fileExists) {
+        const existingRaw = yield* fs.readFileString(configPath);
+        try {
+          const parsed: unknown = JSON.parse(existingRaw);
+          if (isRecord(parsed)) {
+            mergedConfig = {
+              ...parsed,
+              ...desiredConfig,
+            };
+          }
+        } catch {
+          // 配置文件损坏时直接用期望配置覆盖，保证后续 init 稳定执行
+          mergedConfig = desiredConfig;
+        }
+      }
+
+      yield* fs.writeFileString(
+        configPath,
+        `${JSON.stringify(mergedConfig, null, 2)}\n`,
+      );
+
+      return {
+        success: true,
+        error: undefined,
+      };
+    });
+
+  const getTemplateBasePath = Effect.gen(function* () {
+    const distPath = path.join(import.meta.dirname, "template-to-project");
+    if (yield* fs.exists(distPath)) {
+      return distPath;
+    }
+    return path.join(process.cwd(), "template-to-project");
+  });
+
+  const getLatestTemplateVersion = Effect.gen(function* () {
+    const templateBasePath = yield* getTemplateBasePath;
+    const manifestPath = path.join(templateBasePath, "template-manifest.json");
+    const exists = yield* fs.exists(manifestPath);
+    if (!exists) return DEFAULT_TEMPLATE_VERSION;
+
+    const raw = yield* fs.readFileString(manifestPath);
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (isRecord(parsed)) {
+        return (
+          readStringField(parsed, "template_version") ??
+          DEFAULT_TEMPLATE_VERSION
+        );
+      }
+      return DEFAULT_TEMPLATE_VERSION;
+    } catch {
+      return DEFAULT_TEMPLATE_VERSION;
+    }
+  });
+
   /**
    * 解析 specforge 标记
    */
   const parseSpecforgeMarker = (
     content: string,
   ): SpecforgeConfig | undefined => {
-    const markerMatch = content.match(
-      /_specforge:\s*\n\s*version:\s*["']?([^"'\n]+)["']?\s*\n\s*profile:\s*["']?([^"'\n]+)["']?\s*\n\s*initialized_at:\s*["']?([^"'\n]+)["']?/,
+    const block = extractSpecforgeMarkerBlock(content);
+    if (!block) return undefined;
+    const profileMatch = block.match(
+      /^\s*profile:\s*["']?([^"'\r\n]+)["']?\s*$/m,
     );
-    if (markerMatch?.[1] && markerMatch[2] && markerMatch[3]) {
-      return {
-        version: markerMatch[1],
-        profile: markerMatch[2],
-        initializedAt: markerMatch[3],
-      };
-    }
-    return undefined;
+    const initializedAtMatch = block.match(
+      /^\s*initialized_at:\s*["']?([^"'\r\n]+)["']?\s*$/m,
+    );
+    const templateVersionMatch = block.match(
+      /^\s*template_version:\s*["']?([^"'\r\n]+)["']?\s*$/m,
+    );
+
+    if (!profileMatch?.[1] || !initializedAtMatch?.[1]) return undefined;
+
+    return {
+      profile: profileMatch[1].trim(),
+      initializedAt: initializedAtMatch[1].trim(),
+      templateVersion: templateVersionMatch?.[1]
+        ? templateVersionMatch[1].trim()
+        : undefined,
+    };
+  };
+
+  const parseOpenspecConfigInfo = (content: string): OpenspecConfigInfo => {
+    const schemaMatch = content.match(/^schema:\s*["']?([^"'\r\n]+)["']?\s*$/m);
+    return {
+      hasMarker: content.includes("_specforge:"),
+      specforgeConfig: parseSpecforgeMarker(content),
+      schema: schemaMatch?.[1] ? schemaMatch[1].trim() : undefined,
+    };
   };
 
   /**
@@ -160,6 +390,15 @@ const LayerImpl = Effect.gen(function* () {
       return parseSpecforgeMarker(content);
     });
 
+  const getOpenspecSchema = (projectPath: string) =>
+    Effect.gen(function* () {
+      const configPath = path.join(projectPath, "openspec", "config.yaml");
+      const exists = yield* fs.exists(configPath);
+      if (!exists) return undefined;
+      const content = yield* fs.readFileString(configPath);
+      return parseOpenspecConfigInfo(content).schema;
+    });
+
   /**
    * 检查缺失的 specforge skills
    */
@@ -168,11 +407,58 @@ const LayerImpl = Effect.gen(function* () {
       const skillsDir = path.join(projectPath, ".claude", "skills");
       const missing: string[] = [];
 
-      for (const skill of SPECFORGE_REQUIRED_SKILLS) {
+      for (const skill of SPECFORGE_MANAGED_SKILLS) {
         const skillPath = path.join(skillsDir, skill);
         const exists = yield* fs.exists(skillPath);
         if (!exists) {
           missing.push(skill);
+        }
+      }
+
+      return missing;
+    });
+
+  /**
+   * 检查缺失的框架托管 agent 文件
+   */
+  const getMissingAgents = (projectPath: string) =>
+    Effect.gen(function* () {
+      const agentsDir = path.join(projectPath, ".claude", "agents");
+      const missing: string[] = [];
+
+      for (const agentFile of SPECFORGE_MANAGED_AGENTS) {
+        const filePath = path.join(agentsDir, agentFile);
+        const exists = yield* fs.exists(filePath);
+        if (!exists) {
+          missing.push(agentFile);
+        }
+      }
+
+      return missing;
+    });
+
+  /**
+   * 检查缺失的托管文件（openspec/schemas/specforge-enhanced/ 下全部托管文件）
+   */
+  const getMissingManagedFiles = (projectPath: string) =>
+    Effect.gen(function* () {
+      const missing: string[] = [];
+      const base = path.join(
+        projectPath,
+        "openspec",
+        "schemas",
+        "specforge-enhanced",
+      );
+
+      for (const file of [
+        "schema.yaml",
+        "templates/design.md",
+        "templates/spec.md",
+        "templates/tasks.md",
+      ]) {
+        const exists = yield* fs.exists(path.join(base, file));
+        if (!exists) {
+          missing.push(`openspec/schemas/specforge-enhanced/${file}`);
         }
       }
 
@@ -188,6 +474,7 @@ const LayerImpl = Effect.gen(function* () {
     hasClaudeDir: boolean,
     hasMarker: boolean,
     specforgeConfig: SpecforgeConfig | undefined,
+    schema: string | undefined,
     missingSkills: string[],
   ): string[] => {
     const errors: string[] = [];
@@ -212,6 +499,13 @@ const LayerImpl = Effect.gen(function* () {
       errors.push("_specforge 标记存在但解析失败（配置格式损坏）");
     }
 
+    // SpecForge 项目必须使用 specforge-enhanced schema
+    if (hasMarker && schema !== "specforge-enhanced") {
+      errors.push(
+        `openspec/config.yaml 的 schema 必须是 specforge-enhanced（当前: ${schema ?? "未设置"}）`,
+      );
+    }
+
     // 检查必需的 skills
     if (missingSkills.length > 0) {
       errors.push(`缺少必需的 skills: ${missingSkills.join(", ")}`);
@@ -225,7 +519,7 @@ const LayerImpl = Effect.gen(function* () {
    * 暂时返回空数组，后续根据 profile 配置扩展
    */
   const getMissingMcpServers = (_projectPath: string) =>
-    Effect.succeed([] as string[]);
+    Effect.succeed<string[]>([]);
 
   /**
    * 识别项目场景
@@ -235,6 +529,8 @@ const LayerImpl = Effect.gen(function* () {
     hasClaude: boolean,
     hasMarker: boolean,
     missingSkills: string[],
+    missingAgents: string[],
+    missingManagedFiles: string[],
   ): ScenarioType => {
     if (!hasOpenspec && !hasClaude) {
       return "S1_NEW";
@@ -253,8 +549,11 @@ const LayerImpl = Effect.gen(function* () {
     }
 
     if (hasOpenspec && hasClaude && hasMarker) {
-      // 检查是否完整
-      const isComplete = missingSkills.length === 0;
+      // 缺失任一托管项均标记为 S6_PARTIAL
+      const isComplete =
+        missingSkills.length === 0 &&
+        missingAgents.length === 0 &&
+        missingManagedFiles.length === 0;
       return isComplete ? "S5_CONFIGURED" : "S6_PARTIAL";
     }
 
@@ -271,22 +570,25 @@ const LayerImpl = Effect.gen(function* () {
         const globalCli = yield* cliDetection.checkGlobalCli();
         return {
           cliInstalled: globalCli.installed,
-          cliVersion: globalCli.version,
+          cliVersion: globalCli.version ?? null,
           cliInstallType: globalCli.installed ? globalCli.type : undefined,
-          scenario: "S1_NEW" as const,
+          scenario: "S1_NEW",
           scenarioDescription:
             "无法从 Claude 会话中解析项目路径，请先在目标项目目录发起一次 Claude 会话",
           hasOpenspecDir: false,
           hasClaudeDir: false,
           hasSpecforgeMarker: false,
           specforgeConfig: null,
+          templateUpgradeAvailable: false,
           isConfigCorrupted: true,
           configErrors: [
             "无法解析项目路径（projectPath 为空）。请先在目标项目目录发起一次 Claude 会话后重试。",
           ],
           missingSpecforgeSkills: [...SPECFORGE_REQUIRED_SKILLS],
+          missingSpecforgeAgents: [],
+          missingManagedFiles: [],
           missingMcpServers: [],
-          recommendedAction: "none" as const,
+          recommendedAction: "none",
         } satisfies EnvironmentStatus;
       }
 
@@ -303,7 +605,7 @@ const LayerImpl = Effect.gen(function* () {
 
       // SpecForge 强制要求全局 openspec，项目本地安装仅作信息参考
       const cliInstalled = globalCli.installed;
-      const cliVersion = globalCli.version ?? projectCli.version;
+      const cliVersion = globalCli.version ?? projectCli.version ?? null;
       const cliInstallType = globalCli.installed ? globalCli.type : undefined;
 
       // 2. 检测目录状态
@@ -321,24 +623,40 @@ const LayerImpl = Effect.gen(function* () {
       const specforgeConfig = hasMarker
         ? yield* getSpecforgeConfig(projectPath)
         : undefined;
+      const openspecSchema = hasOpenspecDir
+        ? yield* getOpenspecSchema(projectPath)
+        : undefined;
 
       // 4. 检测缺失项
       const missingSpecforgeSkills = hasClaudeDir
         ? yield* getMissingSkills(projectPath)
-        : [...SPECFORGE_REQUIRED_SKILLS];
+        : [...SPECFORGE_MANAGED_SKILLS];
+
+      const missingSpecforgeAgents = hasClaudeDir
+        ? yield* getMissingAgents(projectPath)
+        : [...SPECFORGE_MANAGED_AGENTS];
+
+      const missingManagedFiles = yield* getMissingManagedFiles(projectPath);
 
       const missingMcpServers = yield* getMissingMcpServers(projectPath);
-
       // 5. 验证配置
       const configErrors = validateConfig(
         hasOpenspecDir,
         hasClaudeDir,
         hasMarker,
         specforgeConfig,
+        openspecSchema,
         missingSpecforgeSkills,
       );
 
       const isConfigCorrupted = configErrors.length > 0;
+      const latestTemplateVersion = yield* getLatestTemplateVersion;
+      const templateUpgradeAvailable =
+        hasMarker &&
+        !!specforgeConfig &&
+        !isConfigCorrupted &&
+        (specforgeConfig.templateVersion === undefined ||
+          specforgeConfig.templateVersion !== latestTemplateVersion);
 
       // 6. 识别场景
       const scenario = identifyScenario(
@@ -346,7 +664,13 @@ const LayerImpl = Effect.gen(function* () {
         hasClaudeDir,
         hasMarker,
         missingSpecforgeSkills,
+        missingSpecforgeAgents,
+        missingManagedFiles,
       );
+      const normalizedScenario =
+        scenario === "S5_CONFIGURED" && isConfigCorrupted
+          ? "S6_PARTIAL"
+          : scenario;
 
       const status: EnvironmentStatus = {
         // CLI 状态
@@ -355,14 +679,15 @@ const LayerImpl = Effect.gen(function* () {
         cliInstallType,
 
         // 场景识别
-        scenario,
-        scenarioDescription: SCENARIO_DESCRIPTIONS[scenario],
+        scenario: normalizedScenario,
+        scenarioDescription: SCENARIO_DESCRIPTIONS[normalizedScenario],
 
         // 目录状态
         hasOpenspecDir,
         hasClaudeDir,
         hasSpecforgeMarker: hasMarker,
         specforgeConfig: specforgeConfig ?? null, // 确保字段存在（null 而不是 undefined）
+        templateUpgradeAvailable,
 
         // 配置验证
         isConfigCorrupted,
@@ -370,10 +695,12 @@ const LayerImpl = Effect.gen(function* () {
 
         // 缺失项分析
         missingSpecforgeSkills,
+        missingSpecforgeAgents,
+        missingManagedFiles,
         missingMcpServers,
 
         // 推荐操作
-        recommendedAction: SCENARIO_ACTIONS[scenario],
+        recommendedAction: SCENARIO_ACTIONS[normalizedScenario],
       };
 
       return status;
@@ -390,29 +717,38 @@ const LayerImpl = Effect.gen(function* () {
     Effect.gen(function* () {
       // 1. 安装 CLI
       const installCommand = Command.make(
-        "npm",
+        NPM_EXECUTABLE,
         "install",
         "-g",
-        "@fission-ai/openspec@latest",
+        `@fission-ai/openspec@${OPENSPEC_PINNED_VERSION}`,
       );
       const installResult = yield* Effect.either(
-        Command.string(installCommand).pipe(
+        Command.string(installCommand.pipe(Command.runInShell(true))).pipe(
           Effect.timeout(Duration.seconds(120)),
         ),
       );
 
       if (Either.isLeft(installResult)) {
         return {
-          success: false as const,
-          error: `安装失败: ${String(installResult.left)}`,
+          success: false,
+          error: `安装失败: ${formatUnknownError(installResult.left)}`,
           initialized: false,
         };
       }
 
       // 2. 可选：执行初始化
       if (options.initialize && options.projectPath) {
+        const configSetupResult = yield* ensureSpecforgeGlobalOpenspecConfig();
+        if (!configSetupResult.success) {
+          return {
+            success: false,
+            error: `写入 OpenSpec 全局配置失败: ${configSetupResult.error}`,
+            initialized: false,
+          };
+        }
+
         const initCommand = Command.make(
-          "openspec",
+          OPENSPEC_EXECUTABLE,
           "init",
           "--tools",
           "claude",
@@ -425,22 +761,22 @@ const LayerImpl = Effect.gen(function* () {
         );
 
         const initResult = yield* Effect.either(
-          Command.string(initCommandWithCwd).pipe(
-            Effect.timeout(Duration.seconds(60)),
-          ),
+          Command.string(
+            initCommandWithCwd.pipe(Command.runInShell(true)),
+          ).pipe(Effect.timeout(Duration.seconds(60))),
         );
 
         if (Either.isLeft(initResult)) {
           return {
-            success: false as const,
-            error: `初始化失败: ${String(initResult.left)}`,
+            success: false,
+            error: `初始化失败: ${formatUnknownError(initResult.left)}`,
             initialized: false,
           };
         }
       }
 
       return {
-        success: true as const,
+        success: true,
         error: undefined,
         initialized: options.initialize ?? false,
       };
@@ -464,10 +800,10 @@ const LayerImpl = Effect.gen(function* () {
 
       // 1. 安装 CLI
       const installCommand = Command.make(
-        "npm",
+        NPM_EXECUTABLE,
         "install",
         "--save-dev",
-        "@fission-ai/openspec@latest",
+        `@fission-ai/openspec@${OPENSPEC_PINNED_VERSION}`,
       );
 
       const installCommandWithCwd = Command.workingDirectory(
@@ -476,23 +812,32 @@ const LayerImpl = Effect.gen(function* () {
       );
 
       const installResult = yield* Effect.either(
-        Command.string(installCommandWithCwd).pipe(
-          Effect.timeout(Duration.seconds(120)),
-        ),
+        Command.string(
+          installCommandWithCwd.pipe(Command.runInShell(true)),
+        ).pipe(Effect.timeout(Duration.seconds(120))),
       );
 
       if (Either.isLeft(installResult)) {
         return {
           success: false,
-          error: `安装失败: ${String(installResult.left)}`,
+          error: `安装失败: ${formatUnknownError(installResult.left)}`,
           initialized: false,
         };
       }
 
       // 2. 可选：执行初始化
       if (options.initialize) {
+        const configSetupResult = yield* ensureSpecforgeGlobalOpenspecConfig();
+        if (!configSetupResult.success) {
+          return {
+            success: false,
+            error: `写入 OpenSpec 全局配置失败: ${configSetupResult.error}`,
+            initialized: false,
+          };
+        }
+
         const initCommand = Command.make(
-          "npx",
+          NPX_EXECUTABLE,
           "openspec",
           "init",
           "--tools",
@@ -506,15 +851,15 @@ const LayerImpl = Effect.gen(function* () {
         );
 
         const initResult = yield* Effect.either(
-          Command.string(initCommandWithCwd).pipe(
-            Effect.timeout(Duration.seconds(60)),
-          ),
+          Command.string(
+            initCommandWithCwd.pipe(Command.runInShell(true)),
+          ).pipe(Effect.timeout(Duration.seconds(60))),
         );
 
         if (Either.isLeft(initResult)) {
           return {
             success: false,
-            error: `初始化失败: ${String(initResult.left)}`,
+            error: `初始化失败: ${formatUnknownError(initResult.left)}`,
             initialized: false,
           };
         }
@@ -540,9 +885,18 @@ const LayerImpl = Effect.gen(function* () {
 
       const projectPath = project.meta.projectPath;
 
+      const configSetupResult = yield* ensureSpecforgeGlobalOpenspecConfig();
+      if (!configSetupResult.success) {
+        return {
+          success: false,
+          error: `写入 OpenSpec 全局配置失败: ${configSetupResult.error}`,
+          method: null,
+        };
+      }
+
       // 尝试使用全局 openspec
       const globalCommand = Command.make(
-        "openspec",
+        OPENSPEC_EXECUTABLE,
         "init",
         "--tools",
         "claude",
@@ -555,22 +909,22 @@ const LayerImpl = Effect.gen(function* () {
       );
 
       const globalResult = yield* Effect.either(
-        Command.string(globalCommandWithCwd).pipe(
-          Effect.timeout(Duration.seconds(60)),
-        ),
+        Command.string(
+          globalCommandWithCwd.pipe(Command.runInShell(true)),
+        ).pipe(Effect.timeout(Duration.seconds(60))),
       );
 
       if (Either.isRight(globalResult)) {
         return {
           success: true,
           error: undefined,
-          method: "global" as const,
+          method: "global",
         };
       }
 
       // 如果全局命令失败，尝试使用 npx
       const npxCommand = Command.make(
-        "npx",
+        NPX_EXECUTABLE,
         "openspec",
         "init",
         "--tools",
@@ -584,7 +938,7 @@ const LayerImpl = Effect.gen(function* () {
       );
 
       const npxResult = yield* Effect.either(
-        Command.string(npxCommandWithCwd).pipe(
+        Command.string(npxCommandWithCwd.pipe(Command.runInShell(true))).pipe(
           Effect.timeout(Duration.seconds(120)),
         ),
       );
@@ -593,15 +947,81 @@ const LayerImpl = Effect.gen(function* () {
         return {
           success: true,
           error: undefined,
-          method: "npx" as const,
+          method: "npx",
         };
       }
 
       return {
         success: false,
-        error: `初始化失败: ${String(npxResult.left)}`,
+        error: `初始化失败: ${formatUnknownError(npxResult.left)}`,
         method: null,
       };
+    });
+
+  /**
+   * 全局安装 GitNexus CLI（npm install -g gitnexus@latest）
+   */
+  const installGitNexusGlobal = () =>
+    Effect.gen(function* () {
+      const installCommand = Command.make(
+        NPM_EXECUTABLE,
+        "install",
+        "-g",
+        "gitnexus@latest",
+      );
+      const installResult = yield* Effect.either(
+        Command.string(installCommand.pipe(Command.runInShell(true))).pipe(
+          Effect.timeout(Duration.seconds(120)),
+        ),
+      );
+
+      if (Either.isLeft(installResult)) {
+        return {
+          success: false,
+          error: `GitNexus 安装失败: ${formatUnknownError(installResult.left)}`,
+        };
+      }
+
+      return { success: true, error: undefined };
+    });
+
+  /**
+   * 在项目目录执行 gitnexus analyze 建立索引
+   */
+  const runGitNexusAnalyze = (projectId: string) =>
+    Effect.gen(function* () {
+      const { project } = yield* projectRepository.getProject(projectId);
+      if (project.meta.projectPath === null) {
+        return {
+          success: false,
+          error: "gitnexus analyze 跳过: 无法解析项目路径",
+        };
+      }
+
+      const projectPath = project.meta.projectPath;
+      const gitnexusExecutable =
+        process.platform === "win32" ? "gitnexus.cmd" : "gitnexus";
+
+      const analyzeCommand = Command.make(gitnexusExecutable, "analyze");
+      const analyzeCommandWithCwd = Command.workingDirectory(
+        analyzeCommand,
+        projectPath,
+      );
+
+      const analyzeResult = yield* Effect.either(
+        Command.string(
+          analyzeCommandWithCwd.pipe(Command.runInShell(true)),
+        ).pipe(Effect.timeout(Duration.seconds(120))),
+      );
+
+      if (Either.isLeft(analyzeResult)) {
+        return {
+          success: false,
+          error: `gitnexus analyze 执行失败: ${formatUnknownError(analyzeResult.left)}`,
+        };
+      }
+
+      return { success: true, error: undefined };
     });
 
   return {
@@ -609,6 +1029,8 @@ const LayerImpl = Effect.gen(function* () {
     installCliGlobal,
     installCliProject,
     initializeOpenspec,
+    installGitNexusGlobal,
+    runGitNexusAnalyze,
   };
 });
 

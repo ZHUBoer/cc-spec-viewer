@@ -8,6 +8,7 @@ export const userConfigSchema = z.object({
     .enum(["shift-enter-send", "enter-send", "command-enter-send"])
     .optional()
     .default("shift-enter-send"),
+  claudeCodeExecutablePath: z.string().optional(),
   permissionMode: z
     .enum(["acceptEdits", "bypassPermissions", "default", "plan"])
     .optional()

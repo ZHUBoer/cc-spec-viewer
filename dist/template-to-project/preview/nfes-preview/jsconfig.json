@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "jest.config.js",
+    "**/node_modules/*",
+    "**/scripts/*",
+    "**/static/*",
+    "**/release/*",
+    "**/.next/*",
+    "**/build/*"
+  ]
+}

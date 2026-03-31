@@ -1,14 +1,14 @@
 ---
 name: querying-infra-catalog
-description: 查询业务线内部“组件库/端能力事实源”的组件和 API。适用于：(1) 实现 UI 组件，(2) 调用内部端 API，(3) 需要精确的 props/参数规范，(4) 开始集成内部能力，(5) 解决导入/参数错误。
+description: 查询业务线内部"组件库/端能力事实源"的组件和 API。**必须首先使用此技能**，这是 MCP-First 原则的唯一执行路径，禁止跳过直接猜测或依赖记忆。适用于：(1) 实现 UI 组件，(2) 调用内部端 API，(3) 需要精确的 props/参数规范，(4) 开始集成内部能力，(5) 解决导入/参数错误，(6) design D-1 事实收集阶段（强制执行）。
 ---
 
 # 查询组件/端能力事实源（按分组工具）
 
-通过 MCP 查询“组件库/端能力事实源”以获取精确规范。
+通过 MCP 查询"组件库/端能力事实源"以获取精确规范。
 
 > [!NOTE]
-> 本 Skill 是**MCP-First 规则**的实操指南。
+> 本 Skill 是**MCP-First 规则**的实操指南。凡涉及内部组件/API 的使用，必须通过本技能查询事实源，禁止凭记忆实现。
 
 ## 快速参考
 
@@ -41,7 +41,7 @@ description: 查询业务线内部“组件库/端能力事实源”的组件和
 
 ## 对象调用式（推荐范式）
 
-> 目标：不依赖“固定工具名”，而是按分组选择 tool id。**同一分组可能存在多个 tools**，调用前务必先确认你选的是哪个 tool。
+> 目标：不依赖"固定工具名"，而是按分组选择 tool id。**同一分组可能存在多个 tools**，调用前务必先确认你选的是哪个 tool。
 
 - **overview tools**：{{INFRA_CATALOG_OVERVIEW_TOOLS_MD}}
 - **search tools**：{{INFRA_CATALOG_SEARCH_TOOLS_MD}}
@@ -75,7 +75,7 @@ description: 查询业务线内部“组件库/端能力事实源”的组件和
 5. **实施**：严格按返回的规格实现
 6. **取证**：把涉及的外部边界写入 `HANDOFF_DATA.interfaces[]`
 
-> 注意：如果某分组显示为“未配置”，说明该项目未安装对应能力。**仅当当前任务必须依赖该分组工具获取事实源，且没有可复核替代证据**时，才需要阻塞并要求重新运行 `npx @ctrip/spec-forge init` + 重启 Claude Code；否则可基于现有代码/文档继续，但不得猜测新的 props/参数/行为。
+> 注意：如果某分组显示为"未配置"，说明该项目未安装对应能力。**仅当当前任务必须依赖该分组工具获取事实源，且没有可复核替代证据**时，才需要阻塞并要求重新运行 `npx @ctrip/spec-forge init` + 重启 Claude Code；否则可基于现有代码/文档继续，但不得猜测新的 props/参数/行为。
 
 ## 错误处理
 
@@ -83,5 +83,11 @@ description: 查询业务线内部“组件库/端能力事实源”的组件和
 
 1. 检查组件/API 名称拼写（区分大小写）
 2. 用 `search` 分组尝试更广泛的自然语言搜索
-3. 检查 `.mcp.json` 是否包含对应 server，且 `.claude/settings.json` 已放行对应 tool
+3. 检查 MCP 配置是否正确放行：
+   - 读取 `.claude/settings.json`，检查 `allowedTools` 数组是否包含对应的 tool id（格式如 `mcp__server-name__tool-name`）
+   - 检查 `enableAllProjectMcpServers` 是否为 `true`；若为 `false`，需将对应 tool id 加入 `allowedTools`
+   - 检查 `.mcp.json`（项目根目录）或 `~/.claude/mcp.json`（全局），确认对应 server 已配置且 `command`/`args` 路径正确
+   - 若修改了 settings.json，需重启 Claude Code 才能生效
 4. 兜底：查看业务线文档/组件库官方文档
+
+**字段出口约定**：本技能查询的组件/API 规格，最终必须以结构化形式写入 `design.md`；禁止在内存中消化后"隐式"应用到代码，需保留可审查的引用记录。

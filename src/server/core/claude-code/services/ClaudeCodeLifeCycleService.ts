@@ -7,18 +7,26 @@ import type { CommandExecutor } from "@effect/platform/CommandExecutor";
 import { Context, Effect, Layer, Runtime } from "effect";
 import { ulid } from "ulid";
 import { controllablePromise } from "../../../../lib/controllablePromise";
+import { buildSessionDisplayMeta } from "../../../../lib/session-display";
 import type { UserConfig } from "../../../lib/config/config";
 import type { InferEffect } from "../../../lib/effect/types";
 import { EventBus } from "../../events/services/EventBus";
 import type { CcvOptionsService } from "../../platform/services/CcvOptionsService";
 import type { EnvService } from "../../platform/services/EnvService";
+import type { UserConfigService } from "../../platform/services/UserConfigService";
+import {
+  countVisibleConversations,
+  getFirstVisibleUserMessage,
+} from "../../session/functions/getVisibleSessionMeta";
 import { SessionRepository } from "../../session/infrastructure/SessionRepository";
 import { VirtualConversationDatabase } from "../../session/infrastructure/VirtualConversationDatabase";
+import { SessionLiveDisplayService } from "../../session/services/SessionLiveDisplayService";
 import type { SessionMetaService } from "../../session/services/SessionMetaService";
 import {
   createMessageGenerator,
   type UserMessageInput,
 } from "../functions/createMessageGenerator";
+import { readClaudeSettingsEnv } from "../functions/readClaudeSettingsEnv";
 import * as CCSessionProcess from "../models/CCSessionProcess";
 import * as ClaudeCode from "../models/ClaudeCode";
 import { ClaudeCodePermissionService } from "./ClaudeCodePermissionService";
@@ -35,6 +43,7 @@ const LayerImpl = Effect.gen(function* () {
   const sessionRepository = yield* SessionRepository;
   const sessionProcessService = yield* ClaudeCodeSessionProcessService;
   const virtualConversationDatabase = yield* VirtualConversationDatabase;
+  const sessionLiveDisplayService = yield* SessionLiveDisplayService;
   const permissionService = yield* ClaudeCodePermissionService;
 
   const runtime = yield* Effect.runtime<
@@ -42,11 +51,58 @@ const LayerImpl = Effect.gen(function* () {
     | Path.Path
     | CommandExecutor
     | VirtualConversationDatabase
+    | SessionLiveDisplayService
     | SessionMetaService
     | ClaudeCodePermissionService
     | EnvService
     | CcvOptionsService
+    | UserConfigService
   >();
+
+  const snapshotLiveDisplay = (options: {
+    projectId: string;
+    sessionId: string;
+  }) =>
+    Effect.gen(function* () {
+      const sessionSnapshot = yield* sessionRepository.getSession(
+        options.projectId,
+        options.sessionId,
+      );
+
+      if (sessionSnapshot.session !== null) {
+        return {
+          projectId: options.projectId,
+          sessionId: options.sessionId,
+          displayMeta: sessionSnapshot.session.displayMeta,
+          firstUserMessage: sessionSnapshot.session.meta.firstUserMessage,
+        };
+      }
+
+      const virtualConversation =
+        yield* virtualConversationDatabase.getSessionVirtualConversation(
+          options.sessionId,
+        );
+
+      if (virtualConversation === null) {
+        return null;
+      }
+
+      const firstUserMessage = getFirstVisibleUserMessage(
+        virtualConversation.conversations,
+      );
+
+      return {
+        projectId: options.projectId,
+        sessionId: options.sessionId,
+        displayMeta: buildSessionDisplayMeta({
+          sessionId: options.sessionId,
+          firstUserMessage,
+          visibleMessageCount:
+            countVisibleConversations(virtualConversation.conversations) + 1,
+        }),
+        firstUserMessage,
+      };
+    });
 
   const continueTask = (options: {
     sessionProcessId: string;
@@ -229,6 +285,11 @@ const LayerImpl = Effect.gen(function* () {
               sessionId: message.session_id,
             });
 
+            yield* eventBusService.emit("initializationProgress", {
+              message: "会话连接建立成功",
+              stage: "success",
+            });
+
             return "continue" as const;
           }
 
@@ -244,16 +305,30 @@ const LayerImpl = Effect.gen(function* () {
               sessionId: message.session_id,
             });
 
+            const sessionSnapshot = yield* snapshotLiveDisplay({
+              projectId: processState.def.projectId,
+              sessionId: message.session_id,
+            });
+
+            if (sessionSnapshot !== null) {
+              yield* sessionLiveDisplayService.upsertSessionLiveDisplay({
+                projectId: processState.def.projectId,
+                sessionId: message.session_id,
+                displayMeta: sessionSnapshot.displayMeta,
+                firstUserMessage: sessionSnapshot.firstUserMessage,
+              });
+            }
+
+            yield* virtualConversationDatabase.deleteVirtualConversations(
+              message.session_id,
+            );
+
             // Notify frontend that new assistant message is available
             // This triggers before file watcher debounce, reducing perceived latency
             yield* eventBusService.emit("virtualConversationUpdated", {
               projectId: processState.def.projectId,
               sessionId: message.session_id,
             });
-
-            yield* virtualConversationDatabase.deleteVirtualConversations(
-              message.session_id,
-            );
           }
 
           if (
@@ -280,18 +355,25 @@ const LayerImpl = Effect.gen(function* () {
         try {
           const messageIter = await Runtime.runPromise(runtime)(
             Effect.gen(function* () {
+              yield* eventBusService.emit("initializationProgress", {
+                message: "正在初始化会话环境...",
+                stage: "loading",
+              });
+
               const permissionOptions =
                 yield* permissionService.createCanUseToolRelatedOptions({
                   taskId: task.def.taskId,
+                  sessionProcessId: sessionProcess.def.sessionProcessId,
                   userConfig,
                   sessionId: task.def.baseSessionId,
                 });
 
               // Normalize environment variables for Claude Code SDK
-              // If ANTHROPIC_AUTH_TOKEN is set but ANTHROPIC_API_KEY is not,
-              // use ANTHROPIC_AUTH_TOKEN as ANTHROPIC_API_KEY (for custom proxy services)
+              // 优先级：process.env > ~/.claude/settings.json env
+              // Windows 用户习惯把 ANTHROPIC_AUTH_TOKEN 等写在 settings.json 的 env 字段里
+              const settingsEnv = yield* readClaudeSettingsEnv;
               // biome-ignore lint/style/noProcessEnv: Claude Code SDK requires full env for MCP server configs
-              const normalizedEnv = { ...process.env };
+              const normalizedEnv = { ...settingsEnv, ...process.env };
               if (
                 !normalizedEnv.ANTHROPIC_API_KEY &&
                 normalizedEnv.ANTHROPIC_AUTH_TOKEN
@@ -320,9 +402,31 @@ const LayerImpl = Effect.gen(function* () {
             }),
           );
 
+          Effect.runFork(
+            eventBusService.emit("initializationProgress", {
+              message: "正在建立 MCP server 连接...",
+              stage: "loading",
+            }),
+          );
+
           setNextMessage(input);
 
           for await (const message of messageIter) {
+            // 诊断日志：追踪工具调用名称（用于排查 todowrite vs tasklist 问题）
+            if (
+              message.type === "assistant" &&
+              "message" in message &&
+              message.message?.content
+            ) {
+              const content = message.message.content;
+              const toolNames = (Array.isArray(content) ? content : [])
+                .filter((block) => block.type === "tool_use")
+                .map((t) => (t as { name: string }).name);
+              if (toolNames.length > 0) {
+                console.log(`[SpecForge:tool-use] ${toolNames.join(", ")}`);
+              }
+            }
+
             // Check abort signal before processing message
             if (sessionProcess.def.abortController.signal.aborted) {
               break;
@@ -362,7 +466,6 @@ const LayerImpl = Effect.gen(function* () {
 
             if (result === "break") {
               break;
-            } else {
             }
           }
         } catch (error) {

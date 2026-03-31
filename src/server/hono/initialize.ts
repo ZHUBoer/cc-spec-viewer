@@ -5,8 +5,13 @@ import type { InternalEventDeclaration } from "../core/events/types/InternalEven
 import { ProjectRepository } from "../core/project/infrastructure/ProjectRepository";
 import { ProjectMetaService } from "../core/project/services/ProjectMetaService";
 import { RateLimitAutoScheduleService } from "../core/rate-limit/services/RateLimitAutoScheduleService";
+import { SearchService } from "../core/search/services/SearchService";
 import { SessionRepository } from "../core/session/infrastructure/SessionRepository";
 import { VirtualConversationDatabase } from "../core/session/infrastructure/VirtualConversationDatabase";
+import {
+  isSessionLiveDisplayCaughtUp,
+  SessionLiveDisplayService,
+} from "../core/session/services/SessionLiveDisplayService";
 import { SessionMetaService } from "../core/session/services/SessionMetaService";
 
 interface InitializeServiceInterface {
@@ -28,7 +33,9 @@ export class InitializeService extends Context.Tag("InitializeService")<
       const projectMetaService = yield* ProjectMetaService;
       const sessionMetaService = yield* SessionMetaService;
       const virtualConversationDatabase = yield* VirtualConversationDatabase;
+      const sessionLiveDisplayService = yield* SessionLiveDisplayService;
       const rateLimitAutoScheduleService = yield* RateLimitAutoScheduleService;
+      const searchService = yield* SearchService;
 
       // Ref for state management
       const listenersRef = yield* Ref.make<{
@@ -37,6 +44,9 @@ export class InitializeService extends Context.Tag("InitializeService")<
           | null;
         sessionChanged?:
           | ((event: InternalEventDeclaration["sessionChanged"]) => void)
+          | null;
+        sessionListChanged?:
+          | ((event: InternalEventDeclaration["sessionListChanged"]) => void)
           | null;
       }>({});
 
@@ -62,24 +72,57 @@ export class InitializeService extends Context.Tag("InitializeService")<
           const onSessionChanged = (
             event: InternalEventDeclaration["sessionChanged"],
           ) => {
-            Effect.runFork(
+            Effect.runSync(
               projectMetaService.invalidateProject(event.projectId),
             );
 
-            Effect.runFork(
+            Effect.runSync(
               sessionMetaService.invalidateSession(
                 event.projectId,
                 event.sessionId,
               ),
             );
+            Effect.runSync(searchService.invalidateIndex());
+
+            Effect.runFork(
+              Effect.gen(function* () {
+                const liveDisplay =
+                  yield* sessionLiveDisplayService.getSessionLiveDisplay(
+                    event.sessionId,
+                  );
+
+                if (liveDisplay === null) {
+                  return;
+                }
+
+                const refreshedMeta = yield* sessionMetaService
+                  .getSessionMeta(event.projectId, event.sessionId)
+                  .pipe(Effect.catchAll(() => Effect.succeed(null)));
+
+                if (
+                  refreshedMeta !== null &&
+                  isSessionLiveDisplayCaughtUp({
+                    meta: refreshedMeta,
+                    liveDisplay,
+                  })
+                ) {
+                  yield* sessionLiveDisplayService.deleteSessionLiveDisplay(
+                    event.sessionId,
+                  );
+                }
+              }),
+            );
+          };
+
+          const onSessionListChanged = () => {
+            Effect.runSync(searchService.invalidateIndex());
           };
 
           const onSessionProcessChanged = (
             event: InternalEventDeclaration["sessionProcessChanged"],
           ) => {
             if (
-              (event.changed.type === "completed" ||
-                event.changed.type === "paused") &&
+              event.changed.type === "completed" &&
               event.changed.sessionId !== undefined
             ) {
               Effect.runFork(
@@ -93,9 +136,11 @@ export class InitializeService extends Context.Tag("InitializeService")<
 
           yield* Ref.set(listenersRef, {
             sessionChanged: onSessionChanged,
+            sessionListChanged: onSessionListChanged,
             sessionProcessChanged: onSessionProcessChanged,
           });
           yield* eventBus.on("sessionChanged", onSessionChanged);
+          yield* eventBus.on("sessionListChanged", onSessionListChanged);
           yield* eventBus.on("sessionProcessChanged", onSessionProcessChanged);
 
           yield* Effect.gen(function* () {
@@ -127,6 +172,12 @@ export class InitializeService extends Context.Tag("InitializeService")<
           const listeners = yield* Ref.get(listenersRef);
           if (listeners.sessionChanged) {
             yield* eventBus.off("sessionChanged", listeners.sessionChanged);
+          }
+          if (listeners.sessionListChanged) {
+            yield* eventBus.off(
+              "sessionListChanged",
+              listeners.sessionListChanged,
+            );
           }
 
           if (listeners.sessionProcessChanged) {

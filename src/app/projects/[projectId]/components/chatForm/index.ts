@@ -4,9 +4,23 @@ export type { CommandCompletionRef } from "./CommandCompletion";
 export { CommandCompletion } from "./CommandCompletion";
 export type { FileCompletionRef } from "./FileCompletion";
 export { FileCompletion } from "./FileCompletion";
+export type {
+  FeishuDialogActions,
+  FeishuDialogState,
+  FeishuDownloadResult,
+} from "./feishu";
 export {
+  detectFeishuUrls,
+  FeishuResolverDialogs,
+  isFeishuUrl,
+  replaceFeishuUrls,
+  useFeishuResolver,
+} from "./feishu";
+export {
+  SESSION_CONNECT_TOAST_ID,
   useContinueSessionProcessMutation,
   useCreateSessionProcessMutation,
+  useSwitchCcModelMutation,
 } from "./useChatMutations";
 export type { UseMessageCompletionResult } from "./useMessageCompletion";
 export { useMessageCompletion } from "./useMessageCompletion";

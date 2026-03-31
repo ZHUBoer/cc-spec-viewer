@@ -88,7 +88,9 @@ export function useMessageCompletion(): UseMessageCompletionResult {
     const caretRect = caret.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
 
-    container.removeChild(mirrored);
+    if (mirrored.parentNode === container) {
+      container.removeChild(mirrored);
+    }
 
     return {
       relative: {

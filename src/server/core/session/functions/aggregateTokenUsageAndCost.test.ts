@@ -39,7 +39,7 @@ describe("aggregateTokenUsageAndCost", () => {
       expect(result.totalUsage.input_tokens).toBe(0);
       expect(result.totalUsage.output_tokens).toBe(0);
       expect(result.totalCost.totalUsd).toBe(0);
-      expect(result.modelName).toBe("claude-3.5-sonnet"); // Default model
+      expect(result.modelName).toBe("claude-sonnet-4.5"); // Default model
     });
   });
 
@@ -109,17 +109,17 @@ describe("aggregateTokenUsageAndCost", () => {
       expect(result.totalUsage.output_tokens).toBe(2000000);
 
       // Expected cost calculation:
-      // Haiku: 1M input * $0.25 + 1M output * $1.25 = $0.25 + $1.25 = $1.50
-      // Opus: 1M input * $15 + 1M output * $75 = $15 + $75 = $90
-      // Total: $1.50 + $90 = $91.50
-      const expectedTotal = 1.5 + 90.0;
+      // Haiku (fallback to claude-sonnet-4.5): 1M input * $3.0 + 1M output * $15.0 = $3.0 + $15.0 = $18.0
+      // Opus (fallback to claude-sonnet-4.5): 1M input * $3.0 + 1M output * $15.0 = $3.0 + $15.0 = $18.0
+      // Total: $18.0 + $18.0 = $36.0
+      const expectedTotal = 18.0 + 18.0;
       expect(result.totalCost.totalUsd).toBeCloseTo(expectedTotal, 2);
 
       // Verify breakdown shows correct aggregated costs
-      // Input: Haiku $0.25 + Opus $15 = $15.25
-      expect(result.totalCost.breakdown.inputTokensUsd).toBeCloseTo(15.25, 2);
-      // Output: Haiku $1.25 + Opus $75 = $76.25
-      expect(result.totalCost.breakdown.outputTokensUsd).toBeCloseTo(76.25, 2);
+      // Input: Haiku $3.0 + Opus $3.0 = $6.0
+      expect(result.totalCost.breakdown.inputTokensUsd).toBeCloseTo(6.0, 2);
+      // Output: Haiku $15.0 + Opus $15.0 = $30.0
+      expect(result.totalCost.breakdown.outputTokensUsd).toBeCloseTo(30.0, 2);
 
       // Last model should be from the last file
       expect(result.modelName).toBe("claude-3-opus-20240229");
@@ -149,7 +149,7 @@ describe("aggregateTokenUsageAndCost", () => {
       expect(result.totalUsage.input_tokens).toBe(0);
       expect(result.totalUsage.output_tokens).toBe(0);
       expect(result.totalCost.totalUsd).toBe(0);
-      expect(result.modelName).toBe("claude-3.5-sonnet"); // Default
+      expect(result.modelName).toBe("claude-sonnet-4.5"); // Default
     });
 
     test("handles array with only empty strings", () => {

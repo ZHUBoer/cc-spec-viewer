@@ -1,0 +1,1 @@
+import{u as n,a,r as o,j as s,L as r}from"./index-C3lL12bG.js";function c(){const e=n(),{isAuthenticated:t}=a();return o.useEffect(()=>{e(t?{to:"/projects"}:{to:"/login"})},[t,e]),s.jsx("div",{className:"min-h-screen flex items-center justify-center bg-background",children:s.jsx(r,{className:"h-8 w-8 animate-spin text-muted-foreground"})})}export{c as component};

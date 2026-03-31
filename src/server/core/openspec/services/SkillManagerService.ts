@@ -1,5 +1,5 @@
 import { Command, FileSystem, Path } from "@effect/platform";
-import { Context, Data, Duration, Effect, Either, Layer } from "effect";
+import { Context, Data, Duration, Effect, Either, Layer, Option } from "effect";
 import type { InferEffect } from "../../../lib/effect/types";
 
 // ============================================================================
@@ -18,6 +18,19 @@ export class SkillInstallError extends Data.TaggedError("SkillInstallError")<{
 export interface SkillInstallResult {
   name: string;
   description: string;
+}
+
+export interface SkillPreflightResult {
+  ok: boolean;
+  category:
+    | "none"
+    | "network"
+    | "auth"
+    | "not_found"
+    | "invalid_path"
+    | "unknown";
+  message?: string;
+  missingSkills?: string[];
 }
 
 // ============================================================================
@@ -76,6 +89,73 @@ const LayerImpl = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
 
+  const classifyGitError = (
+    errorText: string,
+  ): SkillPreflightResult["category"] => {
+    const text = errorText.toLowerCase();
+    if (
+      text.includes("authentication failed") ||
+      text.includes("permission denied") ||
+      text.includes("not authorized")
+    ) {
+      return "auth";
+    }
+    if (text.includes("repository not found") || text.includes("not found")) {
+      return "not_found";
+    }
+    if (
+      text.includes("could not resolve host") ||
+      text.includes("failed to connect") ||
+      text.includes("connection timed out") ||
+      text.includes("network is unreachable") ||
+      text.includes("connection reset")
+    ) {
+      return "network";
+    }
+    return "unknown";
+  };
+
+  const cloneRepoWithRetry = (
+    gitUrl: string,
+    tempDir: string,
+    options: { attempts?: number; backoffMs?: number } = {},
+  ) =>
+    Effect.gen(function* () {
+      const attempts = options.attempts ?? 3;
+      const backoffMs = options.backoffMs ?? 1000;
+
+      let lastError = "";
+      for (let i = 0; i < attempts; i++) {
+        const cloneCommand = Command.make(
+          "git",
+          "clone",
+          "--depth",
+          "1",
+          gitUrl,
+          tempDir,
+        );
+        const cloneResult = yield* Effect.either(
+          Command.string(cloneCommand).pipe(
+            Effect.timeout(Duration.seconds(120)),
+          ),
+        );
+        if (Either.isRight(cloneResult)) {
+          return { success: true as const, errorText: "" };
+        }
+
+        lastError = String(cloneResult.left);
+        const category = classifyGitError(lastError);
+        const isTransient = category === "network";
+        if (!isTransient || i === attempts - 1) {
+          break;
+        }
+        const waitMs = backoffMs * 2 ** i;
+        yield* Effect.sleep(Duration.millis(waitMs));
+      }
+
+      return { success: false as const, errorText: lastError };
+    });
+
   /**
    * 在目录中查找 SKILL.md（大小写不敏感）
    */
@@ -89,7 +169,7 @@ const LayerImpl = Effect.gen(function* () {
       // 大小写不敏感查找
       const files = yield* fs
         .readDirectory(dirPath)
-        .pipe(Effect.catchAll(() => Effect.succeed([] as string[])));
+        .pipe(Effect.catchAll(() => Effect.succeed<string[]>([])));
 
       const found = files.find((f) => f.toLowerCase() === "skill.md");
       if (found) {
@@ -97,6 +177,40 @@ const LayerImpl = Effect.gen(function* () {
       }
 
       return null;
+    });
+
+  const findSkillDirsByName = (repoRoot: string, skillName: string) =>
+    Effect.gen(function* () {
+      const matches: string[] = [];
+      const queue: string[] = [repoRoot];
+
+      while (queue.length > 0) {
+        const currentDir = queue.shift();
+        if (!currentDir) continue;
+
+        const entries = yield* fs
+          .readDirectory(currentDir)
+          .pipe(Effect.catchAll(() => Effect.succeed<string[]>([])));
+
+        for (const entry of entries) {
+          if (entry.startsWith(".")) continue;
+          const entryPath = path.join(currentDir, entry);
+          const statResult = yield* fs.stat(entryPath).pipe(Effect.option);
+          if (Option.isNone(statResult)) continue;
+          if (statResult.value.type !== "Directory") continue;
+
+          if (entry === skillName) {
+            const skillMdPath = yield* findSkillMd(entryPath);
+            if (skillMdPath) {
+              matches.push(entryPath);
+            }
+          }
+
+          queue.push(entryPath);
+        }
+      }
+
+      return matches;
     });
 
   /**
@@ -205,26 +319,15 @@ const LayerImpl = Effect.gen(function* () {
 
       // 使用 ensuring 确保临时目录始终被清理
       const installEffect = Effect.gen(function* () {
-        // 1. Git clone（shallow clone 提速）
-        const cloneCommand = Command.make(
-          "git",
-          "clone",
-          "--depth",
-          "1",
-          gitUrl,
-          tempDir,
-        );
-
-        const cloneResult = yield* Effect.either(
-          Command.string(cloneCommand).pipe(
-            Effect.timeout(Duration.seconds(120)),
-          ),
-        );
-
-        if (Either.isLeft(cloneResult)) {
+        // 1. Git clone（shallow clone + 瞬时网络错误重试）
+        const cloneResult = yield* cloneRepoWithRetry(gitUrl, tempDir, {
+          attempts: 3,
+          backoffMs: 1000,
+        });
+        if (!cloneResult.success) {
           console.error(
             `[SkillManager] Git clone 失败: ${gitUrl}`,
-            String(cloneResult.left),
+            cloneResult.errorText,
           );
           return [] as SkillInstallResult[];
         }
@@ -262,8 +365,23 @@ const LayerImpl = Effect.gen(function* () {
             }
           } else {
             // 单个 skill 路径
-            const skillName = path.basename(skillPath);
-            const sourcePath = path.join(tempDir, skillPath);
+            const requestedPath = skillPath.trim();
+            const skillName = path.basename(requestedPath);
+            let sourcePath = path.join(tempDir, requestedPath);
+
+            if (
+              !(yield* fs.exists(sourcePath)) &&
+              !requestedPath.includes("/")
+            ) {
+              // 兼容“仅配置 skill 名称”的场景：在仓库中按目录名自动发现
+              const matchedDirs = yield* findSkillDirsByName(
+                tempDir,
+                skillName,
+              );
+              if (matchedDirs.length === 1 && matchedDirs[0]) {
+                sourcePath = matchedDirs[0];
+              }
+            }
 
             const result = yield* installSingleSkill(
               sourcePath,
@@ -295,13 +413,120 @@ const LayerImpl = Effect.gen(function* () {
             `[SkillManager] Skill 安装失败:`,
             error instanceof Error ? error.message : String(error),
           );
-          return Effect.succeed([] as SkillInstallResult[]);
+          return Effect.succeed<SkillInstallResult[]>([]);
         }),
+      );
+    });
+
+  const preflightSkillsFromGit = (gitUrl: string, skillsList: string[]) =>
+    Effect.gen(function* () {
+      if (!gitUrl || !Array.isArray(skillsList) || skillsList.length === 0) {
+        return {
+          ok: false,
+          category: "invalid_path",
+          message: "develop_skills 配置不完整：缺少 gitUrl 或 skills。",
+        } satisfies SkillPreflightResult;
+      }
+
+      const tempDir = yield* fs.makeTempDirectory({
+        prefix: "specforge-skills-preflight-",
+      });
+
+      return yield* Effect.gen(function* () {
+        const cloneResult = yield* cloneRepoWithRetry(gitUrl, tempDir, {
+          attempts: 3,
+          backoffMs: 1000,
+        });
+        if (!cloneResult.success) {
+          const category = classifyGitError(cloneResult.errorText);
+          return {
+            ok: false,
+            category,
+            message: `Git 仓库不可用: ${cloneResult.errorText}`,
+          } satisfies SkillPreflightResult;
+        }
+
+        const missingSkills: string[] = [];
+        for (const configuredPath of skillsList) {
+          const skillPath = configuredPath.trim();
+          if (!skillPath) continue;
+
+          if (skillPath.endsWith("/*")) {
+            const parentDir = skillPath.slice(0, -2);
+            const fullParentPath = path.join(tempDir, parentDir);
+            if (!(yield* fs.exists(fullParentPath))) {
+              missingSkills.push(skillPath);
+              continue;
+            }
+            const children = yield* fs.readDirectory(fullParentPath);
+            let hasAnySkill = false;
+            for (const child of children) {
+              const childPath = path.join(fullParentPath, child);
+              const statResult = yield* fs.stat(childPath).pipe(Effect.option);
+              if (Option.isNone(statResult)) continue;
+              if (statResult.value.type !== "Directory") continue;
+              const skillMdPath = yield* findSkillMd(childPath);
+              if (skillMdPath) {
+                hasAnySkill = true;
+                break;
+              }
+            }
+            if (!hasAnySkill) {
+              missingSkills.push(skillPath);
+            }
+          } else {
+            let sourcePath = path.join(tempDir, skillPath);
+            let exists = yield* fs.exists(sourcePath);
+            if (!exists && !skillPath.includes("/")) {
+              const skillName = path.basename(skillPath);
+              const matchedDirs = yield* findSkillDirsByName(
+                tempDir,
+                skillName,
+              );
+              if (matchedDirs.length === 1 && matchedDirs[0]) {
+                sourcePath = matchedDirs[0];
+                exists = true;
+              } else if (matchedDirs.length > 1) {
+                missingSkills.push(
+                  `${skillPath}（匹配到多个目录，请改为仓库相对路径）`,
+                );
+                continue;
+              }
+            }
+
+            if (!exists) {
+              missingSkills.push(skillPath);
+              continue;
+            }
+            const skillMdPath = yield* findSkillMd(sourcePath);
+            if (!skillMdPath) {
+              missingSkills.push(skillPath);
+            }
+          }
+        }
+
+        if (missingSkills.length > 0) {
+          return {
+            ok: false,
+            category: "invalid_path",
+            message: "部分 skill 路径不存在或缺少 SKILL.md。",
+            missingSkills,
+          } satisfies SkillPreflightResult;
+        }
+
+        return { ok: true, category: "none" } satisfies SkillPreflightResult;
+      }).pipe(
+        Effect.ensuring(
+          fs
+            .remove(tempDir, { recursive: true })
+            .pipe(Effect.catchAll(() => Effect.succeed(undefined))),
+        ),
       );
     });
 
   return {
     installSkillsFromGit,
+    preflightSkillsFromGit,
   };
 });
 

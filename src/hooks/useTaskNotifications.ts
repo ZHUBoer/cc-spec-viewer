@@ -6,34 +6,51 @@ import {
   soundNotificationsEnabledAtom,
 } from "@/lib/atoms/notifications";
 import { playNotificationSound } from "@/lib/notifications";
+import type { ExtendedConversation } from "@/server/core/types";
+import {
+  advanceTaskNotificationState,
+  createInitialTaskNotificationState,
+  getTaskCompletionContentKey,
+} from "./taskNotificationState";
 
 /**
- * Hook to handle task completion sound notifications
- * Monitors task state changes and triggers sound when tasks complete
+ * Hook to handle task completion notifications.
+ * 当前打开的会话优先等待内容真正出现在前端后再提示。
  */
-export const useTaskNotifications = (isRunningTask: boolean) => {
+export const useTaskNotifications = (options: {
+  isRunningTask: boolean;
+  conversations: ReadonlyArray<ExtendedConversation>;
+}) => {
   const settings = useAtomValue(notificationSettingsAtom);
   const soundEnabled = useAtomValue(soundNotificationsEnabledAtom);
+  const stateRef = useRef(createInitialTaskNotificationState());
+  const latestCompletionKey = getTaskCompletionContentKey(
+    options.conversations,
+  );
 
-  // Track previous running state to detect completion
-  const prevIsRunningRef = useRef<boolean>(isRunningTask);
-
-  // Monitor task state changes
   useEffect(() => {
-    const prevIsRunning = prevIsRunningRef.current;
-    const currentIsRunning = isRunningTask;
-
-    // Update the ref for next comparison
-    prevIsRunningRef.current = currentIsRunning;
-
-    // Detect task completion: was running, now not running
-    if (prevIsRunning && !currentIsRunning) {
+    const notifyCompletion = () => {
       toast.success("Task completed");
 
       if (soundEnabled) {
-        // Play notification sound
         playNotificationSound(settings.soundType);
       }
+    };
+
+    const decision = advanceTaskNotificationState(stateRef.current, {
+      isRunningTask: options.isRunningTask,
+      latestCompletionKey,
+    });
+
+    stateRef.current = decision.nextState;
+
+    if (decision.shouldNotify) {
+      notifyCompletion();
     }
-  }, [isRunningTask, soundEnabled, settings.soundType]);
+  }, [
+    options.isRunningTask,
+    latestCompletionKey,
+    soundEnabled,
+    settings.soundType,
+  ]);
 };

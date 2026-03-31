@@ -1,7 +1,10 @@
 import type { z } from "zod";
 import type { Conversation } from "../../lib/conversation-schema";
 import type { projectMetaSchema } from "./project/schema";
-import type { sessionMetaSchema } from "./session/schema";
+import type {
+  sessionDisplayMetaSchema,
+  sessionMetaSchema,
+} from "./session/schema";
 
 export type Project = {
   id: string;
@@ -16,10 +19,12 @@ export type Session = {
   id: string;
   jsonlFilePath: string;
   lastModifiedAt: Date;
+  displayMeta: SessionDisplayMeta;
   meta: SessionMeta;
 };
 
 export type SessionMeta = z.infer<typeof sessionMetaSchema>;
+export type SessionDisplayMeta = z.infer<typeof sessionDisplayMetaSchema>;
 
 export type ErrorJsonl = {
   type: "x-error";

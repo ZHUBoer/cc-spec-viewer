@@ -27,8 +27,27 @@ const LayerImpl = Effect.gen(function* () {
       } as const satisfies ControllerResponse;
     });
 
+  const pendingPermissionRequests = (options: {
+    sessionId?: string;
+    taskId?: string;
+    sessionProcessId?: string;
+  }) =>
+    Effect.gen(function* () {
+      const requests =
+        yield* claudeCodePermissionService.getPendingPermissionRequests(
+          options,
+        );
+      return {
+        status: 200,
+        response: {
+          requests,
+        },
+      } as const satisfies ControllerResponse;
+    });
+
   return {
     permissionResponse,
+    pendingPermissionRequests,
   };
 });
 

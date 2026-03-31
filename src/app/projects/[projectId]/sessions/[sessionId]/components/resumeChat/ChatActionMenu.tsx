@@ -1,6 +1,5 @@
 import { Trans, useLingui } from "@lingui/react";
 import type { UseMutationResult } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -14,6 +13,7 @@ import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useWorkspacePanel } from "../../../../../../../hooks/useWorkspacePanel";
 import type { PublicSessionProcess } from "../../../../../../../types/session-process";
+import { isSessionProcessAbortable } from "./sessionProcessUi";
 
 interface ChatActionMenuProps {
   projectId: string;
@@ -26,6 +26,8 @@ interface ChatActionMenuProps {
   isNewChat?: boolean;
 }
 
+const DEFAULT_BROWSER_URL = "https://trip.larkenterprise.com/drive/home/";
+
 export const ChatActionMenu: FC<ChatActionMenuProps> = ({
   projectId,
   isPending = false,
@@ -34,24 +36,23 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
   onOpenDiffModal,
   sessionProcess,
   abortTask,
-  isNewChat = false,
+  isNewChat: _isNewChat,
 }) => {
   const { i18n } = useLingui();
-  const navigate = useNavigate();
   const { openBrowser } = useWorkspacePanel();
 
-  const [isNavigatingToNewChat, setIsNavigatingToNewChat] = useState(false);
+  const [isOpeningNewChange, setIsOpeningNewChange] = useState(false);
 
-  const handleStartNewChat = () => {
-    setIsNavigatingToNewChat(true);
-    navigate({
-      to: "/projects/$projectId/session",
-      params: { projectId },
-      search: (prev) => {
-        const { sessionId: _removed, ...rest } = prev;
-        return rest;
-      },
-    });
+  const handleOpenNewChange = () => {
+    setIsOpeningNewChange(true);
+    window.dispatchEvent(
+      new CustomEvent("specforge:open-new-spec", {
+        detail: { projectId },
+      }),
+    );
+    setTimeout(() => {
+      setIsOpeningNewChange(false);
+    }, 300);
   };
 
   return (
@@ -80,7 +81,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => openBrowser("about:blank")}
+          onClick={() => openBrowser(DEFAULT_BROWSER_URL)}
           disabled={isPending}
           className="h-7 px-2 text-xs bg-muted/20 rounded-lg border border-border/40 cursor-pointer"
           title={i18n._({
@@ -94,23 +95,47 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
           type="button"
           variant="ghost"
           size="sm"
-          disabled={isPending || isNewChat || isNavigatingToNewChat}
+          disabled={isPending || isOpeningNewChange}
           className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40 cursor-pointer"
-          onClick={handleStartNewChat}
+          onClick={handleOpenNewChange}
           title={i18n._({
-            id: "control.new_chat",
-            message: "New Chat",
+            id: "control.new_change",
+            message: "新建 Change",
           })}
         >
-          {isNavigatingToNewChat ? (
+          {isOpeningNewChange ? (
             <LoaderIcon className="w-3.5 h-3.5 animate-spin" />
           ) : (
             <PlusIcon className="w-3.5 h-3.5" />
           )}
           <span>
-            <Trans id="control.new" />
+            <Trans id="control.new_change" message="新建 Change" />
           </span>
         </Button>
+        {/* TODO(yiwei): restore after opsx:continue is ready
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={isPending}
+          className="h-7 px-2 gap-1.5 text-xs bg-muted/20 rounded-lg border border-border/40 cursor-pointer"
+          onClick={() => {
+            window.dispatchEvent(
+              new CustomEvent("specforge:send-message", {
+                detail: {
+                  projectId,
+                  message: "/opsx:continue ",
+                },
+              }),
+            );
+          }}
+          title="/opsx:continue"
+        >
+          <span className="font-mono text-[10px] sm:text-xs">
+            /opsx:continue{" "}
+          </span>
+        </Button>
+        */}
         {onScrollToTop && (
           <Button
             type="button"
@@ -143,7 +168,7 @@ export const ChatActionMenu: FC<ChatActionMenuProps> = ({
             <ArrowDownIcon className="w-3.5 h-3.5" />
           </Button>
         )}
-        {sessionProcess && (
+        {isSessionProcessAbortable(sessionProcess) && (
           <Button
             type="button"
             variant="destructive"

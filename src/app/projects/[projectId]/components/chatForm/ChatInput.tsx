@@ -33,10 +33,12 @@ import type {
 } from "../../../../../server/core/claude-code/schema";
 import { useConfig } from "../../../../hooks/useConfig";
 import type { CommandCompletionRef } from "./CommandCompletion";
+import { getNextHandledQueuedMessageId } from "./chatInputQueuedMessage";
 import { isInCompletionContext } from "./completionUtils";
 import type { FileCompletionRef } from "./FileCompletion";
 import { processFile } from "./fileUtils";
 import { InlineCompletion } from "./InlineCompletion";
+import { ModelSwitchBar } from "./ModelSwitchBar";
 
 export interface MessageInput {
   text: string;
@@ -57,6 +59,22 @@ export interface ChatInputProps {
   buttonSize?: "sm" | "default" | "lg";
   enableScheduledSend?: boolean;
   baseSessionId?: string | null;
+  /**
+   * 消息预处理器（middleware），在发送前拦截并处理消息内容。
+   * - 返回 string：使用处理后的消息继续发送
+   * - 返回 null：中止发送，保留输入内容
+   */
+  onBeforeSubmit?: (message: string) => Promise<string | null>;
+  onModelSwitched?: () => void;
+  requireConfirmModelSwitch?: boolean;
+  queuedMessage?: {
+    id: string;
+    text: string;
+  } | null;
+  onQueuedMessageHandled?: (
+    id: string,
+    result: "success" | "aborted" | "failed",
+  ) => void;
 }
 
 export const ChatInput: FC<ChatInputProps> = ({
@@ -72,6 +90,11 @@ export const ChatInput: FC<ChatInputProps> = ({
   buttonSize = "lg",
   enableScheduledSend = false,
   baseSessionId = null,
+  onBeforeSubmit,
+  onModelSwitched,
+  requireConfirmModelSwitch = false,
+  queuedMessage = null,
+  onQueuedMessageHandled,
 }) => {
   // Parse minHeight prop to get pixel value (default to 48px for 1.5 lines)
   // Supports both "200px" and Tailwind format like "min-h-[200px]"
@@ -90,6 +113,8 @@ export const ChatInput: FC<ChatInputProps> = ({
   const minHeightValue = parseMinHeight(minHeightProp);
   const { i18n } = useLingui();
   const [message, setMessage] = useState("");
+  // 暂时隐藏模型切换入口（ada-cli 不稳定）
+  const showModelSwitch = false;
   const [attachedFiles, setAttachedFiles] = useState<
     Array<{ file: File; id: string }>
   >([]);
@@ -100,6 +125,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const [sendMode, setSendMode] = useState<"immediate" | "scheduled">(
     "immediate",
   );
+  const [isModelSwitching, setIsModelSwitching] = useState(false);
   const [scheduledTime, setScheduledTime] = useState(() => {
     const now = new Date();
     now.setHours(now.getHours() + 1);
@@ -119,6 +145,7 @@ export const ChatInput: FC<ChatInputProps> = ({
   const helpId = useId();
   const { config } = useConfig();
   const createSchedulerJob = useCreateSchedulerJob();
+  const handledQueuedMessageIdRef = useRef<string | null>(null);
 
   // Auto-resize textarea based on content
   // biome-ignore lint/correctness/useExhaustiveDependencies: message is intentionally included to trigger resize
@@ -142,103 +169,178 @@ export const ChatInput: FC<ChatInputProps> = ({
     textarea.style.height = `${minHeightValue}px`;
   }, [minHeightValue]);
 
-  const handleSubmit = async () => {
-    if (!message.trim() && attachedFiles.length === 0) return;
-
-    const images: ImageBlockParam[] = [];
-    const documents: DocumentBlockParam[] = [];
-
-    for (const { file } of attachedFiles) {
-      const result = await processFile(file);
-
-      if (result === null) {
-        continue;
+  const handleSubmit = useCallback(
+    async (
+      messageOverride?: string,
+    ): Promise<"success" | "aborted" | "failed"> => {
+      const rawMessage = messageOverride ?? message;
+      if (
+        (!rawMessage.trim() && attachedFiles.length === 0) ||
+        isPending ||
+        disabled ||
+        isModelSwitching
+      ) {
+        return "aborted";
       }
 
-      if (result.type === "text") {
-        documents.push({
-          type: "document",
-          source: {
-            type: "text",
-            media_type: "text/plain",
-            data: result.content,
-          },
-        });
-      } else if (result.type === "image") {
-        images.push(result.block);
-      } else if (result.type === "document") {
-        documents.push(result.block);
+      // 消息预处理器：在发送前拦截并处理消息（如飞书链接解析等）
+      let processedMessage = rawMessage;
+      if (onBeforeSubmit) {
+        const result = await onBeforeSubmit(rawMessage);
+        if (result === null) {
+          // 预处理器返回 null 表示中止发送，保留输入内容
+          return "aborted";
+        }
+        processedMessage = result;
       }
-    }
 
-    if (enableScheduledSend && sendMode === "scheduled") {
-      // Create a scheduler job for scheduled send
-      const match = scheduledTime.match(
-        /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/,
-      );
-      if (!match) {
-        throw new Error("Invalid datetime format");
+      const images: ImageBlockParam[] = [];
+      const documents: DocumentBlockParam[] = [];
+
+      for (const { file } of attachedFiles) {
+        const result = await processFile(file);
+
+        if (result === null) {
+          continue;
+        }
+
+        if (result.type === "text") {
+          documents.push({
+            type: "document",
+            source: {
+              type: "text",
+              media_type: "text/plain",
+              data: result.content,
+            },
+          });
+        } else if (result.type === "image") {
+          images.push(result.block);
+        } else if (result.type === "document") {
+          documents.push(result.block);
+        }
       }
-      const year = Number(match[1]);
-      const month = Number(match[2]);
-      const day = Number(match[3]);
-      const hours = Number(match[4]);
-      const minutes = Number(match[5]);
-      const localDate = new Date(year, month - 1, day, hours, minutes);
 
-      try {
-        await createSchedulerJob.mutateAsync({
-          name: `Scheduled message at ${scheduledTime}`,
-          schedule: {
-            type: "reserved",
-            reservedExecutionTime: localDate.toISOString(),
-          },
-          message: {
-            content: message,
-            projectId,
-            baseSessionId,
-          },
-          enabled: true,
-        });
+      if (enableScheduledSend && sendMode === "scheduled") {
+        // Create a scheduler job for scheduled send
+        const match = scheduledTime.match(
+          /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/,
+        );
+        if (!match) {
+          throw new Error("Invalid datetime format");
+        }
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const hours = Number(match[4]);
+        const minutes = Number(match[5]);
+        const localDate = new Date(year, month - 1, day, hours, minutes);
 
-        toast.success(
-          i18n._({
-            id: "chat.scheduled_send.success",
-            message: "Message scheduled successfully",
-          }),
-          {
-            description: i18n._({
-              id: "chat.scheduled_send.success_description",
-              message: "You can view and manage it in the Scheduler tab",
+        try {
+          await createSchedulerJob.mutateAsync({
+            name: `Scheduled message at ${scheduledTime}`,
+            schedule: {
+              type: "reserved",
+              reservedExecutionTime: localDate.toISOString(),
+            },
+            message: {
+              content: processedMessage,
+              projectId,
+              baseSessionId,
+            },
+            enabled: true,
+          });
+
+          toast.success(
+            i18n._({
+              id: "chat.scheduled_send.success",
+              message: "Message scheduled successfully",
             }),
-          },
-        );
+            {
+              description: i18n._({
+                id: "chat.scheduled_send.success_description",
+                message: "You can view and manage it in the Scheduler tab",
+              }),
+            },
+          );
 
-        setMessage("");
-        setAttachedFiles([]);
-      } catch (error) {
-        toast.error(
-          i18n._({
-            id: "chat.scheduled_send.failed",
-            message: "Failed to schedule message",
-          }),
-          {
-            description: error instanceof Error ? error.message : undefined,
-          },
-        );
+          setMessage("");
+          setAttachedFiles([]);
+          return "success";
+        } catch (error) {
+          toast.error(
+            i18n._({
+              id: "chat.scheduled_send.failed",
+              message: "Failed to schedule message",
+            }),
+            {
+              description: error instanceof Error ? error.message : undefined,
+            },
+          );
+          return "failed";
+        }
+      } else {
+        // Immediate send
+        try {
+          await onSubmit({
+            text: processedMessage,
+            images: images.length > 0 ? images : undefined,
+            documents: documents.length > 0 ? documents : undefined,
+          });
+
+          setMessage("");
+          setAttachedFiles([]);
+          return "success";
+        } catch {
+          return "failed";
+        }
       }
-    } else {
-      // Immediate send
-      await onSubmit({
-        text: message,
-        images: images.length > 0 ? images : undefined,
-        documents: documents.length > 0 ? documents : undefined,
-      });
+    },
+    [
+      attachedFiles,
+      baseSessionId,
+      createSchedulerJob,
+      disabled,
+      enableScheduledSend,
+      i18n,
+      isModelSwitching,
+      isPending,
+      message,
+      onBeforeSubmit,
+      onSubmit,
+      projectId,
+      scheduledTime,
+      sendMode,
+    ],
+  );
 
-      setMessage("");
-      setAttachedFiles([]);
+  useEffect(() => {
+    if (!queuedMessage) {
+      return;
     }
-  };
+    if (handledQueuedMessageIdRef.current === queuedMessage.id) {
+      return;
+    }
+    if (isPending || disabled || isModelSwitching) {
+      return;
+    }
+    handledQueuedMessageIdRef.current = queuedMessage.id;
+    setMessage(queuedMessage.text);
+    void handleSubmit(queuedMessage.text).then((result) => {
+      handledQueuedMessageIdRef.current = getNextHandledQueuedMessageId(
+        handledQueuedMessageIdRef.current,
+        queuedMessage.id,
+        result,
+      );
+      onQueuedMessageHandled?.(queuedMessage.id, result);
+    });
+  }, [
+    disabled,
+    handleSubmit,
+    isModelSwitching,
+    isPending,
+    onQueuedMessageHandled,
+    queuedMessage,
+  ]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -342,7 +444,9 @@ export const ChatInput: FC<ChatInputProps> = ({
     const caretRect = caret.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
 
-    container.removeChild(mirrored);
+    if (mirrored.parentNode === container) {
+      container.removeChild(mirrored);
+    }
 
     return {
       relative: {
@@ -366,6 +470,28 @@ export const ChatInput: FC<ChatInputProps> = ({
     textareaRef.current?.focus();
   };
 
+  useEffect(() => {
+    const handleSendMessageEvent = (e: Event) => {
+      const event = e as CustomEvent;
+      if (
+        event.detail?.projectId === projectId &&
+        typeof event.detail?.message === "string"
+      ) {
+        if (isPending || disabled || isModelSwitching) return;
+        void handleSubmit(event.detail.message);
+      }
+    };
+
+    window.addEventListener("specforge:send-message", handleSendMessageEvent);
+
+    return () => {
+      window.removeEventListener(
+        "specforge:send-message",
+        handleSendMessageEvent,
+      );
+    };
+  }, [projectId, isPending, disabled, isModelSwitching, handleSubmit]);
+
   return (
     <div className={containerClassName}>
       {error && (
@@ -378,12 +504,7 @@ export const ChatInput: FC<ChatInputProps> = ({
       )}
 
       <div className="relative group">
-        <div
-          className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500 will-change-opacity"
-          aria-hidden="true"
-        />
-
-        <div className="relative bg-background border border-border/40 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ring-0 group-focus-within:ring-1 group-focus-within:ring-primary/20 group-focus-within:border-primary/20">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-background transition-[border-color,box-shadow,background-color] duration-300 ring-0 group-focus-within:border-primary/30 group-focus-within:ring-1 group-focus-within:ring-primary/12">
           <div className="relative" ref={containerRef}>
             <Textarea
               ref={textareaRef}
@@ -403,11 +524,11 @@ export const ChatInput: FC<ChatInputProps> = ({
               }}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              className="resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent px-5 py-4 text-base transition-all duration-200 placeholder:text-muted-foreground/50 overflow-y-auto leading-relaxed antialiased font-normal"
+              className={`resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent px-5 py-4 text-base transition-all duration-200 placeholder:text-muted-foreground/50 overflow-y-auto leading-relaxed antialiased font-normal ${!message ? "select-none" : ""}`}
               style={{
                 minHeight: `${minHeightValue}px`,
               }}
-              disabled={isPending || disabled}
+              disabled={isPending || disabled || isModelSwitching}
               aria-label={i18n._("Message input with completion support")}
               aria-describedby={helpId}
               aria-expanded={isInCompletionContext(message)}
@@ -418,11 +539,11 @@ export const ChatInput: FC<ChatInputProps> = ({
           </div>
 
           {attachedFiles.length > 0 && (
-            <div className="px-5 py-3 flex flex-wrap gap-2 border-t border-border/40 bg-muted/10 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="animate-in fade-in slide-in-from-top-1 flex flex-wrap gap-2 border-t border-border/50 bg-background px-5 py-3 duration-200">
               {attachedFiles.map(({ file, id }) => (
                 <div
                   key={id}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-background border border-border/50 shadow-sm rounded-lg text-sm text-foreground/80 hover:text-foreground hover:border-foreground/20 transition-all duration-200"
+                  className="flex items-center gap-2 rounded-lg border border-border/60 bg-background px-3 py-1.5 text-sm text-foreground/80 transition-all duration-200 hover:border-primary/20 hover:text-foreground"
                 >
                   <span className="truncate max-w-[200px] font-medium">
                     {file.name}
@@ -440,7 +561,7 @@ export const ChatInput: FC<ChatInputProps> = ({
             </div>
           )}
 
-          <div className="flex flex-col gap-2 px-5 py-2.5 bg-muted/10 border-t border-border/30 backdrop-blur-sm">
+          <div className="flex flex-col gap-2 border-t border-border/50 bg-background px-5 py-3">
             {enableScheduledSend && sendMode === "scheduled" && (
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1 animate-in fade-in duration-200">
                 <Label htmlFor="send-mode-mobile" className="text-xs sr-only">
@@ -455,7 +576,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                 >
                   <SelectTrigger
                     id="send-mode-mobile"
-                    className="h-8 w-full sm:w-[140px] text-xs bg-background/50 border-border/50 shadow-sm focus:ring-primary/20"
+                    className="h-8 w-full border-border/60 bg-background sm:w-[140px] text-xs focus:ring-primary/20"
                   >
                     <SelectValue />
                   </SelectTrigger>
@@ -478,8 +599,8 @@ export const ChatInput: FC<ChatInputProps> = ({
                     type="datetime-local"
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
-                    disabled={isPending || disabled}
-                    className="h-8 w-full sm:w-[180px] text-xs bg-background/50 border-border/50 shadow-sm focus:ring-primary/20"
+                    disabled={isPending || disabled || isModelSwitching}
+                    className="h-8 w-full border-border/60 bg-background sm:w-[180px] text-xs focus:ring-primary/20"
                   />
                 </div>
               </div>
@@ -487,6 +608,14 @@ export const ChatInput: FC<ChatInputProps> = ({
 
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3 text-muted-foreground/70">
+                {showModelSwitch && (
+                  <ModelSwitchBar
+                    disabled={isPending || disabled}
+                    requireConfirm={requireConfirmModelSwitch}
+                    onSwitched={onModelSwitched}
+                    onSwitchingChange={setIsModelSwitching}
+                  />
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -499,7 +628,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isPending || disabled}
+                  disabled={isPending || disabled || isModelSwitching}
                   className="gap-2 px-2 hover:bg-background/80 hover:text-foreground text-muted-foreground transition-all duration-200 h-8 rounded-lg cursor-pointer"
                 >
                   <PaperclipIcon className="w-4 h-4" />
@@ -531,11 +660,11 @@ export const ChatInput: FC<ChatInputProps> = ({
                       onValueChange={(value: "immediate" | "scheduled") =>
                         setSendMode(value)
                       }
-                      disabled={isPending || disabled}
+                      disabled={isPending || disabled || isModelSwitching}
                     >
                       <SelectTrigger
                         id="send-mode-desktop"
-                        className="h-9 w-auto min-w-[120px] max-w-[140px] text-xs font-medium bg-background/50 border-transparent hover:bg-background hover:border-border/50 shadow-none hover:shadow-sm focus:ring-1 focus:ring-primary/20 transition-all duration-200"
+                        className="h-9 w-auto min-w-[120px] max-w-[140px] border-border/60 bg-background text-xs font-medium transition-all duration-200 hover:border-primary/20 hover:bg-muted/25 focus:ring-1 focus:ring-primary/20"
                       >
                         <SelectValue />
                       </SelectTrigger>
@@ -557,7 +686,7 @@ export const ChatInput: FC<ChatInputProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => setSendMode("scheduled")}
-                    disabled={isPending || disabled}
+                    disabled={isPending || disabled || isModelSwitching}
                     className="sm:hidden gap-1.5 h-9 cursor-pointer"
                   >
                     <span className="text-xs font-medium">
@@ -567,14 +696,17 @@ export const ChatInput: FC<ChatInputProps> = ({
                 )}
 
                 <Button
-                  onClick={handleSubmit}
+                  onClick={() => {
+                    void handleSubmit();
+                  }}
                   disabled={
                     (!message.trim() && attachedFiles.length === 0) ||
                     isPending ||
-                    disabled
+                    disabled ||
+                    isModelSwitching
                   }
                   size={buttonSize}
-                  className="gap-2 px-4 sm:px-6 h-9 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 disabled:from-muted disabled:to-muted disabled:shadow-none bg-[length:200%_auto] hover:bg-[position:right_center] cursor-pointer"
+                  className="h-9 cursor-pointer gap-2 border border-primary/80 bg-primary px-4 transition-all duration-200 hover:border-primary hover:bg-primary/92 active:scale-[0.99] sm:px-6"
                 >
                   {isPending ? (
                     <>

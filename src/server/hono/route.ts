@@ -11,10 +11,12 @@ import { ClaudeCodeController } from "../core/claude-code/presentation/ClaudeCod
 import { ClaudeCodePermissionController } from "../core/claude-code/presentation/ClaudeCodePermissionController";
 import { ClaudeCodeSessionProcessController } from "../core/claude-code/presentation/ClaudeCodeSessionProcessController";
 import { userMessageInputSchema } from "../core/claude-code/schema";
-import { ClaudeCodeLifeCycleService } from "../core/claude-code/services/ClaudeCodeLifeCycleService";
+import type { ClaudeCodeLifeCycleService } from "../core/claude-code/services/ClaudeCodeLifeCycleService";
+import { D2CPreviewController } from "../core/d2c/presentation/D2CPreviewController";
 import { TypeSafeSSE } from "../core/events/functions/typeSafeSSE";
 import { SSEController } from "../core/events/presentation/SSEController";
 import { FeatureFlagController } from "../core/feature-flag/presentation/FeatureFlagController";
+import { FeishuController } from "../core/feishu/FeishuController";
 import { FileSystemController } from "../core/file-system/presentation/FileSystemController";
 import { GitController } from "../core/git/presentation/GitController";
 import { CommitRequestSchema, PushRequestSchema } from "../core/git/schema";
@@ -58,7 +60,6 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
     // const ccvOptionsService = yield* CcvOptionsService;
     const envService = yield* EnvService;
     const userConfigService = yield* UserConfigService;
-    const claudeCodeLifeCycleService = yield* ClaudeCodeLifeCycleService;
     const initializeService = yield* InitializeService;
 
     // controllers
@@ -78,6 +79,8 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
     const searchController = yield* SearchController;
     const tasksController = yield* TasksController;
     const openSpecController = yield* OpenSpecController;
+    const feishuController = yield* FeishuController;
+    const d2cPreviewController = yield* D2CPreviewController;
 
     // middleware
     const authMiddlewareService = yield* AuthMiddleware;
@@ -213,6 +216,40 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
         )
 
         .post(
+          "/api/projects/:projectId/d2c/preview",
+          zValidator(
+            "json",
+            z.object({
+              action: z.enum([
+                "list",
+                "check-status",
+                "check-project",
+                "ensure-running",
+                "sync",
+                "trigger-rebuild",
+              ]),
+              changeId: z.string().optional(),
+              artifactId: z.string().optional(),
+            }),
+          ),
+          async (c) => {
+            const { action, changeId, artifactId } = c.req.valid("json");
+            const response = await effectToResponse(
+              c,
+              d2cPreviewController
+                .previewRoute({
+                  projectId: c.req.param("projectId"),
+                  action,
+                  changeId,
+                  artifactId,
+                })
+                .pipe(Effect.provide(runtime)),
+            );
+            return response;
+          },
+        )
+
+        .post(
           "/api/projects/:projectId/openspec/changes/:changeId/file",
           zValidator(
             "json",
@@ -289,6 +326,7 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
                 "S6_PARTIAL",
               ]),
               force: z.boolean().optional(),
+              isConfigCorrupted: z.boolean().optional(),
               profile: z.object({
                 displayName: z.string(),
                 infra_catalog: z.object({
@@ -411,6 +449,29 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           return response;
         })
 
+        /**
+         * FeishuController Routes
+         */
+        .post(
+          "/api/feishu/download",
+          zValidator(
+            "json",
+            z.object({
+              projectId: z.string(),
+              larkDoc: z.string(),
+            }),
+          ),
+          async (c) => {
+            const response = await effectToResponse(
+              c,
+              feishuController
+                .downloadDoc(c.req.valid("json"))
+                .pipe(Effect.provide(runtime)),
+            );
+            return response;
+          },
+        )
+
         .get("/api/config", async (c) => {
           return c.json({
             config: c.get("userConfig"),
@@ -475,6 +536,40 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
               c,
               projectController
                 .createProject({
+                  ...c.req.valid("json"),
+                })
+                .pipe(Effect.provide(runtime)),
+            );
+            return response;
+          },
+        )
+
+        .post(
+          "/api/workspaces",
+          zValidator(
+            "json",
+            z.object({
+              parentPath: z.string().min(1, "Parent path is required"),
+              workspaceName: z
+                .string()
+                .min(1, "Workspace name is required")
+                .regex(
+                  /^[^\\/:*?"<>|]+$/,
+                  "Workspace name contains invalid characters",
+                )
+                .refine(
+                  (name) =>
+                    !/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i.test(name),
+                  "Workspace name is a reserved system name",
+                ),
+              additionalDirectories: z.array(z.string()),
+            }),
+          ),
+          async (c) => {
+            const response = await effectToResponse(
+              c,
+              projectController
+                .createWorkspace({
                   ...c.req.valid("json"),
                 })
                 .pipe(Effect.provide(runtime)),
@@ -683,6 +778,40 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           return response;
         })
 
+        .get("/api/projects/:projectId/mcp/config", async (c) => {
+          const response = await effectToResponse(
+            c,
+            claudeCodeController
+              .getMcpConfigRoute({
+                ...c.req.param(),
+              })
+              .pipe(Effect.provide(runtime)),
+          );
+          return response;
+        })
+
+        .put(
+          "/api/projects/:projectId/mcp/config",
+          zValidator(
+            "json",
+            z.object({
+              content: z.string(),
+            }),
+          ),
+          async (c) => {
+            const response = await effectToResponse(
+              c,
+              claudeCodeController
+                .saveMcpConfigRoute({
+                  ...c.req.param(),
+                  ...c.req.valid("json"),
+                })
+                .pipe(Effect.provide(runtime)),
+            );
+            return response;
+          },
+        )
+
         .get("/api/cc/meta", async (c) => {
           const response = await effectToResponse(
             c,
@@ -702,6 +831,33 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           );
           return response;
         })
+
+        .get("/api/cc/models", async (c) => {
+          const response = await effectToResponse(
+            c,
+            claudeCodeController.getAdaModels().pipe(Effect.provide(runtime)),
+          );
+          return response;
+        })
+
+        .post(
+          "/api/cc/models/switch",
+          zValidator(
+            "json",
+            z.object({
+              targetIndex: z.number().int().nonnegative(),
+            }),
+          ),
+          async (c) => {
+            const response = await effectToResponse(
+              c,
+              claudeCodeController
+                .switchAdaModel(c.req.valid("json"))
+                .pipe(Effect.provide(runtime)),
+            );
+            return response;
+          },
+        )
 
         /**
          * ClaudeCodeSessionProcessController Routes
@@ -766,17 +922,41 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
           "/api/cc/session-processes/:sessionProcessId/abort",
           zValidator("json", z.object({ projectId: z.string() })),
           async (c) => {
-            const { sessionProcessId } = c.req.param();
-            await Runtime.runPromise(runtime)(
-              claudeCodeLifeCycleService.abortTask(sessionProcessId),
+            const response = await effectToResponse(
+              c,
+              claudeCodeSessionProcessController.abortSessionProcess({
+                ...c.req.param(),
+                ...c.req.valid("json"),
+              }),
             );
-            return c.json({ message: "Task aborted" });
+            return response;
           },
         )
 
         /**
          * ClaudeCodePermissionController Routes
          */
+
+        .get(
+          "/api/cc/permission-requests/pending",
+          zValidator(
+            "query",
+            z.object({
+              sessionId: z.string().optional(),
+              taskId: z.string().optional(),
+              sessionProcessId: z.string().optional(),
+            }),
+          ),
+          async (c) => {
+            const response = await effectToResponse(
+              c,
+              claudeCodePermissionController.pendingPermissionRequests(
+                c.req.valid("query"),
+              ),
+            );
+            return response;
+          },
+        )
 
         .post(
           "/api/cc/permission-response",
@@ -785,6 +965,7 @@ export const routes = (app: HonoAppType, options: CliOptions) =>
             z.object({
               permissionRequestId: z.string(),
               decision: z.enum(["allow", "deny"]),
+              updatedInput: z.record(z.string(), z.unknown()).optional(),
             }),
           ),
           async (c) => {

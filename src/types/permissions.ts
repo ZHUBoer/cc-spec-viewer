@@ -1,9 +1,11 @@
 export type PermissionRequest = {
   id: string;
   taskId: string;
+  sessionProcessId: string;
   sessionId?: string;
   toolName: string;
   toolInput: Record<string, unknown>;
+  toolUseId?: string;
   timestamp: number;
 };
 

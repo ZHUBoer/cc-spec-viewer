@@ -105,7 +105,7 @@ archived (已归档)
 openspec/
 ├── changes/
 │   ├── add-authentication/
-│   │   ├── proposal.md          # 为什么做、做什么
+│   │   ├── spec.md          # 为什么做、做什么
 │   │   ├── architecture.md      # 技术方案和架构决策（或 design.md）
 │   │   ├── tasks.md            # 实现清单（checkbox 格式）
 │   │   ├── tests.md            # 测试计划
@@ -143,7 +143,7 @@ SpecForge 通过文件内容中的标记自动推断变更状态：
 
 ```mermaid
 graph TD
-    A[用户: 创建新 Proposal] --> B[AI: 生成 proposal.md]
+    A[用户: 创建新 Spec] --> B[AI: 生成 spec.md]
     B --> C[用户: 在 Workspace 中审阅]
     C --> D{是否需要设计文档?}
     D -->|是| E[AI: 生成 architecture.md]
@@ -199,7 +199,7 @@ export interface WorkspacePanelContextType {
 **核心功能**：
 - **Spec Dashboard**：展示所有活跃和归档的变更
 - **状态可视化**：通过图标和颜色区分不同状态
-- **内容编辑**：直接在面板中编辑 proposal、design、tasks 等文件
+- **内容编辑**：直接在面板中编辑 spec、design、tasks 等文件
 - **实时同步**：通过 SSE 事件实时更新变更列表
 
 **状态图标系统**：
@@ -225,8 +225,8 @@ const StatusIcon = ({ status }) => {
 **用户体验亮点**：
 - 点击变更卡片即可在右侧面板展开详情
 - 支持折叠/展开归档变更
-- 新建 Proposal 对话框内联在面板中
-- 显示变更描述（从 proposal.md 第一段提取）
+- 新建 Spec 对话框内联在面板中
+- 显示变更描述（从 spec.md 第一段提取）
 
 ### 模式 2：Browser 模式
 
@@ -562,7 +562,7 @@ SpecForge 将 Spec Coding 理念从抽象概念转化为具体可用的工具链
 
 ### 1. 完整的工作流支持
 
-- **从需求到实现**：Proposal → Design → Tasks → Implementation
+- **从需求到实现**：Spec → Design → Tasks → Implementation
 - **状态可视化**：清晰的状态机和图标系统
 - **实时反馈**：SSE 推送 + 虚拟会话机制
 

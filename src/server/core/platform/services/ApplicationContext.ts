@@ -1,6 +1,6 @@
-import { homedir } from "node:os";
 import { Path } from "@effect/platform";
 import { Effect, Context as EffectContext, Layer } from "effect";
+import { resolveHomeDirFromEnv } from "../../../lib/config/resolveHomeDirFromEnv";
 import type { InferEffect } from "../../../lib/effect/types";
 import { CcvOptionsService } from "./CcvOptionsService";
 
@@ -21,12 +21,12 @@ const LayerImpl = Effect.gen(function* () {
       .pipe(
         Effect.map((envVar) =>
           envVar === undefined
-            ? path.resolve(homedir(), ".claude")
+            ? path.resolve(resolveHomeDirFromEnv(), ".claude")
             : path.resolve(envVar),
         ),
       );
 
-    return {
+    const paths: ClaudeCodePaths = {
       globalClaudeDirectoryPath,
       claudeCommandsDirPath: path.resolve(
         globalClaudeDirectoryPath,
@@ -37,7 +37,8 @@ const LayerImpl = Effect.gen(function* () {
         globalClaudeDirectoryPath,
         "projects",
       ),
-    } as const satisfies ClaudeCodePaths;
+    };
+    return paths;
   });
 
   return {

@@ -1,8 +1,59 @@
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { CommandExecutor } from "@effect/platform";
-import { NodeContext } from "@effect/platform-node";
+import { NodeContext, NodeFileSystem } from "@effect/platform-node";
 import { Effect, Layer } from "effect";
 import { testPlatformLayer } from "../../../../testing/layers/testPlatformLayer";
 import * as ClaudeCode from "./ClaudeCode";
+
+const describeWindows = process.platform === "win32" ? describe : describe.skip;
+
+const createTempShim = (content: string, extension: string) => {
+  const dir = mkdtempSync(join(tmpdir(), "specforge-"));
+  const shimPath = join(dir, `claude${extension}`);
+  writeFileSync(shimPath, content, "utf-8");
+  return shimPath;
+};
+
+describe("ClaudeCode.parseWindowsShimJsEntry", () => {
+  it("should parse .cmd shim content", () => {
+    const content =
+      '@IF EXIST "%~dp0\\node.exe" ( "%~dp0\\node.exe" "%~dp0\\node_modules\\@anthropic-ai\\claude-code\\cli.js" %* )';
+    expect(ClaudeCode.parseWindowsShimJsEntry(content)).toBe(
+      "node_modules\\@anthropic-ai\\claude-code\\cli.js",
+    );
+  });
+
+  it("should parse %~dp0 without backslash", () => {
+    const content =
+      '@IF EXIST "%~dp0node.exe" ( "%~dp0node.exe" "%~dp0node_modules\\@anthropic-ai\\claude-code\\cli.mjs" %* )';
+    expect(ClaudeCode.parseWindowsShimJsEntry(content)).toBe(
+      "node_modules\\@anthropic-ai\\claude-code\\cli.mjs",
+    );
+  });
+
+  it("should parse .ps1 shim content", () => {
+    const content =
+      '& "$PSScriptRoot\\node.exe" "$PSScriptRoot\\node_modules\\@anthropic-ai\\claude-code\\cli.mjs" $args';
+    expect(ClaudeCode.parseWindowsShimJsEntry(content)).toBe(
+      "node_modules\\@anthropic-ai\\claude-code\\cli.mjs",
+    );
+  });
+
+  it("should parse %~dp0 without quotes", () => {
+    const content =
+      "%~dp0node.exe %~dp0node_modules\\@anthropic-ai\\claude-code\\cli.cjs";
+    expect(ClaudeCode.parseWindowsShimJsEntry(content)).toBe(
+      "node_modules\\@anthropic-ai\\claude-code\\cli.cjs",
+    );
+  });
+
+  it("should return undefined when no entry is found", () => {
+    const content = "echo no js entry here";
+    expect(ClaudeCode.parseWindowsShimJsEntry(content)).toBeUndefined();
+  });
+});
 
 describe("ClaudeCode.claudeCodePathPriority", () => {
   describe("should return 0 for npx cache paths (lowest priority)", () => {
@@ -107,6 +158,29 @@ describe("ClaudeCode.claudeCodePathPriority", () => {
   });
 });
 
+describeWindows("ClaudeCode.WindowsShim", () => {
+  it("should fail when shim cannot be parsed", async () => {
+    const shimPath = createTempShim("@echo off\n", ".cmd");
+    await expect(
+      Effect.runPromise(
+        ClaudeCode.Config.pipe(
+          Effect.provide(
+            testPlatformLayer({
+              ccvOptions: {
+                executable: shimPath,
+              },
+            }),
+          ),
+          Effect.provide(NodeContext.layer),
+        ),
+      ),
+    ).rejects.toMatchObject({
+      _tag: "ClaudeCodeShimParseError",
+      shimPath,
+    });
+  });
+});
+
 describe("ClaudeCode.Config", () => {
   describe("when environment variable CLAUDE_CODE_VIEWER_CC_EXECUTABLE_PATH is not set", () => {
     it("should correctly parse results of 'which claude' and 'claude --version'", async () => {
@@ -125,6 +199,7 @@ describe("ClaudeCode.Config", () => {
         ClaudeCode.Config.pipe(
           Effect.provide(testPlatformLayer()),
           Effect.provide(CommandExecutorTest),
+          Effect.provide(NodeFileSystem.layer),
         ),
       );
 
@@ -158,6 +233,7 @@ describe("ClaudeCode.Config", () => {
         ClaudeCode.Config.pipe(
           Effect.provide(testPlatformLayer()),
           Effect.provide(CommandExecutorTest),
+          Effect.provide(NodeFileSystem.layer),
         ),
       );
 
@@ -191,6 +267,7 @@ describe("ClaudeCode.Config", () => {
         ClaudeCode.Config.pipe(
           Effect.provide(testPlatformLayer()),
           Effect.provide(CommandExecutorTest),
+          Effect.provide(NodeFileSystem.layer),
         ),
       );
 
@@ -226,6 +303,7 @@ describe("ClaudeCode.Config", () => {
         ClaudeCode.Config.pipe(
           Effect.provide(testPlatformLayer()),
           Effect.provide(CommandExecutorTest),
+          Effect.provide(NodeFileSystem.layer),
         ),
       );
 
@@ -243,11 +321,14 @@ describe("ClaudeCode.Config", () => {
 });
 
 describe("ClaudeCode.AvailableFeatures", () => {
-  describe("when claudeCodeVersion is null", () => {
-    it("canUseTool and uuidOnSDKMessage should be false", () => {
+  describe("when claudeCodeVersion is null (乐观策略：版本解析失败不阻断功能)", () => {
+    it("所有特性应返回 true", () => {
       const features = ClaudeCode.getAvailableFeatures(null);
-      expect(features.canUseTool).toBe(false);
-      expect(features.uuidOnSDKMessage).toBe(false);
+      expect(features.canUseTool).toBe(true);
+      expect(features.uuidOnSDKMessage).toBe(true);
+      expect(features.agentSdk).toBe(true);
+      expect(features.sidechainSeparation).toBe(true);
+      expect(features.runSkillsDirectly).toBe(true);
     });
   });
 
@@ -300,9 +381,9 @@ describe("ClaudeCode.AvailableFeatures", () => {
   });
 
   describe("sidechainSeparation feature flag", () => {
-    it("should be false when claudeCodeVersion is null", () => {
+    it("should be true when claudeCodeVersion is null (乐观策略)", () => {
       const features = ClaudeCode.getAvailableFeatures(null);
-      expect(features.sidechainSeparation).toBe(false);
+      expect(features.sidechainSeparation).toBe(true);
     });
 
     it("should be false when claudeCodeVersion is v2.0.27", () => {
@@ -352,9 +433,9 @@ describe("ClaudeCode.AvailableFeatures", () => {
   });
 
   describe("runSkillsDirectly feature flag", () => {
-    it("should be false when claudeCodeVersion is null", () => {
+    it("should be true when claudeCodeVersion is null (乐观策略)", () => {
       const features = ClaudeCode.getAvailableFeatures(null);
-      expect(features.runSkillsDirectly).toBe(false);
+      expect(features.runSkillsDirectly).toBe(true);
     });
 
     it("should be false when claudeCodeVersion is v2.0.76", () => {

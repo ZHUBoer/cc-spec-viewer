@@ -70,5 +70,50 @@
   },
   "settings.maxBudgetUsd.label": {
     "translation": "Max Budget (USD)"
+  },
+  "chat.model_switch.title": {
+    "translation": "Team Model"
+  },
+  "chat.model_switch.current": {
+    "translation": "Select model"
+  },
+  "chat.model_switch.switching": {
+    "translation": "Switching..."
+  },
+  "chat.model_switch.success": {
+    "translation": "Model switched successfully"
+  },
+  "chat.model_switch.force_new_session": {
+    "translation": "Switched model and started a new session context."
+  },
+  "chat.model_switch.blocked_running_task": {
+    "translation": "Cannot switch model while a session process is running."
+  },
+  "chat.model_switch.load_failed": {
+    "translation": "Failed to switch model"
+  },
+  "chat.model_switch.confirm_existing.title": {
+    "translation": "Switch team model?"
+  },
+  "chat.model_switch.confirm_existing.description": {
+    "translation": "Switching model will start a new session and clear current session context."
+  },
+  "chat.model_switch.confirm_existing.confirm": {
+    "translation": "Switch model"
+  },
+  "chat.model_switch.personal_title": {
+    "translation": "Personal Model"
+  },
+  "chat.model_switch.personal_unsupported": {
+    "translation": "Model: {model} (model switch is not supported)"
+  },
+  "chat.model_switch.unknown_model": {
+    "translation": "Unknown model"
+  },
+  "chat.model_switch.missing_ada_cli": {
+    "translation": "Install ada-cli to enable team model switching."
+  },
+  "chat.model_switch.unsupported_mode": {
+    "translation": "Model switch is available only in team mode."
   }
 }

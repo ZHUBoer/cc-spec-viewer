@@ -1,6 +1,6 @@
 {
   "displayName": "ctrip-prd-to-code-xtaro-zx",
-  "description": "当前默认 profile 为 ctrip-prd-to-code-xtaro-zx（Xtaro 技术栈）。用户可以在此 json schema 的基础上修改配置以适配自身的业务基建能力。",
+  "description": "当前默认 profile 为 ctrip-prd-to-code-xtaro-zx（Xtaro 技术栈）。用户可以在此 json schema 的基础上修改配置以适配自身的业务基建能力。前端/全栈 change 若启用 D2C，可直接配合模板内置的 design-to-code-zx MCP 与 d2c-baseline / d2c-stitching skills 使用。",
   "infra_catalog": {
     "mcp_server_providers": {
       "xtaro-zx-library": {

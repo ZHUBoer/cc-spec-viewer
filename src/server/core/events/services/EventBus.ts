@@ -86,7 +86,7 @@ const layerImpl = Effect.gen(function* () {
     emit,
     on,
     off,
-  } as const;
+  };
 });
 
 export type IEventBus = InferEffect<typeof layerImpl>;

@@ -37,20 +37,20 @@ export const UserConversationContent: FC<{
     if (content.source.type === "base64") {
       return (
         <Card
-          className="border-purple-200 bg-purple-50/50 dark:border-purple-800 dark:bg-purple-950/20 mb-2 p-0 overflow-hidden"
+          className="mb-2 overflow-hidden border-primary/15 bg-card p-0"
           id={id}
         >
           <Collapsible>
             <CollapsibleTrigger asChild>
-              <div className="cursor-pointer hover:bg-purple-100/50 dark:hover:bg-purple-900/20 transition-colors px-3 py-1.5 group">
+              <div className="group cursor-pointer px-3 py-1.5 transition-colors hover:bg-muted/30">
                 <div className="flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <ImageIcon className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">
                     <Trans id="user.content.image" />
                   </span>
                   <Badge
                     variant="outline"
-                    className="border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-300"
+                    className="border-primary/20 text-primary"
                   >
                     {content.source.media_type}
                   </Badge>
@@ -59,7 +59,7 @@ export const UserConversationContent: FC<{
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="py-3 px-4 border-t border-purple-200 dark:border-purple-800">
+              <div className="border-t border-border px-4 py-3">
                 <div className="rounded-lg border overflow-hidden bg-background">
                   <img
                     src={`data:${content.source.media_type};base64,${content.source.data}`}

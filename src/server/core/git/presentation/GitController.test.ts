@@ -18,6 +18,7 @@ describe("GitController.commitFiles", () => {
             projectName: "Test Project",
             projectPath: null, // No project path
             sessionCount: 0,
+            isWorkspace: false,
           },
         },
       ],
@@ -72,6 +73,7 @@ describe("GitController.pushCommits", () => {
             projectName: "Test Project",
             projectPath: null, // No project path
             sessionCount: 0,
+            isWorkspace: false,
           },
         },
       ],

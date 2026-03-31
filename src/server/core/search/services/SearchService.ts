@@ -14,6 +14,7 @@ export type SearchResult = {
   projectName: string;
   sessionId: string;
   conversationIndex: number;
+  conversationUuid: string;
   type: "user" | "assistant";
   snippet: string;
   timestamp: string;
@@ -26,6 +27,7 @@ type SearchDocument = {
   projectName: string;
   sessionId: string;
   conversationIndex: number;
+  conversationUuid: string;
   type: "user" | "assistant";
   text: string;
   timestamp: string;
@@ -114,6 +116,12 @@ const LayerImpl = Effect.gen(function* () {
                   ) {
                     continue;
                   }
+                  // Keep main search aligned with the main conversation list:
+                  // sidechain entries are available via Task details but are not
+                  // directly visible in the main timeline.
+                  if (conversation.isSidechain === true) {
+                    continue;
+                  }
 
                   let text = extractSearchableText(conversation);
                   if (!text || text.length < 3) continue;
@@ -134,6 +142,7 @@ const LayerImpl = Effect.gen(function* () {
                     projectName,
                     sessionId,
                     conversationIndex: i,
+                    conversationUuid: conversation.uuid,
                     type: conversation.type,
                     text,
                     timestamp:
@@ -231,6 +240,7 @@ const LayerImpl = Effect.gen(function* () {
           projectName: doc.projectName,
           sessionId: doc.sessionId,
           conversationIndex: doc.conversationIndex,
+          conversationUuid: doc.conversationUuid,
           type: doc.type,
           snippet,
           timestamp: doc.timestamp,

@@ -1,0 +1,29 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+}
+
+
+@font-face {
+  font-family: Trip Geom;
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(https://static.tripcdn.com/modules/fx/trip-fonts/fonts/TripGeom-Regular.woff2) format("woff2");
+}
+
+@font-face {
+  font-family: Trip Geom;
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(https://static.tripcdn.com/modules/fx/trip-fonts/fonts/TripGeom-Medium.woff2) format("woff2");
+}
+
+@font-face {
+  font-family: Trip Geom;
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(https://static.tripcdn.com/modules/fx/trip-fonts/fonts/TripGeom-Bold.woff2) format("woff2");
+}

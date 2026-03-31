@@ -57,7 +57,9 @@ export const MermaidModal: FC<MermaidModalProps> = ({
               minScale={0.1}
               maxScale={8}
               limitToBounds={false}
-              wheel={{ step: 0.1 }}
+              wheel={{ step: 0.2, smoothStep: 0.008, wheelDisabled: true }}
+              panning={{ wheelPanning: true }}
+              pinch={{ step: 10 }}
             >
               {({ zoomIn, zoomOut, resetTransform }) => (
                 <>

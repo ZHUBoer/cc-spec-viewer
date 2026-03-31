@@ -202,6 +202,84 @@ describe("SessionMetaService", () => {
         content: "actual message",
       });
     });
+
+    it("does not count trailing empty lines as messages", async () => {
+      const FileSystemMock = makeFileSystemMock({
+        readFileString: () =>
+          Effect.succeed(
+            '{"parentUuid":null,"isSidechain":false,"userType":"external","cwd":"/workspace/app","sessionId":"e2ab9812-8be7-4e9e-8194-d9b7b9d6da14","version":"1.0.0","gitBranch":"","type":"user","message":{"role":"user","content":"test message"},"uuid":"e2ab9812-8be7-4e9e-8194-d9b7b9d6da14","timestamp":"2024-01-01T00:00:00.000Z"}\n',
+          ),
+        readDirectory: () => Effect.succeed([]),
+        exists: () => Effect.succeed(false),
+        makeDirectory: () => Effect.void,
+        writeFileString: () => Effect.void,
+      });
+
+      const PathMock = makePathMock();
+      const PersistentServiceMock = makePersistentServiceMock();
+
+      const program = Effect.gen(function* () {
+        const storage = yield* SessionMetaService;
+        const projectId = Buffer.from("/test/project").toString("base64url");
+        const sessionId = Buffer.from("/test/project/session.jsonl").toString(
+          "base64url",
+        );
+
+        return yield* storage.getSessionMeta(projectId, sessionId);
+      });
+
+      const result = await Effect.runPromise(
+        program.pipe(
+          Effect.provide(SessionMetaService.Live),
+          Effect.provide(FileSystemMock),
+          Effect.provide(PathMock),
+          Effect.provide(PersistentServiceMock),
+        ),
+      );
+
+      expect(result.messageCount).toBe(1);
+    });
+
+    it("只统计会话区可见消息，忽略 progress 和纯 tool_result 消息", async () => {
+      const FileSystemMock = makeFileSystemMock({
+        readFileString: () =>
+          Effect.succeed(
+            '{"type":"progress","uuid":"550e8400-e29b-41d4-a716-446655440010","parentUuid":null,"isSidechain":false,"userType":"external","cwd":"/test","sessionId":"test-session","version":"1.0.0","timestamp":"2024-01-01T00:00:00.000Z","data":{"status":"running"}}\n{"type":"user","uuid":"550e8400-e29b-41d4-a716-446655440011","timestamp":"2024-01-01T00:00:01.000Z","isSidechain":false,"userType":"external","cwd":"/test","sessionId":"test-session","version":"1.0.0","parentUuid":null,"message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"tool-1","content":"done"}]}}\n{"parentUuid":null,"isSidechain":false,"userType":"external","cwd":"/workspace/app","sessionId":"test-session","version":"1.0.0","gitBranch":"","type":"user","message":{"role":"user","content":"actual message"},"uuid":"e2ab9812-8be7-4e9e-8194-d9b7b9d6da14","timestamp":"2024-01-01T00:00:02.000Z"}',
+          ),
+        readDirectory: () => Effect.succeed([]),
+        exists: () => Effect.succeed(false),
+        makeDirectory: () => Effect.void,
+        writeFileString: () => Effect.void,
+      });
+
+      const PathMock = makePathMock();
+      const PersistentServiceMock = makePersistentServiceMock();
+
+      const program = Effect.gen(function* () {
+        const storage = yield* SessionMetaService;
+        const projectId = Buffer.from("/test/project").toString("base64url");
+        const sessionId = Buffer.from("/test/project/session.jsonl").toString(
+          "base64url",
+        );
+
+        return yield* storage.getSessionMeta(projectId, sessionId);
+      });
+
+      const result = await Effect.runPromise(
+        program.pipe(
+          Effect.provide(SessionMetaService.Live),
+          Effect.provide(FileSystemMock),
+          Effect.provide(PathMock),
+          Effect.provide(PersistentServiceMock),
+        ),
+      );
+
+      expect(result.messageCount).toBe(1);
+      expect(result.firstUserMessage).toEqual({
+        kind: "text",
+        content: "actual message",
+      });
+    });
   });
 
   describe("invalidateSession", () => {
@@ -421,17 +499,17 @@ describe("SessionMetaService", () => {
       expect(result.cost.tokenUsage.outputTokens).toBe(2000000);
 
       // Expected cost calculation:
-      // Haiku: 1M input * $0.25 + 1M output * $1.25 = $0.25 + $1.25 = $1.50
-      // Opus: 1M input * $15 + 1M output * $75 = $15 + $75 = $90
-      // Total: $1.50 + $90 = $91.50
-      const expectedTotal = 1.5 + 90.0;
+      // Haiku (fallback to claude-sonnet-4.5): 1M input * $3.0 + 1M output * $15.0 = $3.0 + $15.0 = $18.0
+      // Opus (fallback to claude-sonnet-4.5): 1M input * $3.0 + 1M output * $15.0 = $3.0 + $15.0 = $18.0
+      // Total: $18.0 + $18.0 = $36.0
+      const expectedTotal = 18.0 + 18.0;
       expect(result.cost.totalUsd).toBeCloseTo(expectedTotal, 2);
 
       // Verify breakdown shows correct aggregated costs
-      // Input: Haiku $0.25 + Opus $15 = $15.25
-      expect(result.cost.breakdown.inputTokensUsd).toBeCloseTo(15.25, 2);
-      // Output: Haiku $1.25 + Opus $75 = $76.25
-      expect(result.cost.breakdown.outputTokensUsd).toBeCloseTo(76.25, 2);
+      // Input: Haiku $3.0 + Opus $3.0 = $6.0
+      expect(result.cost.breakdown.inputTokensUsd).toBeCloseTo(6.0, 2);
+      // Output: Haiku $15.0 + Opus $15.0 = $30.0
+      expect(result.cost.breakdown.outputTokensUsd).toBeCloseTo(30.0, 2);
     });
   });
 

@@ -18,21 +18,21 @@ interface StatusBadgeProps {
 export const STATUS_CONFIG = {
   draft: {
     color: "gray" as const,
-    label: "提案",
+    label: "需求 Spec",
     icon: "📝",
-    description: "提案阶段，等待生成设计文档",
+    description: "需求 Spec 阶段，等待生成设计文档",
   },
   designing: {
     color: "yellow" as const,
-    label: "设计评审中",
+    label: "技术设计评审中",
     icon: "🎨",
-    description: "设计文档已生成，等待用户确认",
+    description: "技术设计文档已生成，等待用户确认",
   },
   "design-confirmed": {
     color: "blue" as const,
-    label: "设计已确认",
+    label: "技术设计已确认",
     icon: "✅",
-    description: "设计评审完成，可以生成任务列表",
+    description: "技术设计评审完成，可以生成任务列表",
   },
   "task-planning": {
     color: "yellow" as const,
@@ -41,7 +41,7 @@ export const STATUS_CONFIG = {
     description: "任务列表已生成，等待用户确认",
   },
   implementing: {
-    color: "purple" as const,
+    color: "brand" as const,
     label: "实施中",
     icon: "⚙️",
     description: "OpenSpec 正在引导 Claude 实施任务",
@@ -66,8 +66,8 @@ const getVariantClass = (status: ChangeStatus) => {
     yellow:
       "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700",
     blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-300 dark:border-blue-700",
-    purple:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-300 dark:border-purple-700",
+    brand:
+      "bg-muted/30 text-primary border-primary/20 dark:bg-primary/12 dark:text-primary dark:border-primary/30",
     green:
       "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-300 dark:border-green-700",
   } as const;

@@ -110,10 +110,42 @@ const LayerImpl = Effect.gen(function* () {
       } as const satisfies ControllerResponse;
     });
 
+  const abortSessionProcess = (options: {
+    projectId: string;
+    sessionProcessId: string;
+  }) =>
+    Effect.gen(function* () {
+      const { projectId, sessionProcessId } = options;
+
+      const publicSessionProcesses =
+        yield* claudeCodeLifeCycleService.getPublicSessionProcesses();
+
+      const targetProcess = publicSessionProcesses.find(
+        (process) =>
+          process.def.projectId === projectId &&
+          process.def.sessionProcessId === sessionProcessId,
+      );
+
+      if (targetProcess === undefined) {
+        return {
+          response: { error: "Session process not found" },
+          status: 404 as const,
+        } as const satisfies ControllerResponse;
+      }
+
+      yield* claudeCodeLifeCycleService.abortTask(sessionProcessId);
+
+      return {
+        response: { message: "Task aborted" },
+        status: 200 as const,
+      } as const satisfies ControllerResponse;
+    });
+
   return {
     getSessionProcesses,
     createSessionProcess,
     continueSessionProcess,
+    abortSessionProcess,
   };
 });
 

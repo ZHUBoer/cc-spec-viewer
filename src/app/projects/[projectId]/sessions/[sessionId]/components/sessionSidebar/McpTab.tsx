@@ -3,17 +3,20 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2Icon,
   CircleHelpIcon,
+  PencilIcon,
   RefreshCwIcon,
   XCircleIcon,
 } from "lucide-react";
-import type { FC } from "react";
+import { type FC, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loading } from "../../../../../../../components/Loading";
 import { mcpListQuery } from "../../../../../../../lib/api/queries";
+import { McpConfigDialog } from "./McpConfigDialog";
 
 export const McpTab: FC<{ projectId: string }> = ({ projectId }) => {
   const queryClient = useQueryClient();
   const { i18n } = useLingui();
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
 
   const {
     data: mcpData,
@@ -42,18 +45,29 @@ export const McpTab: FC<{ projectId: string }> = ({ projectId }) => {
           <h2 className="text-sm font-semibold text-sidebar-foreground">
             <Trans id="mcp.title" />
           </h2>
-          <Button
-            onClick={handleReload}
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 cursor-pointer"
-            disabled={isLoading || isFetching}
-            title={i18n._("Reload MCP servers")}
-          >
-            <RefreshCwIcon
-              className={`w-3 h-3 ${isLoading || isFetching ? "animate-spin" : ""}`}
-            />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              onClick={() => setConfigDialogOpen(true)}
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 cursor-pointer"
+              title={i18n._("mcp.config.button.edit")}
+            >
+              <PencilIcon className="w-3 h-3" />
+            </Button>
+            <Button
+              onClick={handleReload}
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 cursor-pointer"
+              disabled={isLoading || isFetching}
+              title={i18n._("Reload MCP servers")}
+            >
+              <RefreshCwIcon
+                className={`w-3 h-3 ${isLoading || isFetching ? "animate-spin" : ""}`}
+              />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -86,7 +100,7 @@ export const McpTab: FC<{ projectId: string }> = ({ projectId }) => {
             {mcpData.servers.map((server) => (
               <div
                 key={server.name}
-                className={`p-3 bg-sidebar-accent/50 rounded-md border ${
+                className={`p-3 bg-background rounded-md border ${
                   server.status === "failed"
                     ? "border-red-500/50 bg-red-500/10"
                     : "border-sidebar-border"
@@ -118,6 +132,12 @@ export const McpTab: FC<{ projectId: string }> = ({ projectId }) => {
           </div>
         )}
       </div>
+
+      <McpConfigDialog
+        projectId={projectId}
+        open={configDialogOpen}
+        onOpenChange={setConfigDialogOpen}
+      />
     </div>
   );
 };

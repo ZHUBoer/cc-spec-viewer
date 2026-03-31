@@ -1,0 +1,509 @@
+.pageContainer {
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  background: rgba(69, 255, 153, 1);
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.headerSection {
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  height: 229px;
+  z-index: 1;
+  position: absolute;
+}
+
+.statusBar {
+  gap: 13.4px;
+  width: 100%;
+  display: flex;
+  box-sizing: border-box;
+  align-items: flex-start;
+  flex-direction: column;
+  padding-bottom: 19px;
+  justify-content: flex-start;
+}
+
+.statusBarContent {
+  display: flex;
+  padding: 22px 29.34px 22px 40px;
+  overflow: hidden;
+  align-self: stretch;
+  box-sizing: border-box;
+  align-items: center;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.timeText {
+  color: #222222;
+  font-size: 32px;
+  font-family: PingFangSC-Medium;
+  font-weight: 500;
+  line-height: 46px;
+  text-align: center;
+}
+
+.signalIcon {
+  width: 34px;
+  height: 21px;
+  margin-top: 13px;
+  margin-left: 439px;
+  margin-bottom: 9px;
+}
+
+.wifiIcon {
+  width: 31px;
+  height: 22px;
+  margin-top: 13px;
+  margin-left: 10px;
+  margin-bottom: 9px;
+}
+
+.batteryIcon {
+  width: 49px;
+  height: 23px;
+  margin-top: 13px;
+  margin-left: 10px;
+  margin-bottom: 9px;
+}
+
+.navBar {
+  display: flex;
+  align-self: stretch;
+  align-items: flex-start;
+  margin-left: 28px;
+  margin-right: 316px;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.backButton {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  padding: 0px 10px 0px 20px;
+  z-index: 0;
+  position: relative;
+  box-sizing: border-box;
+  align-items: center;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.backButtonBg {
+  top: 0px;
+  left: 0px;
+  width: 56px;
+  height: 56px;
+  z-index: -1;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 22px;
+}
+
+.backIcon {
+  width: 26px;
+  height: 26px;
+}
+
+.logoImage {
+  width: 112px;
+  height: 52px;
+  margin-top: 4px;
+}
+
+.backgroundLayer {
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 1108px;
+  z-index: 5;
+  display: none;
+  position: absolute;
+  min-height: 1626px;
+}
+
+.bgDecoration {
+  width: 1361px;
+  height: 3133px;
+  z-index: 0;
+  margin-top: -399px;
+  margin-left: -281px;
+  margin-right: -330px;
+}
+
+.titleImage {
+  width: 651px;
+  height: 297px;
+  z-index: 4;
+  margin-top: -2594px;
+  margin-left: 56px;
+  margin-right: 42px;
+}
+
+.mainContent {
+  width: 755px;
+  height: 590px;
+  padding: 0px 41.93px 0px 37.42px;
+  z-index: 3;
+  position: relative;
+  box-sizing: border-box;
+  margin-top: 11px;
+  margin-right: -5px;
+}
+
+.decorationWrapper {
+  top: 5px;
+  left: 0px;
+  right: 5px;
+  bottom: 42px;
+  z-index: 2;
+  display: none;
+  position: absolute;
+  min-height: 544px;
+}
+
+.decorationGroup {
+  top: 26px;
+  right: 0px;
+  width: 170px;
+  height: 182px;
+  padding: 53.5px 39.19px 39.07px 47.93px;
+  z-index: 1;
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.decorTopIcon {
+  top: 0px;
+  left: 35px;
+  width: 47px;
+  height: 66px;
+  position: absolute;
+}
+
+.decorCircle {
+  left: 0px;
+  width: 170px;
+  bottom: 0px;
+  height: 170px;
+  z-index: -1;
+  position: absolute;
+}
+
+.decorBottomIcon {
+  width: 83px;
+  height: 89px;
+}
+
+.cardSection {
+  gap: 5.05px;
+  width: 100%;
+  display: flex;
+  z-index: 0;
+  position: relative;
+  box-sizing: border-box;
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.voucherCard {
+  width: 675px;
+  height: 551px;
+  padding: 41.67px 22.58px 17.67px;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+.cardContent {
+  width: 100%;
+  display: flex;
+  padding: 0px 66px 10.05px;
+  position: relative;
+  box-sizing: border-box;
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.cardBgDecor {
+  top: 0px;
+  left: 0px;
+  width: 630px;
+  height: 492px;
+  z-index: 1;
+  position: absolute;
+}
+
+.cardDivider {
+  left: 55px;
+  width: 520px;
+  bottom: 213px;
+  height: 6px;
+  z-index: 2;
+  position: absolute;
+}
+
+.badgeWrapper {
+  display: flex;
+  z-index: 4;
+  position: relative;
+  align-items: flex-start;
+  margin-left: 151px;
+  margin-right: 48px;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.badgeImage {
+  width: 196px;
+  height: 218px;
+}
+
+.badgeText {
+  color: #545454;
+  opacity: 0.6;
+  font-size: 24px;
+  margin-top: 65px;
+  text-align: center;
+  font-family: PingFangSC-Regular;
+  font-weight: 400;
+  line-height: 34px;
+  margin-left: -65px;
+  margin-bottom: 119px;
+}
+
+.voucherTitle {
+  color: #0a0a5d;
+  z-index: 3;
+  font-size: 36px;
+  align-self: center;
+  margin-top: -19px;
+  text-align: center;
+  font-family: PingFangSC-Semibold;
+  font-weight: 600;
+  line-height: 46px;
+}
+
+.actionButton {
+  display: flex;
+  padding: 32px 145px;
+  z-index: 5;
+  position: relative;
+  align-self: stretch;
+  box-sizing: border-box;
+  margin-top: 79px;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.buttonBg {
+  top: 0px;
+  left: 0px;
+  width: 498px;
+  height: 124px;
+  z-index: -1;
+  position: absolute;
+}
+
+.buttonText {
+  width: 208px;
+  height: 60px;
+}
+
+.historyLink {
+  width: 167px;
+  height: 34px;
+  display: flex;
+  z-index: 0;
+  position: relative;
+  align-self: center;
+  box-sizing: border-box;
+  align-items: flex-start;
+  flex-direction: row;
+  padding-bottom: 4px;
+  justify-content: flex-start;
+}
+
+.historyText {
+  color: #ffffff;
+  font-size: 24px;
+  text-align: center;
+  font-family: PingFangSC-Regular;
+  font-weight: 400;
+  line-height: 34px;
+}
+
+.arrowIcon {
+  width: 26px;
+  height: 26px;
+  margin-top: 4px;
+  margin-left: -3px;
+  margin-bottom: 4px;
+}
+
+.historyEntry {
+  width: 167px;
+  height: 34px;
+  display: flex;
+  align-self: center;
+  align-items: flex-start;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.historyEntryText {
+  color: #155766;
+  font-size: 24px;
+  text-align: center;
+  font-family: PingFangSC-Regular;
+  font-weight: 400;
+  line-height: 34px;
+}
+
+.historyArrowIcon {
+  width: 26px;
+  height: 26px;
+  margin-top: 4px;
+  margin-left: -3px;
+  margin-bottom: 4px;
+}
+
+.rulesSection {
+  display: flex;
+  padding: 62px 45.39px 4.48px;
+  z-index: 2;
+  position: relative;
+  align-self: stretch;
+  box-sizing: border-box;
+  margin-top: 73px;
+  align-items: flex-start;
+  margin-left: 22px;
+  margin-right: 22px;
+  margin-bottom: 28px;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.rulesBg {
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 1417px;
+  z-index: -1;
+  position: absolute;
+  background: rgba(255, 255, 255, 1);
+  min-height: 178px;
+  border-radius: 40px;
+}
+
+.rulesGradient {
+  top: 204px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  z-index: -1;
+  overflow: hidden;
+  position: absolute;
+  min-height: 1391px;
+  border-radius: 46px;
+  background: linear-gradient(180deg, #ffffff 64.42%, #fff7d9 100%);
+}
+
+.bannerPlaceholder {
+  color: #30447c;
+  opacity: 0.4;
+  font-size: 38px;
+  align-self: center;
+  text-align: center;
+  font-family: PingFangSC-Regular;
+  font-weight: 400;
+  line-height: 55px;
+}
+
+.rulesTitle {
+  width: 144px;
+  height: 56px;
+  display: flex;
+  z-index: 2;
+  position: relative;
+  box-sizing: border-box;
+  margin-top: 144px;
+  align-items: flex-start;
+  margin-left: 236px;
+  margin-right: 236px;
+  flex-direction: column;
+  padding-bottom: 14px;
+  justify-content: flex-start;
+}
+
+.rulesTitleBg {
+  left: 2px;
+  width: 141px;
+  bottom: 0px;
+  height: 27px;
+  z-index: -1;
+  position: absolute;
+}
+
+.rulesTitleText {
+  width: 144px;
+  height: 42px;
+  margin-top: -2px;
+  margin-bottom: -5px;
+}
+
+.rulesContent {
+  display: flex;
+  z-index: 1;
+  margin-top: 33px;
+  text-align: left;
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.rulesParagraph {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 40px;
+  flex-direction: column;
+}
+
+.rulesLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  flex-direction: row;
+}
+
+.rulesHeading {
+  color: #3f270a;
+  font-size: 30px;
+  text-align: left;
+  font-family: PingFangSC-Semibold;
+  font-weight: 600;
+  line-height: 40px;
+}
+
+.rulesText {
+  color: #3f270a;
+  font-size: 24px;
+  text-align: left;
+  font-family: PingFangSC-Regular;
+  font-weight: 400;
+  line-height: 40px;
+}
+
+.rulesParagraphLast {
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+}

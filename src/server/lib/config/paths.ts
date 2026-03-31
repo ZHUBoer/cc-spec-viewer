@@ -1,8 +1,8 @@
-import { homedir } from "node:os";
-import { resolve } from "node:path";
+import path from "node:path";
+import { resolveHomeDirFromEnv } from "./resolveHomeDirFromEnv";
 
-export const claudeCodeViewerCacheDirPath = resolve(
-  homedir(),
+export const claudeCodeViewerCacheDirPath = path.join(
+  resolveHomeDirFromEnv(),
   ".spec-forge-viewer",
   "cache",
 );

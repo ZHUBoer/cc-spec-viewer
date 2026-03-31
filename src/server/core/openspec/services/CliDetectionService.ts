@@ -68,10 +68,15 @@ export const CliDetectionServiceLive = Layer.effect(
        */
       checkGlobalCli: () =>
         Effect.gen(function* () {
+          const openspecExecutable =
+            process.platform === "win32" ? "openspec.cmd" : "openspec";
+          const npxExecutable =
+            process.platform === "win32" ? "npx.cmd" : "npx";
+
           // 1. 检查全局 openspec 安装
-          const globalCommand = Command.make("openspec", "--version");
+          const globalCommand = Command.make(openspecExecutable, "--version");
           const globalResult = yield* Effect.either(
-            Command.string(globalCommand).pipe(
+            Command.string(globalCommand.pipe(Command.runInShell(true))).pipe(
               Effect.timeout(Duration.seconds(5)),
             ),
           );
@@ -86,13 +91,13 @@ export const CliDetectionServiceLive = Layer.effect(
 
           // 2. 检查 npx openspec 可用性（--no-install 避免触发网络安装导致长时间等待）
           const npxCommand = Command.make(
-            "npx",
+            npxExecutable,
             "--no-install",
             "openspec",
             "--version",
           );
           const npxResult = yield* Effect.either(
-            Command.string(npxCommand).pipe(
+            Command.string(npxCommand.pipe(Command.runInShell(true))).pipe(
               Effect.timeout(Duration.seconds(2)),
             ),
           );

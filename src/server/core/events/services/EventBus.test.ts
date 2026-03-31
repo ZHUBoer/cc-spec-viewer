@@ -220,6 +220,7 @@ describe("EventBus", () => {
         const mockPermissionRequest: PermissionRequest = {
           id: "permission-1",
           taskId: "task-1",
+          sessionProcessId: "process-1",
           toolName: "read",
           toolInput: {},
           timestamp: Date.now(),

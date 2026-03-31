@@ -67,18 +67,26 @@ export const DeleteSessionDialog: FC<DeleteSessionDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             <Trans id="session.delete_dialog.title" />
           </DialogTitle>
-          <DialogDescription className="break-words line-clamp-10">
+          <DialogDescription className="break-words">
             <Trans
-              id="session.delete_dialog.description"
-              values={{ title: sessionTitle }}
+              id="session.delete_dialog.description.compact"
+              message="确定要删除这个会话吗？下方展示的是将被删除的会话标题。"
             />
           </DialogDescription>
         </DialogHeader>
+        <div className="min-w-0 rounded-md border bg-muted/30 px-3 py-2">
+          <p className="mb-1 text-xs font-medium text-muted-foreground">
+            <Trans id="session.delete_dialog.title" />
+          </p>
+          <div className="max-h-32 overflow-y-auto text-sm leading-6 text-foreground break-all">
+            {sessionTitle}
+          </div>
+        </div>
         <DialogFooter>
           <Button
             variant="outline"

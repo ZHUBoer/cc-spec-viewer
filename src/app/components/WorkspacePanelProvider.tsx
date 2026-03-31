@@ -255,7 +255,7 @@ export const WorkspacePanelProvider: FC<WorkspacePanelProviderProps> = ({
       {children}
       {activeMode !== "none" && (
         <div
-          className="fixed right-0 top-0 bottom-0 bg-background border-l-4 border-primary/20 shadow-2xl z-50 flex flex-col"
+          className="fixed right-0 top-0 bottom-0 z-50 flex flex-col border-l border-emphasis-line bg-background"
           style={{
             width: `${width}%`,
             userSelect: isResizing ? "none" : "auto",
@@ -263,7 +263,7 @@ export const WorkspacePanelProvider: FC<WorkspacePanelProviderProps> = ({
         >
           {/* Resize handle */}
           <div
-            className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-primary/50 transition-colors active:bg-primary z-10"
+            className="absolute left-0 top-0 bottom-0 z-10 w-2 cursor-ew-resize transition-colors hover:bg-primary/18 active:bg-primary/30"
             style={{ pointerEvents: "auto" }}
             onMouseDown={handleMouseDown}
           />
@@ -345,7 +345,7 @@ export const WorkspacePanelProvider: FC<WorkspacePanelProviderProps> = ({
                 <button
                   type="button"
                   onClick={closePanel}
-                  className="p-1.5 hover:bg-muted rounded transition-colors bg-background border shadow-sm cursor-pointer"
+                  className="rounded border border-border bg-background p-1.5 transition-colors hover:bg-muted cursor-pointer"
                   aria-label="Close"
                 >
                   <svg

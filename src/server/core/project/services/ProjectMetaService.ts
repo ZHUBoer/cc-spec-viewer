@@ -56,7 +56,8 @@ const LayerImpl = Effect.gen(function* () {
           conversation.type === "summary" ||
           conversation.type === "x-error" ||
           conversation.type === "file-history-snapshot" ||
-          conversation.type === "queue-operation"
+          conversation.type === "queue-operation" ||
+          conversation.type === "last-prompt"
         ) {
           continue;
         }
@@ -129,7 +130,24 @@ const LayerImpl = Effect.gen(function* () {
         projectName: projectPath ? path.basename(projectPath) : null,
         projectPath,
         sessionCount: files.length,
+        isWorkspace: false,
       };
+
+      if (projectPath !== null) {
+        const settingsPath = path.join(projectPath, ".claude", "settings.json");
+        const isWs = yield* Effect.gen(function* () {
+          const exists = yield* fs.exists(settingsPath);
+          if (!exists) return false;
+          const content = yield* fs.readFileString(settingsPath);
+          const parsed = yield* Effect.try({
+            try: () => JSON.parse(content),
+            catch: () => new Error("Invalid JSON in settings.json"),
+          });
+          const dirs = parsed?.permissions?.additionalDirectories;
+          return Array.isArray(dirs) && dirs.length > 0;
+        }).pipe(Effect.catchAll(() => Effect.succeed(false)));
+        projectMeta.isWorkspace = isWs;
+      }
 
       yield* Ref.update(projectMetaCacheRef, (cache) => {
         cache.set(projectId, projectMeta);

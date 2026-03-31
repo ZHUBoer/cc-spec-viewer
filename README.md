@@ -107,7 +107,7 @@ spec-forge-viewer [options]
 | `PORT` | 端口号 | 否 (默认: 3000) |
 | `HOSTNAME` | 监听主机名 | 否 (默认: localhost) |
 | `CCV_PASSWORD` | 认证密码 | 否 |
-| `CCV_CC_EXECUTABLE_PATH` | Claude Code 路径 | 否 (自动检测) |
+| `CCV_CC_EXECUTABLE_PATH` | Claude Code 路径（Windows 建议指向 `claude.exe` 或实际 `cli.js` 入口） | 否 (自动检测) |
 | `CCV_GLOBAL_CLAUDE_DIR` | Claude 目录路径 | 否 (默认: ~/.claude) |
 | `ANTHROPIC_API_KEY` | Anthropic API 密钥 | 是* |
 | `ANTHROPIC_AUTH_TOKEN` | 自定义代理认证令牌 | 否 |

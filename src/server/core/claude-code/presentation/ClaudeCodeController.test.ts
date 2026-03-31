@@ -5,7 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { testPlatformLayer } from "../../../../testing/layers/testPlatformLayer";
 import { testProjectRepositoryLayer } from "../../../../testing/layers/testProjectRepositoryLayer";
 import { ApplicationContext } from "../../platform/services/ApplicationContext";
+import { AdaModelService } from "../services/AdaModelService";
 import { ClaudeCodeService } from "../services/ClaudeCodeService";
+import { ClaudeCodeSessionProcessService } from "../services/ClaudeCodeSessionProcessService";
 import { ClaudeCodeController } from "./ClaudeCodeController";
 
 // Mock ClaudeCodeService to avoid depending on ClaudeCode.Config
@@ -26,6 +28,71 @@ const testClaudeCodeServiceLayer = Layer.succeed(
         runSkillsDirectly: false,
       }),
     getMcpList: () => Effect.succeed([]),
+    getMcpConfig: () =>
+      Effect.succeed({
+        content: '{\n  "mcpServers": {}\n}',
+        configPath: "/mock/project/.mcp.json",
+      }),
+    saveMcpConfig: () =>
+      Effect.succeed({
+        configPath: "/mock/project/.mcp.json",
+      }),
+  }),
+);
+
+const testAdaModelServiceLayer = Layer.succeed(
+  AdaModelService,
+  AdaModelService.of({
+    listModels: () =>
+      Effect.succeed({
+        models: [
+          {
+            index: 1,
+            label: "mock-model",
+            isCurrent: true,
+          },
+        ],
+        currentIndex: 1,
+        currentLabel: "mock-model",
+        switchSupported: true,
+        unsupportedReason: null,
+      }),
+    switchModel: () =>
+      Effect.succeed({
+        switchedTo: {
+          index: 1,
+          label: "mock-model",
+        },
+        models: [
+          {
+            index: 1,
+            label: "mock-model",
+            isCurrent: true,
+          },
+        ],
+        currentIndex: 1,
+        currentLabel: "mock-model",
+        switchSupported: true,
+        unsupportedReason: null,
+      }),
+  }),
+);
+
+const testSessionProcessServiceLayer = Layer.succeed(
+  ClaudeCodeSessionProcessService,
+  ClaudeCodeSessionProcessService.of({
+    startSessionProcess: () => Effect.die("unused"),
+    continueSessionProcess: () => Effect.die("unused"),
+    getSessionProcess: () => Effect.die("unused"),
+    getSessionProcesses: () => Effect.succeed([]),
+    getTask: () => Effect.die("unused"),
+    dangerouslyChangeProcessState: () => Effect.die("unused"),
+    changeTaskState: () => Effect.die("unused"),
+    toNotInitializedState: () => Effect.die("unused"),
+    toInitializedState: () => Effect.die("unused"),
+    toFileCreatedState: () => Effect.die("unused"),
+    toPausedState: () => Effect.die("unused"),
+    toCompletedState: () => Effect.die("unused"),
   }),
 );
 
@@ -55,8 +122,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           projectCommandsDir,
         };
       }).pipe(
-        Effect.provide(NodeContext.layer),
-        Effect.provide(testPlatformLayer()),
+        Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
       ),
     );
 
@@ -86,8 +152,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           "# Deploy",
         );
       }).pipe(
-        Effect.provide(NodeContext.layer),
-        Effect.provide(testPlatformLayer()),
+        Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
       ),
     );
 
@@ -101,6 +166,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectName: "Test Project",
             projectPath: projectDir,
             sessionCount: 0,
+            isWorkspace: false,
           },
         },
       ],
@@ -120,6 +186,8 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
 
     const testLayer = ClaudeCodeController.Live.pipe(
       Layer.provide(testClaudeCodeServiceLayer),
+      Layer.provide(testAdaModelServiceLayer),
+      Layer.provide(testSessionProcessServiceLayer),
       Layer.provide(projectLayer),
       Layer.provide(appContextLayer),
       Layer.provide(NodeContext.layer),
@@ -134,8 +202,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectId: "test-project",
           })
           .pipe(
-            Effect.provide(NodeContext.layer),
-            Effect.provide(testPlatformLayer()),
+            Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
           );
       }).pipe(Effect.provide(testLayer)),
     );
@@ -188,8 +255,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           "# API Create",
         );
       }).pipe(
-        Effect.provide(NodeContext.layer),
-        Effect.provide(testPlatformLayer()),
+        Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
       ),
     );
 
@@ -203,6 +269,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectName: "Test Project",
             projectPath: projectDir,
             sessionCount: 0,
+            isWorkspace: false,
           },
         },
       ],
@@ -222,6 +289,8 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
 
     const testLayer = ClaudeCodeController.Live.pipe(
       Layer.provide(testClaudeCodeServiceLayer),
+      Layer.provide(testAdaModelServiceLayer),
+      Layer.provide(testSessionProcessServiceLayer),
       Layer.provide(projectLayer),
       Layer.provide(appContextLayer),
       Layer.provide(NodeContext.layer),
@@ -236,8 +305,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectId: "test-project",
           })
           .pipe(
-            Effect.provide(NodeContext.layer),
-            Effect.provide(testPlatformLayer()),
+            Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
           );
       }).pipe(Effect.provide(testLayer)),
     );
@@ -268,8 +336,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           "# Primary Button",
         );
       }).pipe(
-        Effect.provide(NodeContext.layer),
-        Effect.provide(testPlatformLayer()),
+        Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
       ),
     );
 
@@ -283,6 +350,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectName: "Test Project",
             projectPath: projectDir,
             sessionCount: 0,
+            isWorkspace: false,
           },
         },
       ],
@@ -302,6 +370,8 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
 
     const testLayer = ClaudeCodeController.Live.pipe(
       Layer.provide(testClaudeCodeServiceLayer),
+      Layer.provide(testAdaModelServiceLayer),
+      Layer.provide(testSessionProcessServiceLayer),
       Layer.provide(projectLayer),
       Layer.provide(appContextLayer),
       Layer.provide(NodeContext.layer),
@@ -316,8 +386,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectId: "test-project",
           })
           .pipe(
-            Effect.provide(NodeContext.layer),
-            Effect.provide(testPlatformLayer()),
+            Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
           );
       }).pipe(Effect.provide(testLayer)),
     );
@@ -342,6 +411,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectName: "Test Project",
             projectPath: projectDir,
             sessionCount: 0,
+            isWorkspace: false,
           },
         },
       ],
@@ -361,6 +431,8 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
 
     const testLayer = ClaudeCodeController.Live.pipe(
       Layer.provide(testClaudeCodeServiceLayer),
+      Layer.provide(testAdaModelServiceLayer),
+      Layer.provide(testSessionProcessServiceLayer),
       Layer.provide(projectLayer),
       Layer.provide(appContextLayer),
       Layer.provide(NodeContext.layer),
@@ -375,8 +447,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectId: "test-project",
           })
           .pipe(
-            Effect.provide(NodeContext.layer),
-            Effect.provide(testPlatformLayer()),
+            Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
           );
       }).pipe(Effect.provide(testLayer)),
     );
@@ -394,8 +465,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
         const fs = yield* FileSystem.FileSystem;
         yield* fs.writeFileString(`${globalCommandsDir}/impl.md`, "# Impl");
       }).pipe(
-        Effect.provide(NodeContext.layer),
-        Effect.provide(testPlatformLayer()),
+        Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
       ),
     );
 
@@ -409,6 +479,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectName: "Test Project",
             projectPath: null, // No project path
             sessionCount: 0,
+            isWorkspace: false,
           },
         },
       ],
@@ -428,6 +499,8 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
 
     const testLayer = ClaudeCodeController.Live.pipe(
       Layer.provide(testClaudeCodeServiceLayer),
+      Layer.provide(testAdaModelServiceLayer),
+      Layer.provide(testSessionProcessServiceLayer),
       Layer.provide(projectLayer),
       Layer.provide(appContextLayer),
       Layer.provide(NodeContext.layer),
@@ -442,8 +515,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectId: "test-project",
           })
           .pipe(
-            Effect.provide(NodeContext.layer),
-            Effect.provide(testPlatformLayer()),
+            Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
           );
       }).pipe(Effect.provide(testLayer)),
     );
@@ -478,8 +550,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           "# Hidden Impl",
         );
       }).pipe(
-        Effect.provide(NodeContext.layer),
-        Effect.provide(testPlatformLayer()),
+        Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
       ),
     );
 
@@ -493,6 +564,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectName: "Test Project",
             projectPath: projectDir,
             sessionCount: 0,
+            isWorkspace: false,
           },
         },
       ],
@@ -512,6 +584,8 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
 
     const testLayer = ClaudeCodeController.Live.pipe(
       Layer.provide(testClaudeCodeServiceLayer),
+      Layer.provide(testAdaModelServiceLayer),
+      Layer.provide(testSessionProcessServiceLayer),
       Layer.provide(projectLayer),
       Layer.provide(appContextLayer),
       Layer.provide(NodeContext.layer),
@@ -526,8 +600,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectId: "test-project",
           })
           .pipe(
-            Effect.provide(NodeContext.layer),
-            Effect.provide(testPlatformLayer()),
+            Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
           );
       }).pipe(Effect.provide(testLayer)),
     );
@@ -596,8 +669,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
           "# API Validation Skill",
         );
       }).pipe(
-        Effect.provide(NodeContext.layer),
-        Effect.provide(testPlatformLayer()),
+        Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
       ),
     );
 
@@ -611,6 +683,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectName: "Test Project",
             projectPath: projectDir,
             sessionCount: 0,
+            isWorkspace: false,
           },
         },
       ],
@@ -646,11 +719,22 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             runSkillsDirectly: true, // Enable the flag
           }),
         getMcpList: () => Effect.succeed([]),
+        getMcpConfig: () =>
+          Effect.succeed({
+            content: '{\n  "mcpServers": {}\n}',
+            configPath: "/mock/project/.mcp.json",
+          }),
+        saveMcpConfig: () =>
+          Effect.succeed({
+            configPath: "/mock/project/.mcp.json",
+          }),
       }),
     );
 
     const testLayer = ClaudeCodeController.Live.pipe(
       Layer.provide(testClaudeCodeServiceWithSkillsLayer),
+      Layer.provide(testAdaModelServiceLayer),
+      Layer.provide(testSessionProcessServiceLayer),
       Layer.provide(projectLayer),
       Layer.provide(appContextLayer),
       Layer.provide(NodeContext.layer),
@@ -665,8 +749,7 @@ describe("ClaudeCodeController.getClaudeCommands", () => {
             projectId: "test-project",
           })
           .pipe(
-            Effect.provide(NodeContext.layer),
-            Effect.provide(testPlatformLayer()),
+            Effect.provide(Layer.merge(NodeContext.layer, testPlatformLayer())),
           );
       }).pipe(Effect.provide(testLayer)),
     );

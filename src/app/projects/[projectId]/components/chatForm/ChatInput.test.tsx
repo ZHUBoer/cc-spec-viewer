@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { ChatInputProps } from "./ChatInput";
+import { getNextHandledQueuedMessageId } from "./chatInputQueuedMessage";
 
 describe("ChatInput Props", () => {
   it("should have correct type definition for enableScheduledSend", () => {
@@ -40,6 +41,20 @@ describe("ChatInput Props", () => {
     };
 
     expect(props.baseSessionId).toBe("session-123");
+  });
+
+  it("should allow onModelSwitched callback", () => {
+    const onModelSwitched = vi.fn();
+    const props: ChatInputProps = {
+      projectId: "test-project",
+      onSubmit: async () => {},
+      isPending: false,
+      placeholder: "Type your message...",
+      buttonText: "Send",
+      onModelSwitched,
+    };
+
+    expect(props.onModelSwitched).toBe(onModelSwitched);
   });
 
   it("should validate datetime format parsing logic", () => {
@@ -93,5 +108,26 @@ describe("ChatInput Props", () => {
     const parsed = new Date(formatted);
     expect(parsed).toBeInstanceOf(Date);
     expect(Number.isNaN(parsed.getTime())).toBe(false);
+  });
+
+  it("queued message 发送成功后会保留 handled id", () => {
+    expect(getNextHandledQueuedMessageId("draft-1", "draft-1", "success")).toBe(
+      "draft-1",
+    );
+  });
+
+  it("queued message 发送失败后会清空 handled id，允许后续重试", () => {
+    expect(
+      getNextHandledQueuedMessageId("draft-1", "draft-1", "failed"),
+    ).toBeNull();
+    expect(
+      getNextHandledQueuedMessageId("draft-1", "draft-1", "aborted"),
+    ).toBeNull();
+  });
+
+  it("queued message 回调不会误清空其他消息的 handled id", () => {
+    expect(getNextHandledQueuedMessageId("draft-2", "draft-1", "failed")).toBe(
+      "draft-2",
+    );
   });
 });

@@ -3,18 +3,30 @@ import type {
   Conversation,
   SidechainConversation,
 } from "@/lib/conversation-schema";
-import { taskToolInputSchema } from "../components/conversationList/AssistantConversationContent";
+import {
+  isSubagentToolName,
+  taskToolInputSchema,
+} from "../components/conversationList/AssistantConversationContent";
 
 export const useSidechain = (conversations: Conversation[]) => {
-  const sidechainConversations = conversations
-    .filter(
-      (conv) =>
-        conv.type !== "summary" &&
-        conv.type !== "file-history-snapshot" &&
-        conv.type !== "queue-operation" &&
-        conv.type !== "progress",
-    )
-    .filter((conv) => conv.isSidechain === true);
+  const isSidechainConversation = useCallback(
+    (conversation: Conversation): conversation is SidechainConversation => {
+      return (
+        conversation.type === "user" ||
+        conversation.type === "assistant" ||
+        conversation.type === "system"
+      );
+    },
+    [],
+  );
+
+  const sidechainConversations = useMemo(
+    () =>
+      conversations
+        .filter(isSidechainConversation)
+        .filter((conv) => conv.isSidechain === true),
+    [conversations, isSidechainConversation],
+  );
 
   const conversationMap = useMemo(() => {
     return new Map<string, SidechainConversation>(
@@ -45,7 +57,7 @@ export const useSidechain = (conversations: Conversation[]) => {
           ),
         ])
         .flatMap((content) => {
-          if (content.name !== "Task") {
+          if (!isSubagentToolName(content.name)) {
             return [];
           }
 
@@ -93,17 +105,13 @@ export const useSidechain = (conversations: Conversation[]) => {
 
   const isRootSidechain = useCallback(
     (conversation: Conversation) => {
-      if (
-        conversation.type === "summary" ||
-        conversation.type === "file-history-snapshot" ||
-        conversation.type === "queue-operation"
-      ) {
+      if (!isSidechainConversation(conversation)) {
         return false;
       }
 
       return sidechainConversationGroups.has(conversation.uuid);
     },
-    [sidechainConversationGroups],
+    [isSidechainConversation, sidechainConversationGroups],
   );
 
   const getSidechainConversations = useCallback(

@@ -1,5 +1,24 @@
 {
   "mcpServers": {
+    "design-to-code-zx": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "--registry=https://artifactory.release.ctripcorp.com/artifactory/api/npm/trip-npm-prod/",
+        "@ctrip/design-to-code-zx-mcp@2.0.1"
+      ],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "<YOUR_FIGMA_ACCESS_TOKEN>",
+        "GEMINI_API_KEY": "<YOUR_GEMINI_API_KEY>",
+        "GEMINI_BASE_URL": "http://proxy.gcp.vertexai.llm.sys.ctripcorp.com",
+        "GEMINI_MODEL": "gemini-2.5-flash",
+        "D2C_BUSINESS_LINE": "zx",
+        "D2C_TARGET_PLATFORM": "xtaro",
+        "IMAGE_UPLOAD_CHANNEL": "trn_zt_train",
+        "IMAGE_UPLOAD_SCENE": "nEN5s8p50XcHYZteRNVT",
+        "IMAGE_UPLOAD_APP_SECRET": "<YOUR_IMAGE_UPLOAD_APP_SECRET>"
+      }
+    },
     "mermaid-mcp": {
       "type": "http",
       "url": "http://ticket.fws.tripqate.com/api/mcp/mermaid-mcp/mcp"
@@ -7,6 +26,12 @@
     "contract-doc": {
       "url": "http://trn-tool-mcp-server-function.faas.ctripcorp.com/mcp",
       "type": "http"
+    },
+    "gitnexus": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "gitnexus@latest", "mcp"],
+      "env": {}
     }
   }
 }

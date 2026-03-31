@@ -1,12 +1,9 @@
 import { Trans } from "@lingui/react";
 import { ChevronDown, Lightbulb, Wrench } from "lucide-react";
-import type { FC } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  oneDark,
-  oneLight,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
+import { type FC, useState } from "react";
 import z from "zod";
+import { CodeBlock } from "@/app/components/CodeBlock";
+import { AskUserQuestionInteractive } from "@/components/AskUserQuestionInteractive";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Collapsible,
@@ -15,12 +12,36 @@ import {
 } from "@/components/ui/collapsible";
 import type { ToolResultContent } from "@/lib/conversation-schema/content/ToolResultContentSchema";
 import type { AssistantMessageContent } from "@/lib/conversation-schema/message/AssistantMessageSchema";
-import { useTheme } from "../../../../../../../hooks/useTheme";
 import type { SidechainConversation } from "../../../../../../../lib/conversation-schema";
 import { MarkdownContent } from "../../../../../../components/MarkdownContent";
+import { usePendingAskUserQuestion } from "../../hooks/usePendingAskUserQuestion";
 import { AskUserQuestionCard } from "./AskUserQuestionCard";
+import type { AssistantContentSegment } from "./assistantContentSegments";
+import { isMeaningfulAssistantText } from "./assistantContentSegments";
 import { TaskModal } from "./TaskModal";
 import { ToolInputOneLine } from "./ToolInputOneLine";
+
+type ProcessGroupItems = Extract<
+  AssistantContentSegment,
+  { type: "process-group" }
+>["items"];
+
+type AssistantConversationContentProps = {
+  content: AssistantMessageContent | ProcessGroupItems;
+  collapsible: boolean;
+  getToolResult: (toolUseId: string) => ToolResultContent | undefined;
+  getToolUseResult: (toolUseId: string) => unknown;
+  getAgentIdForToolUse: (toolUseId: string) => string | undefined;
+  getSidechainConversationByAgentId: (
+    agentId: string,
+  ) => SidechainConversation | undefined;
+  getSidechainConversationByPrompt: (
+    prompt: string,
+  ) => SidechainConversation | undefined;
+  getSidechainConversations: (rootUuid: string) => SidechainConversation[];
+  projectId: string;
+  sessionId: string;
+};
 
 export const taskToolInputSchema = z
   .object({
@@ -32,7 +53,10 @@ export const taskToolInputSchema = z
     run_in_background: z.boolean().optional(),
     resume: z.string().optional(),
   })
-  .passthrough(); // Allow unknown fields for future compatibility
+  .passthrough();
+
+export const isSubagentToolName = (name: string): boolean =>
+  name === "Task" || name === "Agent";
 
 export const askUserQuestionInputSchema = z.object({
   questions: z.array(
@@ -64,25 +88,16 @@ export const askUserQuestionToolUseResultSchema = z.object({
       multiSelect: z.boolean(),
     }),
   ),
-  answers: z.record(z.string(), z.string()), // question -> answer
+  answers: z.record(z.string(), z.string()),
 });
 
-export const AssistantConversationContent: FC<{
-  content: AssistantMessageContent;
-  getToolResult: (toolUseId: string) => ToolResultContent | undefined;
-  getToolUseResult: (toolUseId: string) => unknown;
-  getAgentIdForToolUse: (toolUseId: string) => string | undefined;
-  getSidechainConversationByAgentId: (
-    agentId: string,
-  ) => SidechainConversation | undefined;
-  getSidechainConversationByPrompt: (
-    prompt: string,
-  ) => SidechainConversation | undefined;
-  getSidechainConversations: (rootUuid: string) => SidechainConversation[];
-  projectId: string;
-  sessionId: string;
-}> = ({
-  content,
+const AssistantProcessGroup: FC<
+  Omit<AssistantConversationContentProps, "content"> & {
+    items: ProcessGroupItems;
+  }
+> = ({
+  items,
+  collapsible,
   getToolResult,
   getToolUseResult,
   getAgentIdForToolUse,
@@ -92,9 +107,125 @@ export const AssistantConversationContent: FC<{
   projectId,
   sessionId,
 }) => {
-  const { resolvedTheme } = useTheme();
-  const syntaxTheme = resolvedTheme === "dark" ? oneDark : oneLight;
+  const { pendingToolUseId } = usePendingAskUserQuestion();
+  const toolUseCount = items.filter((item) => item.type === "tool_use").length;
+  const thinkingCount = items.length - toolUseCount;
+  const shouldForceExpand = items.some((item) => {
+    if (item.type !== "tool_use" || item.name !== "AskUserQuestion") {
+      return false;
+    }
+
+    return pendingToolUseId === item.id && getToolResult(item.id) === undefined;
+  });
+
+  const itemList = (
+    <ul className="w-full space-y-2">
+      {items.map((item, index) => (
+        <li key={`${item.type}-${index}`}>
+          <AssistantConversationContent
+            content={item}
+            collapsible={false}
+            getToolResult={getToolResult}
+            getToolUseResult={getToolUseResult}
+            getAgentIdForToolUse={getAgentIdForToolUse}
+            getSidechainConversationByAgentId={
+              getSidechainConversationByAgentId
+            }
+            getSidechainConversationByPrompt={getSidechainConversationByPrompt}
+            getSidechainConversations={getSidechainConversations}
+            projectId={projectId}
+            sessionId={sessionId}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+
+  if (!collapsible || shouldForceExpand) {
+    return itemList;
+  }
+
+  const summaryParts: string[] = [];
+  if (toolUseCount > 0) {
+    summaryParts.push(`${toolUseCount} 个工具`);
+  }
+  if (thinkingCount > 0) {
+    summaryParts.push(`${thinkingCount} 条思考`);
+  }
+
+  return (
+    <Card className="bg-muted/35 border-dashed mb-2 max-w-full min-w-0 p-0 overflow-hidden">
+      <Collapsible>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/60 transition-all duration-200 py-2.5 px-4 group">
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <Lightbulb className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                <CardTitle className="text-sm font-medium truncate">
+                  <Trans
+                    id="assistant.process_group.title"
+                    message="过程 {count} 条"
+                    values={{ count: items.length }}
+                  />
+                </CardTitle>
+                {summaryParts.length > 0 && (
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {summaryParts.join(" / ")}
+                  </span>
+                )}
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 flex-shrink-0" />
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-3 pb-3">{itemList}</div>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
+  );
+};
+
+export const AssistantConversationContent: FC<
+  AssistantConversationContentProps
+> = ({
+  content,
+  collapsible,
+  getToolResult,
+  getToolUseResult,
+  getAgentIdForToolUse,
+  getSidechainConversationByAgentId,
+  getSidechainConversationByPrompt,
+  getSidechainConversations,
+  projectId,
+  sessionId,
+}) => {
+  const { pendingRequestId, pendingToolUseId, onAnswersSubmit } =
+    usePendingAskUserQuestion();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (Array.isArray(content)) {
+    return (
+      <AssistantProcessGroup
+        items={content}
+        collapsible={collapsible}
+        getToolResult={getToolResult}
+        getToolUseResult={getToolUseResult}
+        getAgentIdForToolUse={getAgentIdForToolUse}
+        getSidechainConversationByAgentId={getSidechainConversationByAgentId}
+        getSidechainConversationByPrompt={getSidechainConversationByPrompt}
+        getSidechainConversations={getSidechainConversations}
+        projectId={projectId}
+        sessionId={sessionId}
+      />
+    );
+  }
+
   if (content.type === "text") {
+    if (!isMeaningfulAssistantText(content)) {
+      return null;
+    }
+
     return (
       <div className="w-full mx-1 sm:mx-2 my-4 sm:my-6">
         <MarkdownContent content={content.text} />
@@ -104,7 +235,7 @@ export const AssistantConversationContent: FC<{
 
   if (content.type === "thinking") {
     return (
-      <Card className="bg-muted/50 border-dashed gap-2 py-3 mb-2 hover:shadow-sm transition-all duration-200">
+      <Card className="bg-muted/50 border-dashed gap-2 py-3 mb-2 max-w-full min-w-0 overflow-hidden hover:shadow-sm transition-all duration-200">
         <Collapsible defaultOpen>
           <CollapsibleTrigger asChild>
             <CardHeader className="cursor-pointer hover:bg-muted/80 rounded-t-lg transition-all duration-200 py-0 px-4 group">
@@ -118,8 +249,8 @@ export const AssistantConversationContent: FC<{
             </CardHeader>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="py-2 px-4">
-              <div className="text-sm text-muted-foreground whitespace-pre-wrap font-mono">
+            <div className="min-w-0 max-w-full px-4 py-2">
+              <div className="min-w-0 max-w-full break-all whitespace-pre-wrap text-sm text-muted-foreground font-mono">
                 {content.thinking}
               </div>
             </div>
@@ -132,7 +263,6 @@ export const AssistantConversationContent: FC<{
   if (content.type === "tool_use") {
     const toolResult = getToolResult(content.id);
 
-    // 特殊处理：AskUserQuestion
     if (content.name === "AskUserQuestion") {
       const parseResult = askUserQuestionInputSchema.safeParse(content.input);
 
@@ -146,8 +276,6 @@ export const AssistantConversationContent: FC<{
       }
 
       const askInput = parseResult.data;
-
-      // 从 toolUseResult 获取 answers（如果存在）
       const rawToolUseResult = getToolUseResult(content.id);
       const toolUseResultParse = rawToolUseResult
         ? askUserQuestionToolUseResultSchema.safeParse(rawToolUseResult)
@@ -164,35 +292,67 @@ export const AssistantConversationContent: FC<{
       const answers = toolUseResultParse?.success
         ? toolUseResultParse.data.answers
         : undefined;
-
-      // 获取 tool_result 的确认消息
       const toolResultContent = toolResult?.content;
       const toolResultText =
         typeof toolResultContent === "string"
           ? toolResultContent
           : toolResultContent?.find((item) => item.type === "text")?.text;
 
+      const hasMatchingToolUseId = pendingToolUseId === content.id;
+      const isWaitingForOtherPending =
+        !toolResult &&
+        pendingRequestId !== null &&
+        pendingToolUseId !== content.id;
+      const isInteractive =
+        !toolResult &&
+        pendingRequestId !== null &&
+        hasMatchingToolUseId &&
+        onAnswersSubmit !== null;
+      const questionTitle = askInput.questions[0]?.header || "问题";
+      const totalCount = askInput.questions.length;
+
       return (
-        <Card className="border-purple-200 bg-purple-50/50 dark:border-purple-800 dark:bg-purple-950/20 mb-2 p-0 overflow-hidden">
+        <Card className="mb-2 max-w-full min-w-0 overflow-hidden border-emphasis-line p-0">
           <Collapsible defaultOpen>
             <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-purple-100/50 dark:hover:bg-purple-900/20 transition-all duration-200 py-3 px-4 group">
-                <div className="flex items-center gap-2">
-                  <Wrench className="h-4 w-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                  <CardTitle className="text-sm font-medium group-hover:text-foreground transition-colors">
-                    <Trans id="assistant.tool.ask_user_question.title" />
-                  </CardTitle>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 flex-shrink-0" />
+              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-all duration-200 py-2.5 px-4 group">
+                <div className="flex items-center justify-between min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Wrench className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                    <CardTitle className="text-sm font-medium group-hover:text-foreground transition-colors overflow-hidden text-ellipsis whitespace-nowrap">
+                      {questionTitle}
+                    </CardTitle>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                      · 问题 {totalCount}/{totalCount}
+                    </span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 flex-shrink-0 ml-2" />
                 </div>
               </CardHeader>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="px-4 pb-4">
-                <AskUserQuestionCard
-                  input={askInput}
-                  answers={answers}
-                  toolResult={toolResultText}
-                />
+              <div className={isInteractive ? "px-4 pb-4" : "px-4 pb-3 pt-1"}>
+                {isInteractive ? (
+                  <AskUserQuestionInteractive
+                    questions={askInput.questions}
+                    onSubmit={async (answers) => {
+                      setIsSubmitting(true);
+                      try {
+                        await onAnswersSubmit(answers);
+                      } finally {
+                        setIsSubmitting(false);
+                      }
+                    }}
+                    isSubmitting={isSubmitting}
+                  />
+                ) : (
+                  <AskUserQuestionCard
+                    input={askInput}
+                    answers={answers}
+                    toolResult={toolResultText}
+                    waitingForResponse={isWaitingForOtherPending}
+                  />
+                )}
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -201,18 +361,14 @@ export const AssistantConversationContent: FC<{
     }
 
     const taskModal = (() => {
-      // Task tool 包含 prompt、description、subagent_type 等字段
-      // taskToolInputSchema 使用 .passthrough() 允许额外字段通过
-      const taskInput =
-        content.name === "Task"
-          ? taskToolInputSchema.safeParse(content.input)
-          : undefined;
+      const taskInput = isSubagentToolName(content.name)
+        ? taskToolInputSchema.safeParse(content.input)
+        : undefined;
 
       if (taskInput === undefined || taskInput.success === false) {
         return undefined;
       }
 
-      // Get agentId from toolUseResult if available (new Claude Code versions)
       const agentId = getAgentIdForToolUse(content.id);
 
       return (
@@ -230,7 +386,7 @@ export const AssistantConversationContent: FC<{
     })();
 
     return (
-      <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20 mb-2 p-0 overflow-hidden">
+      <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20 mb-2 max-w-full min-w-0 p-0 overflow-hidden">
         <Collapsible>
           <div className="flex items-center min-w-0">
             <CollapsibleTrigger asChild>
@@ -242,8 +398,7 @@ export const AssistantConversationContent: FC<{
                     {Object.keys(content.input).length > 0 && (
                       <span className="font-normal">
                         {" "}
-                        (
-                        <ToolInputOneLine input={content.input} />)
+                        (<ToolInputOneLine input={content.input} />)
                       </span>
                     )}
                   </div>
@@ -258,12 +413,12 @@ export const AssistantConversationContent: FC<{
             )}
           </div>
           <CollapsibleContent>
-            <div className="space-y-3 py-3 px-4 border-t border-blue-200 dark:border-blue-800">
+            <div className="min-w-0 max-w-full space-y-3 border-t border-blue-200 px-4 py-3 dark:border-blue-800">
               <div>
                 <h4 className="text-xs font-medium text-muted-foreground mb-1">
                   <Trans id="assistant.tool.tool_id" />
                 </h4>
-                <code className="text-xs bg-background/50 px-2 py-1 rounded border border-blue-200 dark:border-blue-800 font-mono">
+                <code className="max-w-full min-w-0 break-all bg-background/50 px-2 py-1 text-xs rounded border border-blue-200 font-mono dark:border-blue-800">
                   {content.id}
                 </code>
               </div>
@@ -271,23 +426,20 @@ export const AssistantConversationContent: FC<{
                 <h4 className="text-xs font-medium text-muted-foreground mb-2">
                   <Trans id="assistant.tool.input_parameters" />
                 </h4>
-                <SyntaxHighlighter
-                  style={syntaxTheme}
+                <CodeBlock
+                  className="my-0"
                   language="json"
-                  PreTag="div"
-                  className="text-xs rounded"
-                >
-                  {JSON.stringify(content.input, null, 2)}
-                </SyntaxHighlighter>
+                  code={JSON.stringify(content.input, null, 2)}
+                />
               </div>
               {toolResult && (
                 <div>
                   <h4 className="text-xs font-medium text-muted-foreground mb-2">
                     <Trans id="assistant.tool.result" />
                   </h4>
-                  <div className="bg-background rounded border p-3">
+                  <div className="min-w-0 max-w-full bg-background rounded border p-3">
                     {typeof toolResult.content === "string" ? (
-                      <pre className="text-xs overflow-x-auto whitespace-pre-wrap break-words">
+                      <pre className="max-w-full min-w-0 text-xs overflow-x-auto whitespace-pre-wrap break-all">
                         {toolResult.content}
                       </pre>
                     ) : (
@@ -305,7 +457,7 @@ export const AssistantConversationContent: FC<{
                           return (
                             <pre
                               key={item.text}
-                              className="text-xs overflow-x-auto whitespace-pre-wrap break-words"
+                              className="max-w-full min-w-0 text-xs overflow-x-auto whitespace-pre-wrap break-all"
                             >
                               {item.text}
                             </pre>

@@ -143,9 +143,11 @@ const LayerImpl = Effect.gen(function* () {
     scenario: ScenarioType;
     profile: Profile;
     force?: boolean;
+    isConfigCorrupted?: boolean;
   }) =>
     Effect.gen(function* () {
-      const { projectId, scenario, profile, force } = options;
+      const { projectId, scenario, profile, force, isConfigCorrupted } =
+        options;
       const result = yield* templateInjectionService.injectTemplates(
         projectId,
         {
@@ -153,6 +155,7 @@ const LayerImpl = Effect.gen(function* () {
           profile,
           skipUserFiles: true,
           force,
+          isConfigCorrupted,
         },
       );
       return {

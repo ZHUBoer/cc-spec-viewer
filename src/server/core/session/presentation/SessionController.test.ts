@@ -5,6 +5,7 @@ import { testPlatformLayer } from "../../../../testing/layers/testPlatformLayer"
 import { AgentSessionRepository } from "../../agent-session/infrastructure/AgentSessionRepository";
 import { EventBus, type IEventBus } from "../../events/services/EventBus";
 import type { InternalEventDeclaration } from "../../events/types/InternalEventDeclaration";
+import { SearchService } from "../../search/services/SearchService";
 import { SessionRepository } from "../infrastructure/SessionRepository";
 import { VirtualConversationDatabase } from "../infrastructure/VirtualConversationDatabase";
 import { SessionMetaService } from "../services/SessionMetaService";
@@ -20,12 +21,14 @@ describe("SessionController", () => {
         event: EventName,
         data: InternalEventDeclaration[EventName],
       ) => void;
+      onInvalidateSearchIndex?: () => void;
     }) => {
       const {
         fileExists = true,
         removeSuccess = true,
         onRemove,
         onEmit,
+        onInvalidateSearchIndex,
       } = options;
 
       const projectPath = "/test/project";
@@ -85,6 +88,7 @@ describe("SessionController", () => {
               },
             },
             modelName: null,
+            isCostPending: false,
           }),
         invalidateSession: () => Effect.void,
       });
@@ -111,6 +115,14 @@ describe("SessionController", () => {
         off: () => Effect.void,
       } satisfies IEventBus);
 
+      const searchServiceLayer = Layer.succeed(SearchService, {
+        search: () => Effect.succeed({ results: [] }),
+        invalidateIndex: () => {
+          onInvalidateSearchIndex?.();
+          return Effect.void;
+        },
+      });
+
       return {
         projectId,
         sessionId,
@@ -122,6 +134,7 @@ describe("SessionController", () => {
           virtualConversationDatabaseLayer,
           eventBusLayer,
           agentSessionRepositoryLayer,
+          searchServiceLayer,
         ),
       };
     };
@@ -184,6 +197,32 @@ describe("SessionController", () => {
         event: "sessionListChanged",
         data: { projectId },
       });
+    });
+
+    it("invalidates search index after successful deletion", async () => {
+      let invalidated = false;
+      const { projectId, sessionId, layers } = createTestLayers({
+        fileExists: true,
+        removeSuccess: true,
+        onInvalidateSearchIndex: () => {
+          invalidated = true;
+        },
+      });
+
+      const program = Effect.gen(function* () {
+        const controller = yield* SessionController;
+        return yield* controller.deleteSession({ projectId, sessionId });
+      });
+
+      await Effect.runPromise(
+        program.pipe(
+          Effect.provide(SessionController.Live),
+          Effect.provide(layers),
+          Effect.provide(testPlatformLayer()),
+        ),
+      );
+
+      expect(invalidated).toBe(true);
     });
 
     it("returns 404 when session file does not exist", async () => {

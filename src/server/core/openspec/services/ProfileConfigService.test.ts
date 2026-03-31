@@ -214,6 +214,12 @@ describe("ProfileConfigService - 模板变量生成", () => {
     expect(variables.INFRA_CATALOG_TOOL_IDS_APPEND).toContain("overview_tool");
     expect(variables.INFRA_CATALOG_TOOL_IDS_APPEND).toContain("search_tool");
     expect(variables.INFRA_CATALOG_TOOL_IDS_APPEND).toContain("spec_tool");
+    expect(variables.QUERYING_INFRA_RULE_LINE).toBe(
+      "MUST 使用 querying-infra-catalog skill 来获取基建知识",
+    );
+    expect(variables.QUERYING_INFRA_APPLY_ITEM).toBe(
+      "- querying-infra-catalog skill: 查询组件/API 规格",
+    );
   });
 
   it("应该生成 MCP 工具 Markdown 列表", async () => {
@@ -314,6 +320,15 @@ describe("ProfileConfigService - 模板变量生成", () => {
     expect(variables.DEVELOP_SKILLS_APPEND).toBe(", skill1, skill2");
     // DEVELOP_SKILLS_NAMES 无逗号前缀（用于独立引用场景）
     expect(variables.DEVELOP_SKILLS_NAMES).toBe("skill1, skill2");
+    expect(variables.DEVELOP_SKILLS_RULE_LINE).toBe(
+      "MUST 使用 skill1, skill2 skill 中的开发经验/规范。",
+    );
+    expect(variables.DEVELOP_SKILLS_TASK_INSTRUCTION).toBe(
+      "MUST 调用 skill1, skill2 skill；获取业务线的标准开发规范；作为后续实现的权威参考",
+    );
+    expect(variables.DEVELOP_SKILLS_APPLY_ITEM).toBe(
+      "- skill1, skill2 skill: 开发规范/开发经验",
+    );
     // DEVELOP_SKILLS_USAGE_MD 从安装结果生成
     expect(variables.DEVELOP_SKILLS_USAGE_MD).toBe(
       "- **skill1**: Skill 1 描述\n- **skill2**: Skill 2 描述",
@@ -355,6 +370,26 @@ describe("ProfileConfigService - 模板变量生成", () => {
 
     expect(variables.DEVELOP_SKILLS_APPEND).toBe("");
     expect(variables.DEVELOP_SKILLS_NAMES).toBe("");
+    expect(variables.DEVELOP_SKILLS_USAGE_MD).toContain(
+      "当前未配置额外 develop skills",
+    );
+    expect(variables.INFRA_CATALOG_OVERVIEW_TOOLS_MD).toBe("（未配置）");
+    expect(variables.INFRA_CATALOG_SEARCH_TOOLS_MD).toBe("（未配置）");
+    expect(variables.INFRA_CATALOG_SPECIFICATIONS_TOOLS_MD).toBe("（未配置）");
+    expect(variables.INFRA_CATALOG_TOOL_DEFINITIONS_TABLE_MD).toBe("");
+    expect(variables.QUERYING_INFRA_RULE_LINE).toContain(
+      "SHOULD 通过可验证事实获取基建能力信息",
+    );
+    expect(variables.QUERYING_INFRA_APPLY_ITEM).toContain(
+      "若未配置组件/API 规格查询能力",
+    );
+    expect(variables.DEVELOP_SKILLS_RULE_LINE).toContain(
+      "MUST 遵循项目现有开发规范",
+    );
+    expect(variables.DEVELOP_SKILLS_TASK_INSTRUCTION).toContain(
+      "查询并确认本项目的开发规范",
+    );
+    expect(variables.DEVELOP_SKILLS_APPLY_ITEM).toContain("项目开发规范");
   });
 
   it("应该生成 Skills 使用说明并提取 skill 名称", async () => {
@@ -504,8 +539,27 @@ description: 简单技能示例
     );
 
     expect(variables.INFRA_CATALOG_TOOL_IDS_APPEND).toBe("");
+    expect(variables.INFRA_CATALOG_OVERVIEW_TOOLS_MD).toBe("（未配置）");
+    expect(variables.INFRA_CATALOG_SEARCH_TOOLS_MD).toBe("（未配置）");
+    expect(variables.INFRA_CATALOG_SPECIFICATIONS_TOOLS_MD).toBe("（未配置）");
+    expect(variables.QUERYING_INFRA_RULE_LINE).toContain(
+      "SHOULD 通过可验证事实获取基建能力信息",
+    );
+    expect(variables.QUERYING_INFRA_APPLY_ITEM).toContain(
+      "若未配置组件/API 规格查询能力",
+    );
     expect(variables.DEVELOP_SKILLS_APPEND).toBe("");
     expect(variables.DEVELOP_SKILLS_NAMES).toBe("");
+    expect(variables.DEVELOP_SKILLS_USAGE_MD).toContain(
+      "当前未配置额外 develop skills",
+    );
+    expect(variables.DEVELOP_SKILLS_RULE_LINE).toContain(
+      "MUST 遵循项目现有开发规范",
+    );
+    expect(variables.DEVELOP_SKILLS_TASK_INSTRUCTION).toContain(
+      "查询并确认本项目的开发规范",
+    );
+    expect(variables.DEVELOP_SKILLS_APPLY_ITEM).toContain("项目开发规范");
     expect(variables.CODE_EXAMPLES_MD).toBe("");
   });
 

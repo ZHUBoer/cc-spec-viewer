@@ -34,6 +34,11 @@ export type SSEEventDeclaration = {
     projectId: string;
     sessionId: string;
   };
+
+  initializationProgress: {
+    message: string;
+    stage: "loading" | "success";
+  };
 };
 
 export type SSEEventMap = {

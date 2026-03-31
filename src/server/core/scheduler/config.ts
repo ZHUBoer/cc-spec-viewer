@@ -1,6 +1,6 @@
-import { homedir } from "node:os";
 import { FileSystem, Path } from "@effect/platform";
 import { Context, Data, Effect, Layer } from "effect";
+import { resolveHomeDirFromEnv } from "../../lib/config/resolveHomeDirFromEnv";
 import { type SchedulerConfig, schedulerConfigSchema } from "./schema";
 
 class ConfigFileNotFoundError extends Data.TaggedError(
@@ -21,7 +21,13 @@ const CONFIG_FILE = "schedules.json";
 export class SchedulerConfigBaseDir extends Context.Tag(
   "SchedulerConfigBaseDir",
 )<SchedulerConfigBaseDir, string>() {
-  static Live = Layer.succeed(this, `${homedir()}/.spec-forge-viewer`);
+  static Live = Layer.effect(
+    this,
+    Effect.gen(function* () {
+      const path = yield* Path.Path;
+      return path.join(resolveHomeDirFromEnv(), ".spec-forge-viewer");
+    }),
+  );
 }
 
 export const getConfigPath = Effect.gen(function* () {

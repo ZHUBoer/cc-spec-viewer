@@ -139,7 +139,7 @@ const TaskItem: FC<{
 const EmptyState: FC = () => {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-      <div className="w-12 h-12 rounded-full bg-sidebar-accent/50 flex items-center justify-center mb-4">
+      <div className="w-12 h-12 rounded-full bg-muted/30 flex items-center justify-center mb-4">
         <ListTodo className="w-6 h-6 text-sidebar-foreground/40" />
       </div>
       <p className="text-sm font-medium text-sidebar-foreground/70">

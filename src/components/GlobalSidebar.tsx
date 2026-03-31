@@ -118,11 +118,7 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
     id: "system-info",
     icon: InfoIcon,
     title: <Trans id="settings.section.system_info" />,
-    content: (
-      <Suspense fallback={<Loading />}>
-        <SystemInfoCard />
-      </Suspense>
-    ),
+    content: <SystemInfoCard projectId={projectId} />,
   };
 
   const allTabs = [
@@ -135,38 +131,61 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
     defaultActiveTab ?? allTabs[allTabs.length - 1]?.id ?? "settings",
   );
   const [isExpanded, setIsExpanded] = useState(!!defaultActiveTab);
+  const [suppressAutoCollapse, setSuppressAutoCollapse] = useState(false);
 
   // Auto-collapse when forceCollapsed becomes true (e.g. window resize)
   // But allow user to re-expand it manually
   useEffect(() => {
-    if (forceCollapsed) {
+    if (forceCollapsed && !suppressAutoCollapse) {
       setIsExpanded(false);
     }
-  }, [forceCollapsed]);
+  }, [forceCollapsed, suppressAutoCollapse]);
 
-  // 监听 specforge:open-init-dialog 事件，自动切换到 spec-dashboard 标签页
+  // 监听 specforge 事件，自动切换到 spec-dashboard/system-info 标签页
   useEffect(() => {
     if (!projectId) return;
 
     const handleOpenInitDialogEvent = (event: CustomEvent) => {
       if (event.detail?.projectId === projectId) {
-        // 如果已经在 spec-dashboard 标签页，不需要切换，直接让 SpecSidebarPanel 处理
-        if (activeTab === "spec-dashboard") {
-          return;
-        }
-
-        // 切换到 spec-dashboard 标签页并展开侧边栏
+        const shouldRedispatch = activeTab !== "spec-dashboard" || !isExpanded;
+        setSuppressAutoCollapse(true);
         setActiveTab("spec-dashboard");
         setIsExpanded(true);
 
-        // 延迟再次发送事件，确保 SpecSidebarPanel 挂载后能接收到
-        setTimeout(() => {
-          window.dispatchEvent(
-            new CustomEvent("specforge:open-init-dialog", {
-              detail: { projectId },
-            }),
-          );
-        }, 100);
+        if (shouldRedispatch) {
+          setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent("specforge:open-init-dialog", {
+                detail: { projectId },
+              }),
+            );
+          }, 100);
+        }
+      }
+    };
+    const handleOpenNewSpecEvent = (event: CustomEvent) => {
+      if (event.detail?.projectId === projectId) {
+        const shouldRedispatch = activeTab !== "spec-dashboard" || !isExpanded;
+        setSuppressAutoCollapse(true);
+        setActiveTab("spec-dashboard");
+        setIsExpanded(true);
+
+        if (shouldRedispatch) {
+          setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent("specforge:open-new-spec", {
+                detail: { projectId },
+              }),
+            );
+          }, 100);
+        }
+      }
+    };
+    const handleOpenSystemInfoEvent = (event: CustomEvent) => {
+      if (event.detail?.projectId === projectId) {
+        setSuppressAutoCollapse(true);
+        setActiveTab("system-info");
+        setIsExpanded(true);
       }
     };
 
@@ -174,20 +193,46 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
       "specforge:open-init-dialog",
       handleOpenInitDialogEvent as EventListener,
     );
+    window.addEventListener(
+      "specforge:open-new-spec",
+      handleOpenNewSpecEvent as EventListener,
+    );
+    window.addEventListener(
+      "specforge:open-new-proposal",
+      handleOpenNewSpecEvent as EventListener,
+    );
+    window.addEventListener(
+      "specforge:open-system-info",
+      handleOpenSystemInfoEvent as EventListener,
+    );
     return () => {
       window.removeEventListener(
         "specforge:open-init-dialog",
         handleOpenInitDialogEvent as EventListener,
       );
+      window.removeEventListener(
+        "specforge:open-new-spec",
+        handleOpenNewSpecEvent as EventListener,
+      );
+      window.removeEventListener(
+        "specforge:open-new-proposal",
+        handleOpenNewSpecEvent as EventListener,
+      );
+      window.removeEventListener(
+        "specforge:open-system-info",
+        handleOpenSystemInfoEvent as EventListener,
+      );
     };
-  }, [projectId, activeTab]);
+  }, [projectId, activeTab, isExpanded]);
 
   const handleTabClick = (tabId: string) => {
     if (activeTab === tabId && isExpanded) {
       setIsExpanded(false);
+      setSuppressAutoCollapse(false);
     } else {
       setActiveTab(tabId);
       setIsExpanded(true);
+      setSuppressAutoCollapse(false);
     }
   };
 
@@ -216,7 +261,7 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
                     onClick={openSearch}
                     className={cn(
                       "w-8 h-8 flex items-center justify-center rounded-md transition-colors",
-                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      "hover:bg-sidebar-accent hover:text-sidebar-foreground",
                       "text-sidebar-foreground/70 cursor-pointer",
                     )}
                     data-testid="search-button"
@@ -243,9 +288,9 @@ export const GlobalSidebar: FC<GlobalSidebarProps> = ({
                       onClick={() => handleTabClick(tab.id)}
                       className={cn(
                         "w-10 h-10 flex items-center justify-center rounded-md transition-colors cursor-pointer",
-                        "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        "hover:bg-sidebar-accent hover:text-sidebar-foreground",
                         activeTab === tab.id && isExpanded
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                          ? "bg-sidebar-accent text-primary ring-1 ring-primary/12"
                           : "text-sidebar-foreground/70",
                       )}
                       data-testid={`${tab.id}-tab-button`}

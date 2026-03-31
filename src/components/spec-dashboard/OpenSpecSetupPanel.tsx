@@ -25,6 +25,7 @@ import {
 import {
   type BuiltInProfile,
   type EnvironmentStatus,
+  type InjectionResult,
   type ProfileLoadWarning,
   type ProjectProfileConfig,
   type ScenarioType,
@@ -50,10 +51,26 @@ const SCENARIO_LABELS: Record<ScenarioType, string> = {
 const SCENARIO_COLORS: Record<ScenarioType, string> = {
   S1_NEW: "text-green-500",
   S2_OPENSPEC_ONLY: "text-blue-500",
-  S3_CLAUDE_ONLY: "text-purple-500",
+  S3_CLAUDE_ONLY: "text-primary",
   S4_BOTH_NON_SPECFORGE: "text-yellow-500",
   S5_CONFIGURED: "text-emerald-500",
   S6_PARTIAL: "text-orange-500",
+};
+
+const formatInitError = (result: InjectionResult): string => {
+  if (result.errors.length === 0) return "初始化失败，请重试。";
+  const primary = result.errors[0];
+  if (!primary) return "初始化失败，请重试。";
+  if (
+    primary.file === "develop-skills-preflight" ||
+    primary.file === "develop-skills"
+  ) {
+    return `Develop Skills 配置失败：\n${primary.error}`;
+  }
+  if (primary.file === "profile-config") {
+    return `Profile 配置无效：\n${primary.error}`;
+  }
+  return `初始化失败：${primary.error}`;
 };
 
 // ============================================================================
@@ -163,9 +180,10 @@ export const OpenSpecSetupPanel: FC<{
       const config =
         await specDashboardService.getProjectProfileConfig(projectId);
       if (config) {
-        // 将 ProjectProfileConfig 转换为 ProfileFormData（只保留 infra_catalog）
+        // 将 ProjectProfileConfig 转换为 ProfileFormData
         setProfileConfig({
           displayName: config.displayName,
+          custom_variables: config.custom_variables,
           infra_catalog: config.infra_catalog,
         });
       } else {
@@ -176,6 +194,7 @@ export const OpenSpecSetupPanel: FC<{
         if (matched) {
           setProfileConfig({
             displayName: matched.displayName,
+            custom_variables: matched.custom_variables,
             infra_catalog: matched.infra_catalog,
           });
         }
@@ -200,6 +219,7 @@ export const OpenSpecSetupPanel: FC<{
         force: true,
         profile: {
           displayName: "Custom Profile",
+          custom_variables: data.custom_variables,
           infra_catalog: data.infra_catalog,
         },
       });
@@ -208,6 +228,7 @@ export const OpenSpecSetupPanel: FC<{
         // 更新 profileConfig 状态，使用保存的数据
         setProfileConfig({
           displayName: "Custom Profile",
+          custom_variables: data.custom_variables,
           infra_catalog: data.infra_catalog,
         });
         setProfileDialogOpen(false);
@@ -217,7 +238,7 @@ export const OpenSpecSetupPanel: FC<{
           onSuccess: onSetupComplete,
         });
       } else {
-        setError(`更新失败: ${result.errors.length} 个错误`);
+        setError(formatInitError(result));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "保存配置失败");
@@ -237,6 +258,7 @@ export const OpenSpecSetupPanel: FC<{
       // 优先从已保存的项目配置中读取
       let profileToUse: {
         displayName: string;
+        custom_variables?: Record<string, string>;
         infra_catalog: ProfileInfraCatalog;
       } | null = null;
 
@@ -246,6 +268,7 @@ export const OpenSpecSetupPanel: FC<{
         // 使用已保存的项目配置
         profileToUse = {
           displayName: savedConfig.displayName,
+          custom_variables: savedConfig.custom_variables,
           infra_catalog: savedConfig.infra_catalog,
         };
       } else {
@@ -256,6 +279,7 @@ export const OpenSpecSetupPanel: FC<{
         if (currentProfile) {
           profileToUse = {
             displayName: currentProfile.displayName,
+            custom_variables: currentProfile.custom_variables,
             infra_catalog: currentProfile.infra_catalog,
           };
         }
@@ -280,7 +304,7 @@ export const OpenSpecSetupPanel: FC<{
           onSuccess: onSetupComplete,
         });
       } else {
-        setError(`更新失败: ${result.errors.length} 个错误`);
+        setError(formatInitError(result));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "重新初始化失败");
@@ -297,6 +321,7 @@ export const OpenSpecSetupPanel: FC<{
       if (config) {
         setProfileConfig({
           displayName: config.displayName,
+          custom_variables: config.custom_variables,
           infra_catalog: config.infra_catalog,
         });
       } else {
@@ -307,6 +332,7 @@ export const OpenSpecSetupPanel: FC<{
         if (matched) {
           setProfileConfig({
             displayName: matched.displayName,
+            custom_variables: matched.custom_variables,
             infra_catalog: matched.infra_catalog,
           });
         } else {
@@ -405,7 +431,7 @@ export const OpenSpecSetupPanel: FC<{
         </div>
         <button
           type="button"
-          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-sidebar-accent hover:bg-sidebar-accent/80 rounded-md transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-background border border-sidebar-border hover:bg-muted/25 rounded-md transition-colors cursor-pointer"
           onClick={loadData}
         >
           <RefreshCw className="w-4 h-4" />
@@ -450,7 +476,7 @@ export const OpenSpecSetupPanel: FC<{
           <button
             type="button"
             onClick={handleOpenProfileDialog}
-            className="flex-1 min-w-0 px-3 py-1.5 text-xs whitespace-nowrap bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-foreground rounded-md transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            className="flex-1 min-w-0 px-3 py-1.5 text-xs whitespace-nowrap bg-background border border-sidebar-border hover:bg-muted/25 text-sidebar-foreground rounded-md transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Settings2 className="w-3.5 h-3.5 shrink-0" />
             编辑配置
@@ -459,7 +485,7 @@ export const OpenSpecSetupPanel: FC<{
             type="button"
             onClick={handleReinitialize}
             disabled={reinitializing}
-            className="flex-1 min-w-0 px-3 py-1.5 text-xs whitespace-nowrap bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-foreground rounded-md transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+            className="flex-1 min-w-0 px-3 py-1.5 text-xs whitespace-nowrap bg-background border border-sidebar-border hover:bg-muted/25 text-sidebar-foreground rounded-md transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
             {reinitializing ? (
               <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />
@@ -471,7 +497,7 @@ export const OpenSpecSetupPanel: FC<{
           <button
             type="button"
             onClick={handleOpenExportDialog}
-            className="shrink-0 px-2 py-1.5 bg-sidebar-accent hover:bg-sidebar-accent/80 text-sidebar-foreground rounded-md transition-colors flex items-center justify-center cursor-pointer"
+            className="shrink-0 px-2 py-1.5 bg-background border border-sidebar-border hover:bg-muted/25 text-sidebar-foreground rounded-md transition-colors flex items-center justify-center cursor-pointer"
             title="导出配置"
           >
             <Download className="w-3.5 h-3.5" />
@@ -484,12 +510,17 @@ export const OpenSpecSetupPanel: FC<{
           onClose={() => setProfileDialogOpen(false)}
           initialData={
             profileConfig
-              ? { infra_catalog: profileConfig.infra_catalog }
+              ? {
+                  displayName: profileConfig.displayName,
+                  infra_catalog: profileConfig.infra_catalog,
+                  custom_variables: profileConfig.custom_variables,
+                }
               : null
           }
           loading={profileLoading}
           onSave={handleSaveProfile}
           saving={profileSaving}
+          availableProfiles={profiles}
         />
 
         {/* 导出配置弹窗 */}
@@ -514,7 +545,7 @@ export const OpenSpecSetupPanel: FC<{
                     <button
                       type="button"
                       onClick={handleCopyToClipboard}
-                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-sidebar-foreground/70 hover:bg-sidebar-accent/50 rounded-md transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-sidebar-foreground/70 hover:bg-muted/25 rounded-md transition-colors cursor-pointer"
                     >
                       {copied ? (
                         <>
@@ -531,14 +562,14 @@ export const OpenSpecSetupPanel: FC<{
                     <button
                       type="button"
                       onClick={handleSaveAsFile}
-                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-sidebar-foreground/70 hover:bg-sidebar-accent/50 rounded-md transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-sidebar-foreground/70 hover:bg-muted/25 rounded-md transition-colors cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" />
                       保存为文件
                     </button>
                   </div>
                 </div>
-                <div className="bg-sidebar-accent/10 border border-sidebar-border/50 rounded-lg p-4">
+                <div className="bg-background border border-sidebar-border/50 rounded-lg p-4">
                   <pre className="text-xs font-mono text-sidebar-foreground/90 whitespace-pre-wrap wrap-break-word overflow-x-auto">
                     {getExportJson()}
                   </pre>
@@ -586,7 +617,7 @@ export const OpenSpecSetupPanel: FC<{
       </div>
 
       {/* 场景状态 */}
-      <div className="p-3 bg-sidebar-accent/20 rounded-lg border border-sidebar-border">
+      <div className="p-3 bg-background rounded-lg border border-sidebar-border">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-sidebar-foreground/60">当前场景</span>
           <span
@@ -606,7 +637,11 @@ export const OpenSpecSetupPanel: FC<{
           installed={environment.cliInstalled}
           label={
             environment.cliInstalled
-              ? `OpenSpec CLI v${environment.cliVersion}${
+              ? `OpenSpec CLI ${
+                  environment.cliVersion
+                    ? `v${environment.cliVersion}`
+                    : "（版本未知）"
+                }${
                   environment.cliInstallType
                     ? ` (${environment.cliInstallType})`
                     : ""
@@ -619,7 +654,7 @@ export const OpenSpecSetupPanel: FC<{
           <div className="flex gap-2 mt-2">
             <button
               type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-sidebar-accent hover:bg-sidebar-accent/80 rounded-md transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-background border border-sidebar-border hover:bg-muted/25 rounded-md transition-colors cursor-pointer"
               onClick={() => handleInstallCli("global")}
             >
               <Terminal className="w-3.5 h-3.5" />
@@ -627,7 +662,7 @@ export const OpenSpecSetupPanel: FC<{
             </button>
             <button
               type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-sidebar-accent/50 hover:bg-sidebar-accent/80 rounded-md transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-muted/20 border border-sidebar-border hover:bg-muted/30 rounded-md transition-colors cursor-pointer"
               onClick={() => handleInstallCli("project")}
             >
               <Download className="w-3.5 h-3.5" />
@@ -639,11 +674,23 @@ export const OpenSpecSetupPanel: FC<{
 
       {/* 缺失项目 */}
       {(environment.missingSpecforgeSkills.length > 0 ||
+        environment.missingSpecforgeAgents.length > 0 ||
+        environment.missingManagedFiles.length > 0 ||
         environment.missingMcpServers.length > 0) && (
         <div className="text-xs space-y-1">
           {environment.missingSpecforgeSkills.length > 0 && (
             <div className="text-yellow-600">
               缺少 Skills: {environment.missingSpecforgeSkills.join(", ")}
+            </div>
+          )}
+          {environment.missingSpecforgeAgents.length > 0 && (
+            <div className="text-yellow-600">
+              缺少 Agents: {environment.missingSpecforgeAgents.join(", ")}
+            </div>
+          )}
+          {environment.missingManagedFiles.length > 0 && (
+            <div className="text-yellow-600">
+              缺少托管文件: {environment.missingManagedFiles.join(", ")}
             </div>
           )}
           {environment.missingMcpServers.length > 0 && (
@@ -678,7 +725,7 @@ export const OpenSpecSetupPanel: FC<{
                     }),
                   );
                 }}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 border border-primary/30 rounded-md transition-colors cursor-pointer shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 border border-primary/30 rounded-md transition-colors cursor-pointer"
               >
                 <Settings2 className="w-4 h-4" />
                 <span>立即初始化</span>

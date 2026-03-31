@@ -1,5 +1,4 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { FileSystem, Path } from "@effect/platform";
 import { NodeContext } from "@effect/platform-node";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
@@ -9,13 +8,17 @@ import { AgentSessionController } from "./core/agent-session/presentation/AgentS
 import { ClaudeCodeController } from "./core/claude-code/presentation/ClaudeCodeController";
 import { ClaudeCodePermissionController } from "./core/claude-code/presentation/ClaudeCodePermissionController";
 import { ClaudeCodeSessionProcessController } from "./core/claude-code/presentation/ClaudeCodeSessionProcessController";
+import { AdaModelService } from "./core/claude-code/services/AdaModelService";
 import { ClaudeCodeLifeCycleService } from "./core/claude-code/services/ClaudeCodeLifeCycleService";
 import { ClaudeCodePermissionService } from "./core/claude-code/services/ClaudeCodePermissionService";
 import { ClaudeCodeService } from "./core/claude-code/services/ClaudeCodeService";
 import { ClaudeCodeSessionProcessService } from "./core/claude-code/services/ClaudeCodeSessionProcessService";
+import { D2CPreviewController } from "./core/d2c/presentation/D2CPreviewController";
+import { D2CPreviewService } from "./core/d2c/services/D2CPreviewService";
 import { SSEController } from "./core/events/presentation/SSEController";
 import { FileWatcherService } from "./core/events/services/fileWatcher";
 import { FeatureFlagController } from "./core/feature-flag/presentation/FeatureFlagController";
+import { FeishuController } from "./core/feishu/FeishuController";
 import { FileSystemController } from "./core/file-system/presentation/FileSystemController";
 import { GitController } from "./core/git/presentation/GitController";
 import { GitService } from "./core/git/services/GitService";
@@ -40,6 +43,7 @@ import { SearchService } from "./core/search/services/SearchService";
 import { SessionRepository } from "./core/session/infrastructure/SessionRepository";
 import { VirtualConversationDatabase } from "./core/session/infrastructure/VirtualConversationDatabase";
 import { SessionController } from "./core/session/presentation/SessionController";
+import { SessionLiveDisplayService } from "./core/session/services/SessionLiveDisplayService";
 import { SessionMetaService } from "./core/session/services/SessionMetaService";
 import { TasksController } from "./core/tasks/presentation/TasksController";
 import { TasksService } from "./core/tasks/services/TasksService";
@@ -54,8 +58,25 @@ export const startServer = async (options: CliOptions) => {
   const isDevelopment = process.env.NODE_ENV === "development";
 
   if (!isDevelopment) {
-    const staticPath = resolve(import.meta.dirname, "static");
+    const { staticPath, indexHtmlPath } = await Effect.runPromise(
+      Effect.gen(function* () {
+        const path = yield* Path.Path;
+        const resolvedStaticPath = path.resolve(import.meta.dirname, "static");
+        return {
+          staticPath: resolvedStaticPath,
+          indexHtmlPath: path.resolve(resolvedStaticPath, "index.html"),
+        };
+      }).pipe(Effect.provide(PlatformLayer)),
+    );
     console.log("Serving static files from ", staticPath);
+
+    const readIndexHtml = () =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const fs = yield* FileSystem.FileSystem;
+          return yield* fs.readFileString(indexHtmlPath);
+        }).pipe(Effect.provide(PlatformLayer)),
+      );
 
     honoApp.use(
       "/assets/*",
@@ -69,7 +90,7 @@ export const startServer = async (options: CliOptions) => {
         return next();
       }
 
-      const html = await readFile(resolve(staticPath, "index.html"), "utf-8");
+      const html = await readIndexHtml();
       return c.html(html);
     });
   }
@@ -105,6 +126,7 @@ const PlatformLayer = Layer.mergeAll(platformLayer, NodeContext.layer);
 
 const InfraBasics = Layer.mergeAll(
   VirtualConversationDatabase.Live,
+  SessionLiveDisplayService.Live,
   ProjectMetaService.Live,
   SessionMetaService.Live,
 );
@@ -117,13 +139,14 @@ const InfraRepos = Layer.mergeAll(
 const InfraLayer = AgentSessionLayer.pipe(Layer.provideMerge(InfraRepos));
 
 const DomainBase = Layer.mergeAll(
+  AdaModelService.Live,
   ClaudeCodePermissionService.Live,
   ClaudeCodeSessionProcessService.Live,
   ClaudeCodeService.Live,
+  D2CPreviewService.Live,
   GitService.Live,
   SchedulerService.Live,
   SchedulerConfigBaseDir.Live,
-  SearchService.Live,
   SearchService.Live,
   TasksService.Live,
   OpenSpecService.Live,
@@ -174,6 +197,8 @@ const PresentationLayer = Layer.mergeAll(
   SearchController.Live,
   TasksController.Live,
   OpenSpecController.Live,
+  FeishuController.Live,
+  D2CPreviewController.Live,
 );
 
 const MainLayer = PresentationLayer.pipe(

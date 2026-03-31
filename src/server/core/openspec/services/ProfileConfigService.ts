@@ -86,14 +86,17 @@ const ProfileSchema = z.object({
 // ============================================================================
 
 function isValidProfile(value: unknown): value is Profile {
-  if (typeof value !== "object" || value === null) return false;
-  const obj = value as Record<string, unknown>;
-
-  return (
-    typeof obj.displayName === "string" &&
-    typeof obj.infra_catalog === "object" &&
-    obj.infra_catalog !== null
-  );
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  if (!("displayName" in value) || typeof value.displayName !== "string") {
+    return false;
+  }
+  if (!("infra_catalog" in value)) {
+    return false;
+  }
+  const infraCatalog = value.infra_catalog;
+  return typeof infraCatalog === "object" && infraCatalog !== null;
 }
 
 // ============================================================================
@@ -165,6 +168,18 @@ export interface ProfileInfraCatalog {
   };
 }
 
+const hasInfraCatalogToolsConfigured = (
+  infraCatalog: ProfileInfraCatalog,
+): boolean => {
+  const defs = infraCatalog.mcp_tool_definitions;
+  const allTools = [
+    ...(defs.overview?.tools ?? []),
+    ...(defs.search?.tools ?? []),
+    ...(defs.specifications?.tools ?? []),
+  ];
+  return allTools.some((tool) => tool.trim().length > 0);
+};
+
 export interface Profile {
   displayName: string;
   custom_variables?: Record<string, string>;
@@ -180,6 +195,7 @@ export interface BuiltInProfile {
   id: string;
   displayName: string;
   infra_catalog: ProfileInfraCatalog;
+  custom_variables?: Record<string, string>;
 }
 
 export interface ProfileLoadWarning {
@@ -259,6 +275,7 @@ const LayerImpl = Effect.gen(function* () {
             id,
             displayName: result.data.displayName,
             infra_catalog: result.data.infra_catalog,
+            custom_variables: result.data.custom_variables,
           });
         } else {
           // 提取第一个验证错误的详细信息
@@ -392,19 +409,54 @@ const LayerImpl = Effect.gen(function* () {
       const path = yield* Path.Path;
 
       const { infra_catalog, custom_variables } = profile;
+      const queryingInfraEnabled =
+        hasInfraCatalogToolsConfigured(infra_catalog);
       const variables: TemplateVariables = {
         PROJECT_ROOT: projectPath,
         VERSION: "1.0.0",
         INFRA_CATALOG_TOOL_IDS_APPEND: "",
-        INFRA_CATALOG_OVERVIEW_TOOLS_MD: "",
-        INFRA_CATALOG_SEARCH_TOOLS_MD: "",
-        INFRA_CATALOG_SPECIFICATIONS_TOOLS_MD: "",
+        INFRA_CATALOG_OVERVIEW_TOOLS_MD: "（未配置）",
+        INFRA_CATALOG_SEARCH_TOOLS_MD: "（未配置）",
+        INFRA_CATALOG_SPECIFICATIONS_TOOLS_MD: "（未配置）",
         INFRA_CATALOG_TOOL_DEFINITIONS_TABLE_MD: "",
         DEVELOP_SKILLS_APPEND: "",
         DEVELOP_SKILLS_NAMES: "",
-        DEVELOP_SKILLS_USAGE_MD: "",
+        DEVELOP_SKILLS_USAGE_MD:
+          "- 当前未配置额外 develop skills；请优先参考项目内规范文档与现有代码实践。",
+        DEVELOP_SKILLS_RULE_LINE:
+          "MUST 遵循项目现有开发规范；若无现成规范，遵循通用工程最佳实践并保持与现有代码风格一致。",
+        DEVELOP_SKILLS_TASK_INSTRUCTION:
+          "查询并确认本项目的开发规范（优先使用已有规范文档或代码库最佳实践），作为后续实现的权威参考。",
+        DEVELOP_SKILLS_APPLY_ITEM:
+          "- 项目开发规范（如已配置 develop skills，优先使用对应 skills）: 开发规范/开发经验",
+        QUERYING_INFRA_RULE_LINE:
+          "SHOULD 通过可验证事实获取基建能力信息；若未配置专用查询能力，优先使用代码库与项目文档作为事实来源。",
+        QUERYING_INFRA_OVERVIEW_TASK_DESCRIPTION:
+          "梳理当前项目的整体技术栈和相关能力范围；建立技术认知，为后续查询打基础（优先使用代码库与项目文档）",
+        QUERYING_INFRA_SEARCH_TASK_DESCRIPTION:
+          "【执行指令】(1)查询基建能力：通过代码库检索、项目文档和现有实现梳理 D-1-1 和 D-1-3 中可能映射的组件/API；(2)多端支持检测：从 spec.md「多端支持说明」章节提取端支持要求（APP/小程序/H5），对比基建能力的端支持情况，若基建组件/API 不支持某个必需的端，标记为'端能力不兼容'并生成🔴临界问题；(3)源码验证：针对查询到的基建能力，使用 Read 工具读取相关源码验证实际使用情况；(4)对比分析：对比已有事实依据与源码实现，若不一致，参考 D-1-2 的开发规范或 D-1-4 的最佳实践；(5)歧义标记：若仍有歧义或端能力不匹配，标记为待用户确认",
+        QUERYING_INFRA_FACT_CHECK_SOURCE: "基建组件（通过代码库/文档验证）",
+        QUERYING_INFRA_APPLY_ITEM:
+          "- 若未配置组件/API 规格查询能力，请基于代码库与官方文档核对规格",
+        QUERYING_INFRA_QUALITY_USAGE_LINE:
+          "- **审查内部组件/API 使用** → 若未配置专用查询能力，请通过代码库与文档核对规格，绝不猜测",
         CODE_EXAMPLES_MD: "",
       };
+
+      if (queryingInfraEnabled) {
+        variables.QUERYING_INFRA_RULE_LINE =
+          "MUST 使用 querying-infra-catalog skill 来获取基建知识";
+        variables.QUERYING_INFRA_OVERVIEW_TASK_DESCRIPTION =
+          "使用 querying-infra-catalog skill 的 overview 功能；了解当前项目的整体技术栈和相关能力范围；建立技术认知，为后续查询打基础";
+        variables.QUERYING_INFRA_SEARCH_TASK_DESCRIPTION =
+          "【执行指令】(1)查询基建能力：使用 querying-infra-catalog skill 的 search 和 specifications 功能查询 D-1-1 和 D-1-3 中可能映射的组件/API；(2)多端支持检测：从 spec.md「多端支持说明」章节提取端支持要求（APP/小程序/H5），对比基建能力的端支持情况，若基建组件/API 不支持某个必需的端，标记为'端能力不兼容'并生成🔴临界问题；(3)源码验证：针对查询到的基建能力，使用 Read 工具读取相关源码验证实际使用情况；(4)对比分析：对比 MCP 查询结果与源码实现，若不一致，参考 D-1-2 的开发规范或 D-1-4 的最佳实践；(5)歧义标记：若仍有歧义或端能力不匹配，标记为待用户确认";
+        variables.QUERYING_INFRA_FACT_CHECK_SOURCE =
+          "基建组件（调用 querying-infra-catalog skill）";
+        variables.QUERYING_INFRA_APPLY_ITEM =
+          "- querying-infra-catalog skill: 查询组件/API 规格";
+        variables.QUERYING_INFRA_QUALITY_USAGE_LINE =
+          "- **审查内部组件/API 使用** → 使用 `querying-infra-catalog` Skill 查询 spec，**绝不猜测**";
+      }
 
       // 生成 MCP 工具 ID 追加片段
       const allToolIds: string[] = [];
@@ -426,15 +478,18 @@ const LayerImpl = Effect.gen(function* () {
         const formatToolsMd = (tools: string[]): string =>
           tools.map((t) => `\`${t}\``).join(", ");
 
-        variables.INFRA_CATALOG_OVERVIEW_TOOLS_MD = overview?.tools
-          ? formatToolsMd(overview.tools)
-          : "";
-        variables.INFRA_CATALOG_SEARCH_TOOLS_MD = search?.tools
-          ? formatToolsMd(search.tools)
-          : "";
-        variables.INFRA_CATALOG_SPECIFICATIONS_TOOLS_MD = specifications?.tools
-          ? formatToolsMd(specifications.tools)
-          : "";
+        variables.INFRA_CATALOG_OVERVIEW_TOOLS_MD =
+          overview?.tools && overview.tools.length > 0
+            ? formatToolsMd(overview.tools)
+            : "（未配置）";
+        variables.INFRA_CATALOG_SEARCH_TOOLS_MD =
+          search?.tools && search.tools.length > 0
+            ? formatToolsMd(search.tools)
+            : "（未配置）";
+        variables.INFRA_CATALOG_SPECIFICATIONS_TOOLS_MD =
+          specifications?.tools && specifications.tools.length > 0
+            ? formatToolsMd(specifications.tools)
+            : "（未配置）";
 
         // 生成工具定义表格
         variables.INFRA_CATALOG_TOOL_DEFINITIONS_TABLE_MD =
@@ -462,6 +517,9 @@ const LayerImpl = Effect.gen(function* () {
           (s) => `- **${s.name}**: ${s.description}`,
         );
         variables.DEVELOP_SKILLS_USAGE_MD = skillLines.join("\n");
+        variables.DEVELOP_SKILLS_RULE_LINE = `MUST 使用 ${skillNames.join(", ")} skill 中的开发经验/规范。`;
+        variables.DEVELOP_SKILLS_TASK_INSTRUCTION = `MUST 调用 ${skillNames.join(", ")} skill；获取业务线的标准开发规范；作为后续实现的权威参考`;
+        variables.DEVELOP_SKILLS_APPLY_ITEM = `- ${skillNames.join(", ")} skill: 开发规范/开发经验`;
       } else if (infra_catalog.develop_skills) {
         // 回退：扫描 .claude/skills/ 目录（兼容已安装但没有 installedDevelopSkills 结果的情况）
         const skillsDir = path.join(projectPath, ".claude", "skills");
@@ -508,7 +566,17 @@ const LayerImpl = Effect.gen(function* () {
             detectedNames.length > 0 ? `, ${detectedNames.join(", ")}` : "";
           variables.DEVELOP_SKILLS_NAMES =
             detectedNames.length > 0 ? detectedNames.join(", ") : "";
-          variables.DEVELOP_SKILLS_USAGE_MD = skillLines.join("\n");
+          variables.DEVELOP_SKILLS_USAGE_MD =
+            skillLines.length > 0
+              ? skillLines.join("\n")
+              : "- 当前未配置额外 develop skills；请优先参考项目内规范文档与现有代码实践。";
+
+          if (detectedNames.length > 0) {
+            const skillNamesText = detectedNames.join(", ");
+            variables.DEVELOP_SKILLS_RULE_LINE = `MUST 使用 ${skillNamesText} skill 中的开发经验/规范。`;
+            variables.DEVELOP_SKILLS_TASK_INSTRUCTION = `MUST 调用 ${skillNamesText} skill；获取业务线的标准开发规范；作为后续实现的权威参考`;
+            variables.DEVELOP_SKILLS_APPLY_ITEM = `- ${skillNamesText} skill: 开发规范/开发经验`;
+          }
         }
       }
 
@@ -555,13 +623,17 @@ const LayerImpl = Effect.gen(function* () {
     ];
 
     for (const { name, def } of groups) {
-      if (def) {
-        const toolsStr = def.tools.map((t) => `\`${t}\``).join(", ");
-        lines.push(`| ${name} | ${def.description} | ${toolsStr} |`);
-      }
+      if (!def) continue;
+      const effectiveTools = def.tools
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+      if (effectiveTools.length === 0) continue;
+      const toolsStr = effectiveTools.map((t) => `\`${t}\``).join(", ");
+      lines.push(`| ${name} | ${def.description} | ${toolsStr} |`);
     }
 
-    return lines.join("\n");
+    // 没有任何有效工具时不输出空表格，避免生成歧义文案
+    return lines.length > 2 ? lines.join("\n") : "";
   };
 
   /**

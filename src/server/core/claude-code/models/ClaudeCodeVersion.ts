@@ -16,18 +16,15 @@ export type ClaudeCodeVersion = z.infer<typeof versionSchema>;
 export const fromCLIString = (
   versionOutput: string,
 ): ClaudeCodeVersion | null => {
-  const groups = versionOutput.trim().match(versionRegex)?.groups;
+  for (const line of versionOutput.split(/\r?\n/)) {
+    const groups = line.trim().match(versionRegex)?.groups;
+    if (groups === undefined) continue;
 
-  if (groups === undefined) {
-    return null;
+    const parsed = versionSchema.safeParse(groups);
+    if (parsed.success) return parsed.data;
   }
 
-  const parsed = versionSchema.safeParse(groups);
-  if (!parsed.success) {
-    return null;
-  }
-
-  return parsed.data;
+  return null;
 };
 
 export const versionText = (version: ClaudeCodeVersion) =>

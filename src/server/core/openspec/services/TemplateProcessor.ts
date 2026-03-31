@@ -31,8 +31,20 @@ export interface TemplateVariables {
 
   // Skills 相关变量
   DEVELOP_SKILLS_APPEND?: string;
+  /** @deprecated 仅兼容历史逻辑，禁止在模板语义句中直接拼接该变量 */
   DEVELOP_SKILLS_NAMES?: string;
   DEVELOP_SKILLS_USAGE_MD?: string;
+  DEVELOP_SKILLS_RULE_LINE?: string;
+  DEVELOP_SKILLS_TASK_INSTRUCTION?: string;
+  DEVELOP_SKILLS_APPLY_ITEM?: string;
+
+  // querying-infra-catalog 能力开关相关变量
+  QUERYING_INFRA_RULE_LINE?: string;
+  QUERYING_INFRA_OVERVIEW_TASK_DESCRIPTION?: string;
+  QUERYING_INFRA_SEARCH_TASK_DESCRIPTION?: string;
+  QUERYING_INFRA_FACT_CHECK_SOURCE?: string;
+  QUERYING_INFRA_APPLY_ITEM?: string;
+  QUERYING_INFRA_QUALITY_USAGE_LINE?: string;
 
   // 代码示例变量
   CODE_EXAMPLES_MD?: string;
@@ -73,6 +85,9 @@ const LayerImpl = Effect.gen(function* () {
         processed = processed.replace(regex, value);
       }
     }
+
+    // 清理所有剩余的 {{VAR}} 格式标签（处理未定义的自定义变量）
+    processed = processed.replace(/\{\{[A-Z0-9_]+\}\}/g, "");
 
     return processed;
   };

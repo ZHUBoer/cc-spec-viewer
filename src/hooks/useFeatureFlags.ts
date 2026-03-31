@@ -1,19 +1,20 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { featureFlagsQuery } from "../lib/api/queries";
 import type { FlagName } from "../server/core/feature-flag/models/flag";
 
 export const useFeatureFlags = () => {
-  const { data } = useSuspenseQuery({
+  const { data } = useQuery({
     queryKey: featureFlagsQuery.queryKey,
     queryFn: featureFlagsQuery.queryFn,
   });
+  const flags = data?.flags ?? [];
 
   const enabledFlags = useMemo(() => {
     return new Set(
-      data.flags.filter((flag) => flag.enabled).map((flag) => flag.name),
+      flags.filter((flag) => flag.enabled).map((flag) => flag.name),
     );
-  }, [data.flags]);
+  }, [flags]);
 
   const isFlagEnabled = useCallback(
     (flagName: FlagName) => {
@@ -23,7 +24,7 @@ export const useFeatureFlags = () => {
   );
 
   return {
-    flags: data.flags,
+    flags,
     isFlagEnabled,
   } as const;
 };

@@ -1,8 +1,7 @@
 /** @effect-diagnostics globalErrorInEffectFailure:skip-file */
-import { homedir } from "node:os";
-import { join } from "node:path";
 import { FileSystem, Path } from "@effect/platform";
 import { Context, Effect, Layer, Option } from "effect";
+import { resolveHomeDirFromEnv } from "../../../lib/config/resolveHomeDirFromEnv";
 import { normalizeClaudeProjectPath } from "../../project/functions/normalizeClaudeProjectPath";
 import {
   type Task,
@@ -47,7 +46,7 @@ export class TasksService extends Context.Tag("TasksService")<
 
       // Helper to find the Global Claude Directory
       const getClaudeDir = () =>
-        Effect.succeed(join(homedir(), CLAUDE_DIR_NAME));
+        Effect.succeed(path.join(resolveHomeDirFromEnv(), CLAUDE_DIR_NAME));
 
       const normalizeProjectPath = (projectPath: string) => {
         // Keep normalization consistent with Claude project directory naming.
@@ -86,8 +85,9 @@ export class TasksService extends Context.Tag("TasksService")<
           // Check if the projectPath is already pointing to a metadata directory in .claude/projects
           // Path structure: .../.claude/projects/<normalized-id>
           const isMetadataPath =
-            projectPath.includes(join(CLAUDE_DIR_NAME, PROJECTS_DIR_NAME)) &&
-            projectPath.split(path.sep).pop()?.startsWith("-");
+            projectPath.includes(
+              path.join(CLAUDE_DIR_NAME, PROJECTS_DIR_NAME),
+            ) && projectPath.split(path.sep).pop()?.startsWith("-");
 
           let projectMetaDir: string;
 

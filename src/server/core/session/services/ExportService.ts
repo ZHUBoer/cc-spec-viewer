@@ -47,6 +47,80 @@ const formatTimestamp = (timestamp: number | string): string => {
   });
 };
 
+const formatNumber = (value: number): string => value.toLocaleString("en-US");
+
+type ExportHeaderStats = {
+  projectPath: string | null;
+  branch: string | null;
+  modelsUsed: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  tokenCoverage: string;
+};
+
+const collectExportHeaderStats = (
+  conversations: Conversation[],
+): ExportHeaderStats => {
+  const modelCounts = new Map<string, number>();
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let assistantCount = 0;
+  let assistantWithUsageCount = 0;
+
+  for (const conv of conversations) {
+    if (conv.type !== "assistant") continue;
+
+    assistantCount += 1;
+
+    const modelName = conv.message.model.trim();
+    if (modelName.length > 0) {
+      modelCounts.set(modelName, (modelCounts.get(modelName) ?? 0) + 1);
+    }
+
+    const usage = conv.message.usage;
+    assistantWithUsageCount += 1;
+    inputTokens += usage.input_tokens;
+    outputTokens += usage.output_tokens;
+  }
+
+  const modelsUsed =
+    modelCounts.size > 0
+      ? Array.from(modelCounts.entries())
+          .sort((a, b) => {
+            if (b[1] !== a[1]) return b[1] - a[1];
+            return a[0].localeCompare(b[0]);
+          })
+          .map(([model, count]) => `${model} (${count})`)
+          .join(", ")
+      : "N/A";
+
+  const projectPath =
+    conversations.find(
+      (conv): conv is Conversation & { cwd: string } =>
+        "cwd" in conv &&
+        typeof conv.cwd === "string" &&
+        conv.cwd.trim().length > 0,
+    )?.cwd ?? null;
+  const branch =
+    conversations.find(
+      (conv): conv is Conversation & { gitBranch: string } =>
+        "gitBranch" in conv &&
+        typeof conv.gitBranch === "string" &&
+        conv.gitBranch.trim().length > 0,
+    )?.gitBranch ?? null;
+
+  return {
+    projectPath,
+    branch,
+    modelsUsed,
+    inputTokens,
+    outputTokens,
+    totalTokens: inputTokens + outputTokens,
+    tokenCoverage: `${assistantWithUsageCount}/${assistantCount} assistant responses`,
+  };
+};
+
 /**
  * Renders markdown content to HTML (enhanced version)
  * Supports: code blocks, tables, blockquotes, lists (ul/ol/task), hr, strikethrough,
@@ -407,6 +481,9 @@ type SidechainData = {
   toolUseIdToAgentId: Map<string, string>;
 };
 
+const isSubagentTool = (toolName: string): boolean =>
+  toolName === "Task" || toolName === "Agent";
+
 /**
  * Type guard to check if toolUseResult contains agentId
  */
@@ -434,6 +511,7 @@ const buildSidechainData = (
       conv.type !== "file-history-snapshot" &&
       conv.type !== "queue-operation" &&
       conv.type !== "progress" &&
+      conv.type !== "last-prompt" &&
       conv.isSidechain === true,
   ) as Array<Extract<Conversation, { type: "user" | "assistant" | "system" }>>;
 
@@ -513,7 +591,8 @@ const buildSidechainData = (
       conv.type === "summary" ||
       conv.type === "file-history-snapshot" ||
       conv.type === "queue-operation" ||
-      conv.type === "progress"
+      conv.type === "progress" ||
+      conv.type === "last-prompt"
     ) {
       continue;
     }
@@ -607,10 +686,11 @@ const renderSidechainEntry = (
         if (msg.type === "tool_use") {
           const toolResult = toolResultMap.get(msg.id);
 
-          // Check if this is a nested Task tool (recursive subagent)
-          if (msg.name === "Task") {
+          // Check if this is a nested Task/Agent tool (recursive subagent)
+          if (isSubagentTool(msg.name)) {
             return renderTaskTool(
               msg.id,
+              msg.name,
               msg.input,
               toolResult,
               sidechainData,
@@ -683,10 +763,11 @@ const renderSidechainEntry = (
   return "";
 };
 /**
- * Renders a Task tool specially with prompt display and subagent conversations
+ * Renders Task/Agent tools with prompt display and subagent conversations
  */
 const renderTaskTool = (
   toolId: string,
+  toolName: string,
   input: Record<string, unknown>,
   toolResult: ToolResultContent | undefined,
   sidechainData: SidechainData,
@@ -758,14 +839,14 @@ const renderTaskTool = (
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
           <path d="M9 12l2 2 4-4"/>
         </svg>
-        <span class="task-tool-name">Task${hasSidechain ? ` (${sidechainConversations.length} steps)` : ""}</span>
+        <span class="task-tool-name">${escapeHtml(toolName)}${hasSidechain ? ` (${sidechainConversations.length} steps)` : ""}</span>
         <span class="task-prompt-preview">${escapeHtml(truncatedPrompt)}</span>
         <svg class="icon-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
       <div class="task-tool-content collapsible-content">
-        <div class="task-tool-id"><strong>Task ID:</strong> <code>${escapeHtml(toolId)}</code></div>
+        <div class="task-tool-id"><strong>${escapeHtml(toolName)} ID:</strong> <code>${escapeHtml(toolId)}</code></div>
         <div class="task-prompt">
           <strong>Prompt:</strong>
           <div class="task-prompt-text">${renderMarkdown(prompt)}</div>
@@ -815,10 +896,11 @@ const renderAssistantEntry = (
       if (msg.type === "tool_use") {
         const toolResult = toolResultMap.get(msg.id);
 
-        // Special rendering for Task tool
-        if (msg.name === "Task") {
+        // Special rendering for Task/Agent tools
+        if (isSubagentTool(msg.name)) {
           return renderTaskTool(
             msg.id,
+            msg.name,
             msg.input,
             toolResult,
             sidechainData,
@@ -1001,10 +1083,11 @@ const renderGroupedAssistantEntries = (
       if (msg.type === "tool_use") {
         const toolResult = toolResultMap.get(msg.id);
 
-        // Special rendering for Task tool
-        if (msg.name === "Task") {
+        // Special rendering for Task/Agent tools
+        if (isSubagentTool(msg.name)) {
           return renderTaskTool(
             msg.id,
+            msg.name,
             msg.input,
             toolResult,
             sidechainData,
@@ -1095,6 +1178,7 @@ export const generateSessionHtml = (
         conv.type !== "file-history-snapshot" &&
         conv.type !== "queue-operation" &&
         conv.type !== "progress" &&
+        conv.type !== "last-prompt" &&
         conv.isSidechain === true &&
         conv.agentId !== undefined
       ) {
@@ -1149,6 +1233,7 @@ export const generateSessionHtml = (
       ),
       ...loadedConversations,
     ];
+    const headerStats = collectExportHeaderStats(allConversations);
 
     // Build sidechain data using ALL conversations
     const sidechainData = buildSidechainData(allConversations);
@@ -1964,6 +2049,13 @@ export const generateSessionHtml = (
     <div class="metadata">
       <div><strong>Session ID:</strong> ${escapeHtml(session.id)}</div>
       <div><strong>Project ID:</strong> ${escapeHtml(projectId)}</div>
+      <div><strong>Project Path:</strong> ${escapeHtml(headerStats.projectPath ?? "N/A")}</div>
+      <div><strong>Branch:</strong> ${escapeHtml(headerStats.branch ?? "N/A")}</div>
+      <div><strong>Models Used:</strong> ${escapeHtml(headerStats.modelsUsed)}</div>
+      <div><strong>Input Tokens:</strong> ${formatNumber(headerStats.inputTokens)}</div>
+      <div><strong>Output Tokens:</strong> ${formatNumber(headerStats.outputTokens)}</div>
+      <div><strong>Total Tokens:</strong> ${formatNumber(headerStats.totalTokens)}</div>
+      <div><strong>Token Data Coverage:</strong> ${escapeHtml(headerStats.tokenCoverage)}</div>
       <div><strong>Exported:</strong> ${formatTimestamp(Date.now())}</div>
       <div><strong>Total Conversations:</strong> ${session.conversations.length}</div>
     </div>

@@ -30,4 +30,16 @@ describe("encodeProjectIdFromSessionFilePath", () => {
       ),
     ).toBe(sampleProjectId);
   });
+
+  it("should use root directory when session file is directly under root", () => {
+    expect(encodeProjectIdFromSessionFilePath("/sample-session-id.jsonl")).toBe(
+      encodeProjectId("/"),
+    );
+  });
+
+  it("should fall back to current directory marker when no separator exists", () => {
+    expect(encodeProjectIdFromSessionFilePath("sample-session-id.jsonl")).toBe(
+      encodeProjectId("."),
+    );
+  });
 });

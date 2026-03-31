@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   CheckCircle2,
-  ChevronRight,
+  Eye,
   FileText,
   GitCompare,
   ListTodo,
@@ -10,43 +10,44 @@ import {
   PenTool,
 } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";
-import { MarkdownContent } from "@/app/components/MarkdownContent";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   type OpenSpecChange,
   specDashboardService,
 } from "./SpecDashboardService";
 import { StatusBadge } from "./StatusBadge";
-import { DesignReviewView } from "./views/DesignReviewView";
-import { SpecContentView } from "./views/SpecContentView";
-import { TasksView } from "./views/TasksView";
+import { D2CPreviewPanel } from "./views/D2CPreviewPanel";
+import {
+  canUndoD2CBaselineFreeze,
+  resolveD2CCheckpointActionBarState,
+} from "./views/d2cCheckpointWorkflow";
+import { StageDocumentView } from "./views/StageDocumentView";
+import { useD2CCheckpointActions } from "./views/useD2CCheckpointActions";
 
 // Context payload passed from Sidebar
 export interface SpecPanelContext {
   projectId: string;
   changeId: string;
+  targetStage?: "spec" | "proposal" | "design" | "tasks";
+  openedAt?: number;
 }
 
 interface SpecContextPanelProps {
   context: unknown;
 }
 
-type Stage = "proposal" | "specs" | "design" | "tasks" | "tests";
+type Stage = "spec" | "d2c-preview" | "specs" | "design" | "tasks" | "tests";
 
 /** 根据 change 内容的生成状态，确定应展示的默认标签页 */
 function determineDefaultStage(change: OpenSpecChange): Stage {
   if (change.tasksContent) return "tasks";
   if (change.designContent) return "design";
-  return "proposal";
+  return "spec";
 }
 
 export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
-  const [activeStage, setActiveStage] = useState<Stage>("proposal");
+  const [activeStage, setActiveStage] = useState<Stage>("spec");
   const prevChangeIdRef = useRef<string | null>(null);
+  const prevOpenRequestKeyRef = useRef<string | null>(null);
 
   // Safe cast and validation
   const ctx = context as SpecPanelContext;
@@ -54,12 +55,27 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     ctx &&
     typeof ctx.projectId === "string" &&
     typeof ctx.changeId === "string";
+  const targetStage: "spec" | "design" | "tasks" | null = (() => {
+    switch (ctx?.targetStage) {
+      case "spec":
+      case "proposal":
+        return "spec"; // compat
+      case "design":
+      case "tasks":
+        return ctx.targetStage;
+      default:
+        return null;
+    }
+  })();
+  const openRequestKey =
+    targetStage !== null && typeof ctx?.openedAt === "number"
+      ? `${ctx.projectId}:${ctx.changeId}:${targetStage}:${ctx.openedAt}`
+      : null;
 
   const {
     data: change,
     isLoading,
     error,
-    refetch,
     isFetching,
   } = useQuery({
     queryKey: ["openspec", "change", ctx?.projectId, ctx?.changeId],
@@ -75,10 +91,85 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     placeholderData: (previousData) => previousData,
   });
 
+  const showD2CPreviewTab =
+    change?.d2c?.enabled && change?.d2c?.hasGeneratedFiles;
+  const specReviewContent =
+    change?.specContent ?? change?.proposalContent ?? "";
+  const isSpecConfirmed =
+    specReviewContent.includes("<!-- SPEC_FINAL_CONFIRMATION: true -->") ||
+    specReviewContent.includes("<!-- PROPOSAL_FINAL_CONFIRMATION: true -->");
+  const hasD2CMaterials = (change?.d2c?.materials.length ?? 0) > 0;
+  const hasD2CReviewResult =
+    change?.d2c?.reviewStatus !== undefined &&
+    change.d2c.reviewStatus !== "unknown";
+  const {
+    handleApproveReviewOverride,
+    handleContinueToDesign,
+    handleFreezeD2CBaseline,
+    handleRefreshD2CReviewStatus,
+    handleRequestD2CReview,
+    handleRequestReviewFollowup,
+    handleTriggerD2CGeneration,
+    handleUndoFreezeD2CBaseline,
+    isApprovingReviewOverride,
+    isContinuingToDesign,
+    isFreezingD2C,
+    isGeneratingD2C,
+    isUndoingFreezeD2C,
+    reviewRequestState,
+  } = useD2CCheckpointActions({
+    change: change ?? {
+      name: "",
+      status: "draft",
+      updatedAt: "",
+    },
+    changeId: ctx.changeId,
+    onGeneratedArtifactsReady: () => {
+      setActiveStage("d2c-preview");
+    },
+    projectId: ctx.projectId,
+  });
+  const resolvedD2CPrimaryState = change?.d2c?.enabled
+    ? resolveD2CCheckpointActionBarState({
+        isSpecConfirmed,
+        hasD2CMaterials,
+        hasGeneratedFiles: Boolean(change.d2c.hasGeneratedFiles),
+        hasReviewResult: hasD2CReviewResult,
+        canEnterDesign: Boolean(change.d2c.canEnterDesign),
+        effectiveCanEnterDesign: Boolean(change.d2c.effectiveCanEnterDesign),
+        isD2CFrozen: Boolean(change.d2c.baselineFrozen),
+        isGeneratingD2C,
+        isFreezingD2C,
+        isContinuingToDesign,
+        reviewRequestState,
+        reviewSummary: change.d2c.reviewSummary,
+      })
+    : null;
+  const canUndoFreeze =
+    change?.d2c?.enabled === true
+      ? canUndoD2CBaselineFreeze({
+          isD2CFrozen: Boolean(change.d2c.baselineFrozen),
+          status: change.status,
+          designContent: change.designContent,
+        })
+      : false;
+
   // Effect: 当 changeId 变化（包括首次加载）时，自动选择合适的默认标签页；
   // 同时处理当前标签无效的回退逻辑
   useEffect(() => {
     if (!change) return;
+
+    // 同一 change 上重复点击卡片时，也应按 artifact 切换到目标阶段
+    if (
+      openRequestKey !== null &&
+      targetStage !== null &&
+      prevOpenRequestKeyRef.current !== openRequestKey
+    ) {
+      prevOpenRequestKeyRef.current = openRequestKey;
+      setActiveStage(targetStage);
+      prevChangeIdRef.current = ctx.changeId;
+      return;
+    }
 
     // 当 changeId 变化时，自动选择合适的标签
     // 需确认 change 数据确实对应当前 changeId，避免 placeholderData 带来的竞态
@@ -102,8 +193,17 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
       setActiveStage(determineDefaultStage(change));
     } else if (activeStage === "tests" && !hasTests) {
       setActiveStage(determineDefaultStage(change));
+    } else if (activeStage === "d2c-preview" && !showD2CPreviewTab) {
+      setActiveStage(determineDefaultStage(change));
     }
-  }, [change, activeStage, ctx.changeId]);
+  }, [
+    change,
+    activeStage,
+    ctx.changeId,
+    openRequestKey,
+    targetStage,
+    showD2CPreviewTab,
+  ]);
 
   if (!isValidContext) {
     return (
@@ -153,112 +253,59 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
     );
   }
 
-  const renderContent = () => {
-    switch (activeStage) {
-      case "proposal":
-        return (
-          <DesignReviewView
-            projectId={ctx.projectId}
-            changeId={ctx.changeId}
-            content={change.proposalContent || ""}
-            readonly={change.status === "archived"}
-            mode="proposal"
-          />
-        );
-      case "specs":
-        return (
-          <div className="flex-1 overflow-y-auto min-h-0 bg-muted/5 p-4">
-            <div className="space-y-6 max-w-3xl mx-auto">
-              {/* Root specs.md content */}
-              {change.specsContent && (
-                <Collapsible
-                  defaultOpen={true}
-                  className="bg-card rounded-lg border border-border/60 shadow-sm overflow-hidden"
-                >
-                  <CollapsibleTrigger className="w-full flex items-center justify-between p-6 hover:bg-muted/30 transition-colors group text-left">
-                    <h4 className="text-sm font-semibold flex items-center gap-2 font-mono break-all">
-                      <FileText className="w-4 h-4 text-primary shrink-0" />
-                      {change.status === "archived"
-                        ? "changes/archive"
-                        : "changes"}
-                      /{change.name}/specs.md
-                    </h4>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/70 transition-transform duration-200 group-data-[state=open]:rotate-90 shrink-0" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="px-6 pb-6 pt-0">
-                      <MarkdownContent content={change.specsContent} />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+  const handleSwitchStage = (stage: string) => {
+    setActiveStage(stage as Stage);
+  };
 
-              {/* Individual Spec Files */}
-              {change.specFiles && change.specFiles.length > 0 ? (
-                <div className="space-y-3">
-                  {change.specsContent && (
-                    <h4 className="text-sm font-medium text-muted-foreground ml-1">
-                      Detailed Specs
-                    </h4>
-                  )}
-                  {change.specFiles.map(
-                    (file: { name: string; content: string }) => (
-                      <Collapsible
-                        key={file.name}
-                        defaultOpen={false}
-                        className="border border-border/60 rounded-lg bg-card shadow-sm overflow-hidden"
-                      >
-                        <CollapsibleTrigger className="flex items-center w-full px-4 py-3 text-sm font-medium bg-muted/30 hover:bg-muted/50 transition-colors group text-left">
-                          <ChevronRight className="w-4 h-4 mr-3 text-muted-foreground/70 transition-transform duration-200 group-data-[state=open]:rotate-90 shrink-0" />
-                          <span className="font-mono text-xs text-secondary-foreground truncate">
-                            {change.status === "archived"
-                              ? "changes/archive"
-                              : "changes"}
-                            /{change.name}/specs/{file.name}
-                          </span>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="border-t border-border/60 bg-background">
-                          <div className="p-4 text-xs overflow-x-auto">
-                            <MarkdownContent
-                              content={`\`\`\`markdown\n${file.content}\n\`\`\``}
-                            />
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    ),
-                  )}
-                </div>
-              ) : !change.specsContent ? (
-                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
-                  <p>No spec files found</p>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        );
+  const renderContent = () => {
+    if (activeStage === "d2c-preview") {
+      return (
+        <D2CPreviewPanel
+          projectId={ctx.projectId}
+          changeId={ctx.changeId}
+          d2cPrimaryState={resolvedD2CPrimaryState}
+          canUndoFreeze={canUndoFreeze}
+          isApprovingReviewOverride={isApprovingReviewOverride}
+          onContinueToDesign={handleContinueToDesign}
+          onFreezeBaseline={handleFreezeD2CBaseline}
+          onGenerate={handleTriggerD2CGeneration}
+          onApproveReviewOverride={handleApproveReviewOverride}
+          onRefreshReview={handleRefreshD2CReviewStatus}
+          onRequestReview={handleRequestD2CReview}
+          onRequestReviewFollowup={handleRequestReviewFollowup}
+          onUndoFreezeBaseline={handleUndoFreezeD2CBaseline}
+          isUndoingFreezeBaseline={isUndoingFreezeD2C}
+        />
+      );
+    }
+
+    switch (activeStage) {
+      case "spec":
+      case "specs":
       case "design":
-        return (
-          <DesignReviewView
-            projectId={ctx.projectId}
-            changeId={ctx.changeId}
-            content={change.designContent || ""}
-            readonly={change.status === "archived"}
-          />
-        );
       case "tasks":
-        return (
-          <TasksView
-            projectId={ctx.projectId}
-            changeId={ctx.changeId}
-            content={change.tasksContent || "*No tasks content*"}
-            status={change.status}
-          />
-        );
       case "tests":
         return (
-          <SpecContentView
-            content={change.testsContent}
-            emptyMessage="No tests content available"
+          <StageDocumentView
+            projectId={ctx.projectId}
+            changeId={ctx.changeId}
+            stage={activeStage}
+            change={change}
+            d2cPrimaryState={resolvedD2CPrimaryState}
+            canUndoFreeze={canUndoFreeze}
+            isApprovingReviewOverride={isApprovingReviewOverride}
+            isFreezingD2C={isFreezingD2C}
+            isGeneratingD2C={isGeneratingD2C}
+            isUndoingFreezeBaseline={isUndoingFreezeD2C}
+            onApproveReviewOverride={handleApproveReviewOverride}
+            onContinueToDesign={handleContinueToDesign}
+            onFreezeBaseline={handleFreezeD2CBaseline}
+            onGenerate={handleTriggerD2CGeneration}
+            onRefreshReview={handleRefreshD2CReviewStatus}
+            onRequestReview={handleRequestD2CReview}
+            onRequestReviewFollowup={handleRequestReviewFollowup}
+            onUndoFreezeBaseline={handleUndoFreezeD2CBaseline}
+            onSwitchStage={handleSwitchStage}
           />
         );
     }
@@ -283,7 +330,16 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
         {/* Stage Tabs */}
         <div className="flex px-2 gap-1 overflow-x-auto no-scrollbar">
           {[
-            { id: "proposal", icon: FileText, label: "Proposal" },
+            { id: "spec", icon: FileText, label: "Spec" },
+            ...(showD2CPreviewTab
+              ? [
+                  {
+                    id: "d2c-preview" as const,
+                    icon: Eye,
+                    label: "预览",
+                  },
+                ]
+              : []),
             { id: "specs", icon: GitCompare, label: "Specs" },
             { id: "design", icon: PenTool, label: "Design" },
             { id: "tasks", icon: ListTodo, label: "Tasks" },
@@ -310,11 +366,10 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
                   type="button"
                   onClick={() => {
                     setActiveStage(stage.id as Stage);
-                    refetch();
                   }}
                   className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? "border-primary text-primary bg-primary/5"
+                      ? "border-primary text-primary bg-muted/30"
                       : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
@@ -327,7 +382,7 @@ export const SpecContextPanel: FC<SpecContextPanelProps> = ({ context }) => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-scroll min-h-0 relative">
+      <div className="flex-1 overflow-hidden min-h-0 relative">
         {renderContent()}
       </div>
     </div>

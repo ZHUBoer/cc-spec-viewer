@@ -12,6 +12,9 @@ import { Progress } from "@/components/ui/progress";
 import { honoClient } from "@/lib/api/client";
 import type { OpenSpecChange } from "../SpecDashboardService";
 import { specDashboardService } from "../SpecDashboardService";
+import { extractMarkdownToc, parseTasksProgress } from "./document-utils";
+import { SpecDocumentWorkbench } from "./SpecDocumentWorkbench";
+import { StageIntroBanner } from "./StageIntroBanner";
 
 interface TasksViewProps {
   projectId: string;
@@ -20,31 +23,6 @@ interface TasksViewProps {
   status: OpenSpecChange["status"];
   readonly?: boolean;
 }
-
-/**
- * 解析 tasks.md 中的任务进度
- */
-const parseTasksProgress = (content: string) => {
-  const checkboxes = content.match(/- \[(x| )\]/g) || [];
-  const completed = checkboxes.filter((cb) => cb.includes("x")).length;
-  const total = checkboxes.length;
-  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-  return { completed, total, percent };
-};
-
-// Layout components for consistent styling with DesignReviewView
-const Header = () => (
-  <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-    <h4 className="flex items-center gap-2 font-semibold text-primary mb-2">
-      <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-      Task Planning Mode
-    </h4>
-    <p className="text-sm text-foreground/80">
-      请审查生成的实施任务列表。确保所有步骤完整且合理。
-    </p>
-  </div>
-);
 
 export const TasksView: FC<TasksViewProps> = ({
   projectId,
@@ -58,6 +36,7 @@ export const TasksView: FC<TasksViewProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const progress = useMemo(() => parseTasksProgress(content), [content]);
+  const toc = useMemo(() => extractMarkdownToc(content), [content]);
   const tasksConfirmed = content.includes("<!-- TASKS_CONFIRMED: true -->");
 
   const isCompleted = status === "completed";
@@ -171,16 +150,16 @@ export const TasksView: FC<TasksViewProps> = ({
   };
 
   return (
-    <div className="flex h-full bg-background animate-in fade-in duration-300 relative">
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto min-h-0 relative mb-40">
-        <div className="p-6 max-w-4xl mx-auto space-y-4">
-          {isPlanning && <Header />}
-
-          {/* Progress Card - for implementing and completed states */}
+    <SpecDocumentWorkbench
+      stage="tasks"
+      title={changeId}
+      sidebarToc={toc}
+      topPanel={
+        <>
+          <StageIntroBanner stage="tasks" />
           {(isImplementing || isCompleted) && (
-            <Card className="p-4">
-              <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+            <Card className="rounded-2xl border-border/70 p-4 shadow-sm">
+              <h4 className="mb-2 flex items-center gap-2 text-sm font-medium">
                 实施进度
               </h4>
               <Progress value={progress.percent} className="mb-2 h-2" />
@@ -191,7 +170,7 @@ export const TasksView: FC<TasksViewProps> = ({
               {isCompleted && (
                 <Alert
                   variant="default"
-                  className="mt-3 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
+                  className="mt-3 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30"
                 >
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                   <AlertTitle className="text-green-700 dark:text-green-400">
@@ -204,75 +183,62 @@ export const TasksView: FC<TasksViewProps> = ({
               )}
             </Card>
           )}
-
-          {/* Markdown Content */}
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            <MarkdownContent content={content} />
-          </div>
-        </div>
-      </div>
-
-      {/* Footer / Global Actions (Persistent) */}
-      {!readonly && (isPlanning || isImplementing || isCompleted) && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-background shadow-lg z-10 transition-transform">
-          <div className="max-w-4xl mx-auto">
-            {/* Planning State Actions */}
-            {isPlanning && !tasksConfirmed && (
+        </>
+      }
+      footer={
+        !readonly && (isPlanning || isImplementing || isCompleted) ? (
+          <>
+            {isPlanning && !tasksConfirmed ? (
               <>
                 <div className="mb-3 flex items-center gap-2">
                   <h4 className="font-semibold text-base">任务规划评审</h4>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <Button
                     className="flex-1 cursor-pointer"
                     variant="outline"
                     onClick={handleRegenerateTasks}
                     disabled={isProcessing}
                   >
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                    <RefreshCw className="mr-2 h-4 w-4" />
                     {isProcessing ? "处理中..." : "重新生成任务"}
                   </Button>
 
                   <Button
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                    className="flex-1 bg-green-600 hover:bg-green-700 cursor-pointer"
                     onClick={handleConfirmAndStart}
                     disabled={isProcessing}
                   >
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
                     {isProcessing ? "请求中..." : "确认计划并开始实施"}
                   </Button>
                 </div>
-                <div className="mt-3 text-xs text-muted-foreground flex items-start gap-1">
-                  <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                <div className="mt-3 flex items-start gap-1 text-xs text-muted-foreground">
+                  <AlertCircle className="mt-0.5 h-3 w-3 flex-shrink-0" />
                   <span>
                     点击"重新生成"将复制提示词，请在左侧会话中发送以调整任务。
                     点击"确认"将自动创建新会话并启动实施 Agent。
                   </span>
                 </div>
               </>
-            )}
+            ) : null}
 
-            {/* Planning Confirmed (Waiting) */}
-            {isPlanning && tasksConfirmed && (
-              <div className="text-center py-2">
-                <span className="flex items-center justify-center gap-2 text-primary font-medium">
+            {isPlanning && tasksConfirmed ? (
+              <div className="py-2 text-center">
+                <span className="flex items-center justify-center gap-2 font-medium text-primary">
                   <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                   任务已确认，正在启动实施流程...
                 </span>
               </div>
-            )}
+            ) : null}
 
-            {/* Implementing State */}
-            {isImplementing && (
+            {isImplementing ? (
               <div className="flex items-center justify-between gap-4 py-2">
-                <div className="flex items-center gap-4">
-                  <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                  <div>
-                    <p className="font-medium text-sm">实施进行中</p>
-                    <p className="text-xs text-muted-foreground">
-                      执行任务时，请保持页面开启。
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-sm font-medium">实施进行中</p>
+                  <p className="text-xs text-muted-foreground">
+                    执行任务时，请保持页面开启。
+                  </p>
                 </div>
                 <Button
                   variant="outline"
@@ -281,17 +247,16 @@ export const TasksView: FC<TasksViewProps> = ({
                   disabled={isProcessing}
                   className="cursor-pointer"
                 >
-                  <RefreshCw className="h-3 w-3 mr-2" />
+                  <RefreshCw className="mr-2 h-3 w-3" />
                   重试实施
                 </Button>
               </div>
-            )}
+            ) : null}
 
-            {/* Completed State */}
-            {isCompleted && (
-              <div className="flex flex-col sm:flex-row gap-3 items-center">
+            {isCompleted ? (
+              <div className="flex flex-col items-center gap-3 sm:flex-row">
                 <div className="flex-1">
-                  <p className="font-medium text-green-600 dark:text-green-500 flex items-center gap-2">
+                  <p className="flex items-center gap-2 font-medium text-green-600 dark:text-green-500">
                     <CheckCircle2 className="h-4 w-4" />
                     实施已完成
                   </p>
@@ -308,7 +273,7 @@ export const TasksView: FC<TasksViewProps> = ({
                 </Button>
 
                 <Button
-                  className="bg-gray-600 hover:bg-gray-700 cursor-pointer"
+                  className="cursor-pointer bg-gray-600 hover:bg-gray-700"
                   onClick={async () => {
                     try {
                       const response = await honoClient.api.cc[
@@ -342,10 +307,14 @@ export const TasksView: FC<TasksViewProps> = ({
                   归档此 Change
                 </Button>
               </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+            ) : null}
+          </>
+        ) : null
+      }
+    >
+      <div className="prose prose-sm max-w-none dark:prose-invert">
+        <MarkdownContent content={content} />
+      </div>
+    </SpecDocumentWorkbench>
   );
 };

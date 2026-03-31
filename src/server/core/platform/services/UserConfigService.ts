@@ -8,6 +8,7 @@ const LayerImpl = Effect.gen(function* () {
     hideNoUserMessageSession: true,
     unifySameTitleSession: false,
     enterKeyBehavior: "shift-enter-send",
+    claudeCodeExecutablePath: undefined,
     permissionMode: "default",
     locale: DEFAULT_LOCALE,
     theme: "system",

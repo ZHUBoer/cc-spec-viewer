@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { parsedUserMessageSchema } from "../claude-code/functions/parseUserMessage";
 
+export const sessionDisplayMetaSchema = z.object({
+  title: z.string(),
+  visibleMessageCount: z.number(),
+});
+
 export const sessionMetaSchema = z.object({
   messageCount: z.number(),
   firstUserMessage: parsedUserMessageSchema.nullable(),
@@ -20,4 +25,5 @@ export const sessionMetaSchema = z.object({
     }),
   }),
   modelName: z.string().nullable(),
+  isCostPending: z.boolean(),
 });

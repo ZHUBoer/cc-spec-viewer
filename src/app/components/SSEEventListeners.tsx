@@ -1,11 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { FC, PropsWithChildren } from "react";
+import { toast } from "sonner";
 import {
   projectDetailQuery,
   projectListQuery,
   sessionDetailQuery,
 } from "../../lib/api/queries";
 import { useServerEventListener } from "../../lib/sse/hook/useServerEventListener";
+import { SESSION_CONNECT_TOAST_ID } from "../projects/[projectId]/components/chatForm";
 
 export const SSEEventListeners: FC<PropsWithChildren> = ({ children }) => {
   const queryClient = useQueryClient();
@@ -31,6 +33,11 @@ export const SSEEventListeners: FC<PropsWithChildren> = ({ children }) => {
   useServerEventListener("sessionChanged", async (event) => {
     try {
       await Promise.all([
+        // Session content changed implies list metadata may also change
+        // (e.g. first message parsed, lastModifiedAt updated).
+        queryClient.invalidateQueries({
+          queryKey: projectDetailQuery(event.projectId).queryKey,
+        }),
         queryClient.invalidateQueries({
           queryKey: sessionDetailQuery(event.projectId, event.sessionId)
             .queryKey,
@@ -72,17 +79,35 @@ export const SSEEventListeners: FC<PropsWithChildren> = ({ children }) => {
   });
 
   // Listen for virtual conversation updates - triggers before file watcher debounce
-  // This reduces perceived latency by refreshing session data as soon as new assistant message is received
+  // 这里也要刷新当前项目的会话列表，否则未选中会话会继续显示旧 meta。
   useServerEventListener("virtualConversationUpdated", async (event) => {
     try {
-      await queryClient.invalidateQueries({
-        queryKey: sessionDetailQuery(event.projectId, event.sessionId).queryKey,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: projectDetailQuery(event.projectId).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: sessionDetailQuery(event.projectId, event.sessionId)
+            .queryKey,
+        }),
+      ]);
     } catch (error) {
       console.error(
         "[SSEEventListeners] Failed to invalidate virtual conversation queries:",
         error,
       );
+    }
+  });
+
+  useServerEventListener("initializationProgress", (event) => {
+    if (event.stage === "success") {
+      toast.success(event.message, {
+        id: SESSION_CONNECT_TOAST_ID,
+      });
+    } else {
+      toast.loading(event.message, {
+        id: SESSION_CONNECT_TOAST_ID,
+      });
     }
   });
 

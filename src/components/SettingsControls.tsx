@@ -1,8 +1,11 @@
 import { Trans, useLingui } from "@lingui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { type FC, useId, useMemo } from "react";
+import { type FC, useEffect, useId, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useConfig } from "@/app/hooks/useConfig";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -12,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { useTheme } from "@/hooks/useTheme";
+import { honoClient } from "../lib/api/client";
 import { projectDetailQuery, projectListQuery } from "../lib/api/queries";
 import {
   DEFAULT_LOCALE,
@@ -40,6 +44,7 @@ export const SettingsControls: FC<SettingsControlsProps> = ({
   const enterKeyBehaviorId = useId();
   const searchHotkeyId = useId();
   const permissionModeId = useId();
+  const claudeExecutableId = useId();
   const localeId = useId();
   const themeId = useId();
   const { config, updateConfig } = useConfig();
@@ -47,6 +52,14 @@ export const SettingsControls: FC<SettingsControlsProps> = ({
   const { theme } = useTheme();
   const { i18n } = useLingui();
   const { isFlagEnabled } = useFeatureFlags();
+  const [claudeExecutableDraft, setClaudeExecutableDraft] = useState(
+    config?.claudeCodeExecutablePath ?? "",
+  );
+  const [isValidatingExecutable, setIsValidatingExecutable] = useState(false);
+
+  useEffect(() => {
+    setClaudeExecutableDraft(config?.claudeCodeExecutablePath ?? "");
+  }, [config?.claudeCodeExecutablePath]);
 
   const isToolApprovalAvailable = isFlagEnabled("tool-approval");
   const inferredLocale = useMemo(() => {
@@ -121,6 +134,91 @@ export const SettingsControls: FC<SettingsControlsProps> = ({
         | "plan",
     };
     updateConfig(newConfig);
+  };
+
+  const handleClaudeExecutableBlur = async () => {
+    const nextValue = claudeExecutableDraft.trim();
+    const newConfig = {
+      ...config,
+      claudeCodeExecutablePath: nextValue.length > 0 ? nextValue : undefined,
+    };
+    updateConfig(newConfig);
+  };
+
+  const handleClaudeExecutableValidate = async () => {
+    const nextValue = claudeExecutableDraft.trim();
+    const newConfig = {
+      ...config,
+      claudeCodeExecutablePath: nextValue.length > 0 ? nextValue : undefined,
+    };
+
+    updateConfig(newConfig, {
+      onSuccess: async () => {
+        setIsValidatingExecutable(true);
+        try {
+          const response = await honoClient.api.cc.meta.$get();
+          if (!response.ok) {
+            const data = await response.json().catch(() => null);
+            const errorMessage =
+              data &&
+              typeof data === "object" &&
+              "error" in data &&
+              typeof data.error === "string"
+                ? data.error
+                : response.statusText;
+            throw new Error(
+              errorMessage ||
+                i18n._({
+                  id: "settings.claude_code.executable_path.validate_failed",
+                  message: "校验失败",
+                }),
+            );
+          }
+          const meta = await response.json();
+          const executablePath =
+            meta &&
+            typeof meta === "object" &&
+            "executablePath" in meta &&
+            typeof meta.executablePath === "string"
+              ? meta.executablePath
+              : i18n._({
+                  id: "settings.claude_code.executable_path.unknown",
+                  message: "未知",
+                });
+          toast.success(
+            i18n._({
+              id: "settings.claude_code.executable_path.validate_success",
+              message: "校验成功",
+            }),
+            {
+              description: i18n._({
+                id: "settings.claude_code.executable_path.validate_detected",
+                message: "检测到：{path}",
+                values: { path: executablePath },
+              }),
+            },
+          );
+        } catch (error) {
+          toast.error(
+            i18n._({
+              id: "settings.claude_code.executable_path.validate_failed",
+              message: "校验失败",
+            }),
+            {
+              description:
+                error instanceof Error
+                  ? error.message
+                  : i18n._({
+                      id: "settings.claude_code.executable_path.validate_failed",
+                      message: "校验失败",
+                    }),
+            },
+          );
+        } finally {
+          setIsValidatingExecutable(false);
+        }
+      },
+    });
   };
 
   const handleLocaleChange = async (value: SupportedLocale) => {
@@ -311,6 +409,51 @@ export const SettingsControls: FC<SettingsControlsProps> = ({
         {showDescriptions && !isToolApprovalAvailable && (
           <p className="text-xs text-destructive mt-1">
             <Trans id="settings.permission.mode.unavailable" />
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {showLabels && (
+          <label
+            htmlFor={claudeExecutableId}
+            className="text-sm font-medium leading-none"
+          >
+            <Trans
+              id="settings.claude_code.executable_path"
+              message="Claude Code 可执行路径"
+            />
+          </label>
+        )}
+        <div className="flex items-center gap-2">
+          <Input
+            id={claudeExecutableId}
+            value={claudeExecutableDraft}
+            onChange={(event) => setClaudeExecutableDraft(event.target.value)}
+            onBlur={handleClaudeExecutableBlur}
+            placeholder={i18n._({
+              id: "settings.claude_code.executable_path.placeholder",
+              message: "例如：C:\\Program Files\\Claude\\claude.exe",
+            })}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClaudeExecutableValidate}
+            disabled={isValidatingExecutable}
+          >
+            <Trans
+              id="settings.claude_code.executable_path.validate"
+              message="校验"
+            />
+          </Button>
+        </div>
+        {showDescriptions && (
+          <p className="text-xs text-muted-foreground mt-1">
+            <Trans
+              id="settings.claude_code.executable_path.description"
+              message="用于手动指定 claude.exe 或 cli.js 路径；不要填写 .cmd/.ps1；留空则自动检测。"
+            />
           </p>
         )}
       </div>

@@ -89,6 +89,17 @@ const LayerImpl = Effect.gen(function* () {
         );
       };
 
+      const onInitializationProgress = (
+        event: InternalEventDeclaration["initializationProgress"],
+      ) => {
+        Effect.runFork(
+          typeSafeSSE.writeSSE("initializationProgress", {
+            message: event.message,
+            stage: event.stage,
+          }),
+        );
+      };
+
       yield* eventBus.on("sessionListChanged", onSessionListChanged);
       yield* eventBus.on("sessionChanged", onSessionChanged);
       yield* eventBus.on("agentSessionChanged", onAgentSessionChanged);
@@ -99,6 +110,7 @@ const LayerImpl = Effect.gen(function* () {
         "virtualConversationUpdated",
         onVirtualConversationUpdated,
       );
+      yield* eventBus.on("initializationProgress", onInitializationProgress);
 
       const { connectionPromise } = adaptInternalEventToSSE(rawStream, {
         timeout: 5 /* min */ * 60 /* sec */ * 1000,
@@ -117,6 +129,10 @@ const LayerImpl = Effect.gen(function* () {
               yield* eventBus.off(
                 "virtualConversationUpdated",
                 onVirtualConversationUpdated,
+              );
+              yield* eventBus.off(
+                "initializationProgress",
+                onInitializationProgress,
               );
             }),
           );

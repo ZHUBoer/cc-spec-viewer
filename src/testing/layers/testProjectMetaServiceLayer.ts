@@ -17,6 +17,7 @@ export const testProjectMetaServiceLayer = (options?: {
       projectName: null,
       projectPath: null,
       sessionCount: 0,
+      isWorkspace: false,
     },
     invalidateProject = () => Effect.void,
     repairProjectPath = (_projectId: string) =>

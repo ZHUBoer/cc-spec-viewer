@@ -261,7 +261,7 @@ export const FileCompletion = forwardRef<
         <CollapsibleContent>
           <div
             ref={listRef}
-            className="absolute z-50 w-full bg-popover border border-border rounded-lg shadow-xl overflow-hidden"
+            className="absolute z-50 w-full overflow-hidden rounded-lg border border-border bg-popover shadow-[0_16px_40px_-28px_rgba(17,32,47,0.35)]"
             style={{ height: "15rem" }}
             role="listbox"
             aria-label={i18n._("Available files and directories")}
@@ -289,7 +289,7 @@ export const FileCompletion = forwardRef<
                       className={cn(
                         "w-full justify-start text-left font-mono text-sm h-9 px-3 min-w-0 transition-colors duration-150 cursor-pointer",
                         index === selectedIndex
-                          ? "bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-foreground border border-blue-500/20"
+                          ? "border border-primary/20 bg-muted/30 text-foreground"
                           : "hover:bg-accent/50",
                       )}
                       onClick={() =>
@@ -315,7 +315,7 @@ export const FileCompletion = forwardRef<
                         </span>
                       )}
                       {index === selectedIndex && (
-                        <CheckIcon className="w-3.5 h-3.5 ml-auto text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        <CheckIcon className="ml-auto h-3.5 w-3.5 flex-shrink-0 text-primary" />
                       )}
                     </Button>
                   ))}

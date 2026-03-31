@@ -18,7 +18,6 @@
 /out/
 
 # production
-/build
 
 # misc
 .DS_Store
@@ -50,10 +49,14 @@ CLAUDE.local.md
 .cc-delegate/
 
 # speckit
-specs
+# specs
 
 # e2e check
 temp-pack
 
 
 .history
+
+# feishu document downloads
+feishu2md/
+.gitnexus

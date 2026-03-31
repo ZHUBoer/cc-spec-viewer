@@ -27,6 +27,9 @@ jobs:
       - name: Run linting
         run: pnpm lint
 
+      - name: Check template version bump
+        run: pnpm check:template-version
+
       - name: Run type checking
         run: pnpm typecheck
 
@@ -58,6 +61,9 @@ jobs:
 
       - name: Run linting
         run: pnpm lint
+
+      - name: Check template version bump
+        run: pnpm check:template-version
 
       - name: Run type checking
         run: pnpm typecheck

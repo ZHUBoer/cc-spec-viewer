@@ -226,7 +226,7 @@ export const SchedulerTab: FC<{ projectId: string; sessionId: string }> = ({
             {jobs.map((job) => (
               <div
                 key={job.id}
-                className="p-3 bg-sidebar-accent/50 rounded-md border border-sidebar-border"
+                className="rounded-md border border-sidebar-border bg-background p-3"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="min-w-0 flex-1">

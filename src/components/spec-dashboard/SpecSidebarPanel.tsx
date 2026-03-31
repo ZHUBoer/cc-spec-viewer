@@ -12,14 +12,16 @@ import {
 import { type FC, useCallback, useEffect, useState } from "react";
 import { useWorkspacePanel } from "@/hooks/useWorkspacePanel";
 import { useSpecForgeInitialization } from "./hooks/useSpecForgeInitialization";
-import { NewProposalDialog } from "./NewProposalDialog";
+import { NewSpecDialog } from "./NewSpecDialog";
 import { OpenSpecSetupPanel } from "./OpenSpecSetupPanel";
 import {
   ProfileConfigDialog,
   type ProfileFormData,
 } from "./ProfileConfigDialog";
 import {
+  type BuiltInProfile,
   type EnvironmentStatus,
+  type InjectionResult,
   type OpenSpecChange,
   specDashboardService,
 } from "./SpecDashboardService";
@@ -35,7 +37,7 @@ const StatusIcon = ({ status }: { status: OpenSpecChange["status"] }) => {
     case "implementing":
       return <Clock className="w-4 h-4 text-yellow-500" />;
     case "completed":
-      return <CheckCircle2 className="w-4 h-4 text-purple-500" />;
+      return <CheckCircle2 className="w-4 h-4 text-primary" />;
     case "archived":
       return <CheckCircle2 className="w-4 h-4 text-green-500" />;
     default:
@@ -44,16 +46,33 @@ const StatusIcon = ({ status }: { status: OpenSpecChange["status"] }) => {
 };
 
 export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
+  const formatInitError = (result: InjectionResult): string => {
+    if (result.errors.length === 0) return "初始化失败，请重试。";
+    const primary = result.errors[0];
+    if (!primary) return "初始化失败，请重试。";
+    if (
+      primary.file === "develop-skills-preflight" ||
+      primary.file === "develop-skills"
+    ) {
+      return `Develop Skills 配置失败：\n${primary.error}`;
+    }
+    if (primary.file === "profile-config") {
+      return `Profile 配置无效：\n${primary.error}`;
+    }
+    return `初始化失败：${primary.error}`;
+  };
+
   const [changes, setChanges] = useState<OpenSpecChange[]>([]);
   const [archivedChanges, setArchivedChanges] = useState<OpenSpecChange[]>([]);
   const [loading, setLoading] = useState(true);
   const [archivedLoading, setArchivedLoading] = useState(false);
   const [showChanges, setShowChanges] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
-  const [newProposalOpen, setNewProposalOpen] = useState(false);
+  const [newSpecOpen, setNewSpecOpen] = useState(false);
   const [environment, setEnvironment] = useState<EnvironmentStatus | null>(
     null,
   );
+  const [profiles, setProfiles] = useState<BuiltInProfile[]>([]);
   const [initDialogOpen, setInitDialogOpen] = useState(false);
   const [profileConfig, setProfileConfig] = useState<ProfileFormData | null>(
     null,
@@ -67,8 +86,12 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
   const loadEnvironment = useCallback(async () => {
     if (!projectId) return;
     try {
-      const envData = await specDashboardService.getEnvironment(projectId);
+      const [envData, profilesData] = await Promise.all([
+        specDashboardService.getEnvironment(projectId),
+        specDashboardService.getProfiles(projectId),
+      ]);
       setEnvironment(envData);
+      setProfiles(profilesData.profiles);
       // 如果未配置，自动打开初始化弹窗
       // 如果已配置，确保弹窗关闭
       if (
@@ -92,10 +115,15 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
       const config =
         await specDashboardService.getProjectProfileConfig(projectId);
       if (config) {
-        setProfileConfig(config);
+        setProfileConfig({
+          displayName: config.displayName,
+          custom_variables: config.custom_variables,
+          infra_catalog: config.infra_catalog,
+        });
       } else {
         // 没有已保存配置时，使用空配置
         setProfileConfig({
+          custom_variables: {},
           infra_catalog: {
             mcp_server_providers: {},
             mcp_tool_definitions: {
@@ -110,6 +138,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
       console.error("Failed to load profile config", err);
       // 即使加载失败也使用空配置
       setProfileConfig({
+        custom_variables: {},
         infra_catalog: {
           mcp_server_providers: {},
           mcp_tool_definitions: {
@@ -154,15 +183,36 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
         handleOpenInitDialog();
       }
     };
+    const handleOpenNewSpecEvent = (event: CustomEvent) => {
+      if (event.detail?.projectId === projectId) {
+        setNewSpecOpen(true);
+      }
+    };
 
     window.addEventListener(
       "specforge:open-init-dialog",
       handleOpenInitDialogEvent as EventListener,
     );
+    window.addEventListener(
+      "specforge:open-new-spec",
+      handleOpenNewSpecEvent as EventListener,
+    );
+    window.addEventListener(
+      "specforge:open-new-proposal",
+      handleOpenNewSpecEvent as EventListener,
+    );
     return () => {
       window.removeEventListener(
         "specforge:open-init-dialog",
         handleOpenInitDialogEvent as EventListener,
+      );
+      window.removeEventListener(
+        "specforge:open-new-spec",
+        handleOpenNewSpecEvent as EventListener,
+      );
+      window.removeEventListener(
+        "specforge:open-new-proposal",
+        handleOpenNewSpecEvent as EventListener,
       );
     };
   }, [projectId, handleOpenInitDialog]);
@@ -222,7 +272,8 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
         scenario: environment.scenario,
         force: true,
         profile: {
-          displayName: "Custom Profile",
+          displayName: data.displayName || "Custom Profile",
+          custom_variables: data.custom_variables,
           infra_catalog: data.infra_catalog,
         },
       });
@@ -261,7 +312,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
         // 使用 Hook 处理通用的后处理逻辑
         await handlePostInitialization();
       } else {
-        throw new Error(`初始化失败: ${result.errors.length} 个错误`);
+        throw new Error(formatInitError(result));
       }
     } catch (err) {
       console.error("Failed to save profile", err);
@@ -283,9 +334,9 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
         </div>
         <button
           type="button"
-          className="p-1.5 hover:bg-sidebar-accent rounded-md transition-colors cursor-pointer"
-          title="New Proposal"
-          onClick={() => setNewProposalOpen(true)}
+          className="p-1.5 hover:bg-muted/25 rounded-md transition-colors cursor-pointer"
+          title="New Spec"
+          onClick={() => setNewSpecOpen(true)}
         >
           <PlusIcon className="w-5 h-5 text-sidebar-foreground/70" />
         </button>
@@ -318,7 +369,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
               <Layers className="w-4 h-4" />
               <span className="font-medium">Changes</span>
               {!loading && changes.length > 0 && (
-                <span className="text-xs text-sidebar-foreground/50 bg-sidebar-accent/50 px-1.5 py-0.5 rounded-full leading-none">
+                <span className="text-xs text-sidebar-foreground/50 bg-muted/30 px-1.5 py-0.5 rounded-full leading-none">
                   {changes.length}
                 </span>
               )}
@@ -345,7 +396,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
                   <button
                     key={change.name}
                     type="button"
-                    className="w-full text-left p-3 rounded-lg border border-sidebar-border hover:bg-sidebar-accent/50 cursor-pointer transition-colors"
+                    className="w-full text-left p-3 rounded-lg border border-sidebar-border bg-background hover:bg-muted/20 cursor-pointer transition-colors"
                     onClick={() => handleSelectChange(change)}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
@@ -380,7 +431,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
               <Archive className="w-4 h-4" />
               <span className="font-medium">Archived</span>
               {archivedChanges.length > 0 && (
-                <span className="text-xs text-sidebar-foreground/50 bg-sidebar-accent/50 px-1.5 py-0.5 rounded-full leading-none">
+                <span className="text-xs text-sidebar-foreground/50 bg-muted/30 px-1.5 py-0.5 rounded-full leading-none">
                   {archivedChanges.length}
                 </span>
               )}
@@ -407,7 +458,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
                   <button
                     key={change.name}
                     type="button"
-                    className="w-full text-left p-2.5 rounded-md hover:bg-sidebar-accent/50 transition-colors cursor-pointer"
+                    className="w-full text-left p-2.5 rounded-md hover:bg-muted/20 transition-colors cursor-pointer"
                     onClick={() => handleSelectChange(change)}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -424,9 +475,10 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
         </div>
       </div>
 
-      <NewProposalDialog
-        open={newProposalOpen}
-        onOpenChange={setNewProposalOpen}
+      <NewSpecDialog
+        open={newSpecOpen}
+        onOpenChange={setNewSpecOpen}
+        projectId={projectId}
       />
 
       {/* 强制初始化弹窗 */}
@@ -438,6 +490,7 @@ export const SpecSidebarPanel: FC<{ projectId: string }> = ({ projectId }) => {
           loading={profileLoading}
           onSave={handleSaveProfile}
           saving={profileSaving}
+          availableProfiles={profiles}
         />
       )}
     </div>

@@ -1,0 +1,60 @@
+{
+  "name": "xtaro-zx-d2c-preview",
+  "version": "0.0.11",
+  "description": "XTaro template demo",
+  "scripts": {
+    "//weapp": "---------------------- 小程序相关 ----------------------",
+    "build:mini": "xtaro build --platform mini --miniType weapp",
+    "dev:mini": "xtaro build --platform mini --miniType weapp --watch",
+    "//h5": "---------------------- h5相关 ----------------------",
+    "build:h5": "xtaro build --platform h5",
+    "build:trip-h5": "xtaro build --platform h5 -T",
+    "dev:h5": "xtaro build --platform h5 --watch",
+    "dev:trip-h5": "xtaro build --platform h5 --watch -T",
+    "//pc": "---------------------- pc相关 ----------------------",
+    "build:pc": "xtaro build --platform pc",
+    "build:trip-pc": "xtaro build --platform pc -T",
+    "dev:pc": "xtaro build --platform pc --watch",
+    "dev:trip-pc": "xtaro build --platform pc --watch -T",
+    "//h5ct": "---------------------- ct相关 ----------------------",
+    "build:ct": "xtaro build --platform h5 --extra BuildCtripTrip",
+    "//crn": "---------------------- crn相关 ----------------------",
+    "build:crn": "xtaro build --platform crn",
+    "build:crn:harmony": "xtaro build --platform crn --rnversion=harmony",
+    "dev:crn": "xtaro build --platform crn --watch",
+    "dev:crn:harmony": " xtaro build --platform crn --watch --rnversion=harmony",
+    "start:crn:harmony": "xtaro build --platform crn --watch --blended --rnversion=harmony",
+    "start:crn": "xtaro build --platform crn --watch --blended",
+    "dev:crn37": "xtaro build --platform crn --appId 37 --watch",
+    "build:crn37": "xtaro build --platform crn --appId 37"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.dev.sh.ctripcorp.com:xtaro/xtaro-template.git"
+  },
+  "keywords": [
+    "xtaro",
+    "project",
+    "xtaro-project",
+    "xtaro-zx-d2c-preview"
+  ],
+  "type": "commonjs",
+  "author": "bianyl",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/generator": "^7.28.5",
+    "@ctrip/ds-atom": "^0.0.76",
+    "@ctrip/xtaro": "2.8.6",
+    "@ctrip/xtaro-zx": "^2.6.8",
+    "@ctrip/xtaro-types": "2.8.6",
+    "crypto": "^1.0.1",
+    "react": "18.2.0"
+  },
+  "devDependencies": {
+    "@ctrip/trip-common-eslint-rules": "^1.0.6",
+    "@ctrip/xtaro-cli": "2.8.6",
+    "eslint": "^8.57.0"
+  },
+  "xtaro-crn-dist": "./dist/crn/xtaro-zx-d2c-preview",
+  "xtaro-crn": true
+}

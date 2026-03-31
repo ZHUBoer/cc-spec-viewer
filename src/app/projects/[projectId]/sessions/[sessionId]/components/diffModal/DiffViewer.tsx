@@ -178,7 +178,7 @@ const FileHeader: FC<FileHeaderProps> = ({
 };
 
 export const DiffViewer: FC<DiffViewerProps> = ({ fileDiff, className }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);

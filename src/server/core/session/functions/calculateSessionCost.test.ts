@@ -6,37 +6,39 @@ import {
 } from "./calculateSessionCost";
 
 describe("normalizeModelName", () => {
-  it("should normalize claude-sonnet-4-20250514 to claude-3.5-sonnet", () => {
+  it("should normalize claude-sonnet-4-20250514 to claude-sonnet-4.5", () => {
     expect(normalizeModelName("claude-sonnet-4-20250514")).toBe(
-      "claude-3.5-sonnet",
+      "claude-sonnet-4.5",
     );
   });
 
-  it("should normalize claude-3-5-sonnet-20240620 to claude-3.5-sonnet", () => {
+  it("should normalize claude-3-5-sonnet-20240620 to claude-sonnet-4.5", () => {
     expect(normalizeModelName("claude-3-5-sonnet-20240620")).toBe(
-      "claude-3.5-sonnet",
+      "claude-sonnet-4.5",
     );
   });
 
-  it("should normalize claude-3-opus-20240229 to claude-3-opus", () => {
-    expect(normalizeModelName("claude-3-opus-20240229")).toBe("claude-3-opus");
+  it("should fallback claude-3-opus-20240229 to claude-sonnet-4.5", () => {
+    expect(normalizeModelName("claude-3-opus-20240229")).toBe(
+      "claude-sonnet-4.5",
+    );
   });
 
-  it("should normalize claude-3-haiku-20240307 to claude-3-haiku", () => {
+  it("should fallback claude-3-haiku-20240307 to claude-sonnet-4.5", () => {
     expect(normalizeModelName("claude-3-haiku-20240307")).toBe(
-      "claude-3-haiku",
+      "claude-sonnet-4.5",
     );
   });
 
-  it("should normalize claude-opus-4-1-20250101 to claude-opus-4.1", () => {
+  it("should fallback claude-opus-4-1-20250101 to claude-sonnet-4.5", () => {
     expect(normalizeModelName("claude-opus-4-1-20250101")).toBe(
-      "claude-opus-4.1",
+      "claude-sonnet-4.5",
     );
   });
 
-  it("should normalize claude-opus-4-5-20251101 to claude-opus-4.5", () => {
+  it("should fallback claude-opus-4-5-20251101 to claude-sonnet-4.5", () => {
     expect(normalizeModelName("claude-opus-4-5-20251101")).toBe(
-      "claude-opus-4.5",
+      "claude-sonnet-4.5",
     );
   });
 
@@ -52,8 +54,8 @@ describe("normalizeModelName", () => {
     );
   });
 
-  it("should return claude-3.5-sonnet for unknown model", () => {
-    expect(normalizeModelName("unknown-model")).toBe("claude-3.5-sonnet");
+  it("should return claude-sonnet-4.5 for unknown model", () => {
+    expect(normalizeModelName("unknown-model")).toBe("claude-sonnet-4.5");
   });
 });
 
@@ -66,7 +68,7 @@ describe("calculateTokenCost", () => {
       cache_read_input_tokens: 0,
     };
 
-    const result = calculateTokenCost(usage, "claude-3.5-sonnet");
+    const result = calculateTokenCost(usage, "claude-sonnet-4.5");
 
     expect(result.totalUsd).toBe(0.003); // 1000 / 1_000_000 * 3.0
     expect(result.breakdown.inputTokensUsd).toBe(0.003);
@@ -87,7 +89,7 @@ describe("calculateTokenCost", () => {
       cache_read_input_tokens: 0,
     };
 
-    const result = calculateTokenCost(usage, "claude-3.5-sonnet");
+    const result = calculateTokenCost(usage, "claude-sonnet-4.5");
 
     expect(result.totalUsd).toBe(0.015); // 1000 / 1_000_000 * 15.0
     expect(result.breakdown.outputTokensUsd).toBe(0.015);
@@ -101,7 +103,7 @@ describe("calculateTokenCost", () => {
       cache_read_input_tokens: 3000,
     };
 
-    const result = calculateTokenCost(usage, "claude-3.5-sonnet");
+    const result = calculateTokenCost(usage, "claude-sonnet-4.5");
 
     // input: 10000 / 1_000_000 * 3.0 = 0.03
     // output: 5000 / 1_000_000 * 15.0 = 0.075
@@ -115,7 +117,7 @@ describe("calculateTokenCost", () => {
     expect(result.breakdown.cacheReadUsd).toBeCloseTo(0.0009, 4);
   });
 
-  it("should calculate cost for Claude 3 Opus", () => {
+  it("should fallback Claude 3 Opus to default (Sonnet 4.5) pricing", () => {
     const usage: TokenUsage = {
       input_tokens: 1000,
       output_tokens: 1000,
@@ -125,15 +127,16 @@ describe("calculateTokenCost", () => {
 
     const result = calculateTokenCost(usage, "claude-3-opus");
 
-    // input: 1000 / 1_000_000 * 15.0 = 0.015
-    // output: 1000 / 1_000_000 * 75.0 = 0.075
-    // total: 0.09
-    expect(result.totalUsd).toBeCloseTo(0.09, 4);
-    expect(result.breakdown.inputTokensUsd).toBeCloseTo(0.015, 4);
-    expect(result.breakdown.outputTokensUsd).toBeCloseTo(0.075, 4);
+    // Falls back to Sonnet 4.5 pricing
+    // input: 1000 / 1_000_000 * 3.0 = 0.003
+    // output: 1000 / 1_000_000 * 15.0 = 0.015
+    // total: 0.018
+    expect(result.totalUsd).toBeCloseTo(0.018, 4);
+    expect(result.breakdown.inputTokensUsd).toBeCloseTo(0.003, 4);
+    expect(result.breakdown.outputTokensUsd).toBeCloseTo(0.015, 4);
   });
 
-  it("should calculate cost for Claude 3 Haiku", () => {
+  it("should fallback Claude 3 Haiku to default (Sonnet 4.5) pricing", () => {
     const usage: TokenUsage = {
       input_tokens: 100000,
       output_tokens: 50000,
@@ -143,15 +146,16 @@ describe("calculateTokenCost", () => {
 
     const result = calculateTokenCost(usage, "claude-3-haiku");
 
-    // input: 100000 / 1_000_000 * 0.25 = 0.025
-    // output: 50000 / 1_000_000 * 1.25 = 0.0625
-    // total: 0.0875
-    expect(result.totalUsd).toBeCloseTo(0.0875, 4);
-    expect(result.breakdown.inputTokensUsd).toBeCloseTo(0.025, 4);
-    expect(result.breakdown.outputTokensUsd).toBeCloseTo(0.0625, 4);
+    // Falls back to Sonnet 4.5 pricing
+    // input: 100000 / 1_000_000 * 3.0 = 0.3
+    // output: 50000 / 1_000_000 * 15.0 = 0.75
+    // total: 1.05
+    expect(result.totalUsd).toBeCloseTo(1.05, 4);
+    expect(result.breakdown.inputTokensUsd).toBeCloseTo(0.3, 4);
+    expect(result.breakdown.outputTokensUsd).toBeCloseTo(0.75, 4);
   });
 
-  it("should calculate cost for Claude Opus 4.1", () => {
+  it("should fallback Claude Opus 4.1 to default (Sonnet 4.5) pricing", () => {
     const usage: TokenUsage = {
       input_tokens: 1000,
       output_tokens: 1000,
@@ -161,19 +165,20 @@ describe("calculateTokenCost", () => {
 
     const result = calculateTokenCost(usage, "claude-opus-4.1");
 
-    // input: 1000 / 1_000_000 * 15.0 = 0.015
-    // output: 1000 / 1_000_000 * 75.0 = 0.075
-    // cache_creation: 500 / 1_000_000 * 18.75 = 0.009375
-    // cache_read: 500 / 1_000_000 * 1.5 = 0.00075
-    // total: 0.015 + 0.075 + 0.009375 + 0.00075 = 0.100125
-    expect(result.totalUsd).toBeCloseTo(0.100125, 4);
-    expect(result.breakdown.inputTokensUsd).toBeCloseTo(0.015, 4);
-    expect(result.breakdown.outputTokensUsd).toBeCloseTo(0.075, 4);
-    expect(result.breakdown.cacheCreationUsd).toBeCloseTo(0.009375, 4);
-    expect(result.breakdown.cacheReadUsd).toBeCloseTo(0.00075, 4);
+    // Falls back to Sonnet 4.5 pricing
+    // input: 1000 / 1_000_000 * 3.0 = 0.003
+    // output: 1000 / 1_000_000 * 15.0 = 0.015
+    // cache_creation: 500 / 1_000_000 * 3.75 = 0.001875
+    // cache_read: 500 / 1_000_000 * 0.3 = 0.00015
+    // total: 0.020025
+    expect(result.totalUsd).toBeCloseTo(0.020025, 4);
+    expect(result.breakdown.inputTokensUsd).toBeCloseTo(0.003, 4);
+    expect(result.breakdown.outputTokensUsd).toBeCloseTo(0.015, 4);
+    expect(result.breakdown.cacheCreationUsd).toBeCloseTo(0.001875, 4);
+    expect(result.breakdown.cacheReadUsd).toBeCloseTo(0.00015, 4);
   });
 
-  it("should calculate cost for Claude Opus 4.5", () => {
+  it("should fallback Claude Opus 4.5 to default (Sonnet 4.5) pricing", () => {
     const usage: TokenUsage = {
       input_tokens: 1000,
       output_tokens: 1000,
@@ -183,16 +188,17 @@ describe("calculateTokenCost", () => {
 
     const result = calculateTokenCost(usage, "claude-opus-4.5");
 
-    // input: 1000 / 1_000_000 * 5.0 = 0.005
-    // output: 1000 / 1_000_000 * 25.0 = 0.025
-    // cache_creation: 500 / 1_000_000 * 6.25 = 0.003125
-    // cache_read: 500 / 1_000_000 * 0.5 = 0.00025
-    // total: 0.005 + 0.025 + 0.003125 + 0.00025 = 0.033375
-    expect(result.totalUsd).toBeCloseTo(0.033375, 4);
-    expect(result.breakdown.inputTokensUsd).toBeCloseTo(0.005, 4);
-    expect(result.breakdown.outputTokensUsd).toBeCloseTo(0.025, 4);
-    expect(result.breakdown.cacheCreationUsd).toBeCloseTo(0.003125, 4);
-    expect(result.breakdown.cacheReadUsd).toBeCloseTo(0.00025, 4);
+    // Falls back to Sonnet 4.5 pricing
+    // input: 1000 / 1_000_000 * 3.0 = 0.003
+    // output: 1000 / 1_000_000 * 15.0 = 0.015
+    // cache_creation: 500 / 1_000_000 * 3.75 = 0.001875
+    // cache_read: 500 / 1_000_000 * 0.3 = 0.00015
+    // total: 0.020025
+    expect(result.totalUsd).toBeCloseTo(0.020025, 4);
+    expect(result.breakdown.inputTokensUsd).toBeCloseTo(0.003, 4);
+    expect(result.breakdown.outputTokensUsd).toBeCloseTo(0.015, 4);
+    expect(result.breakdown.cacheCreationUsd).toBeCloseTo(0.001875, 4);
+    expect(result.breakdown.cacheReadUsd).toBeCloseTo(0.00015, 4);
   });
 
   it("should calculate cost for Claude Sonnet 4.5", () => {
@@ -247,7 +253,7 @@ describe("calculateTokenCost", () => {
       cache_read_input_tokens: undefined,
     };
 
-    const result = calculateTokenCost(usage, "claude-3.5-sonnet");
+    const result = calculateTokenCost(usage, "claude-sonnet-4.5");
 
     expect(result.totalUsd).toBeCloseTo(0.018, 4); // 0.003 + 0.015
     expect(result.breakdown.cacheCreationUsd).toBe(0);
@@ -264,7 +270,7 @@ describe("calculateTokenCost", () => {
       cache_read_input_tokens: 0,
     };
 
-    const result = calculateTokenCost(usage, "claude-3.5-sonnet");
+    const result = calculateTokenCost(usage, "claude-sonnet-4.5");
 
     expect(result.totalUsd).toBe(0);
     expect(result.breakdown.inputTokensUsd).toBe(0);
@@ -295,7 +301,7 @@ describe("calculateTokenCost", () => {
       cache_read_input_tokens: 0,
     };
 
-    const result = calculateTokenCost(usage, "claude-3.5-sonnet");
+    const result = calculateTokenCost(usage, "claude-sonnet-4.5");
 
     // input: 10_000_000 / 1_000_000 * 3.0 = 30.0
     // output: 5_000_000 / 1_000_000 * 15.0 = 75.0
@@ -313,7 +319,7 @@ describe("calculateTokenCost", () => {
       cache_read_input_tokens: 1,
     };
 
-    const result = calculateTokenCost(usage, "claude-3.5-sonnet");
+    const result = calculateTokenCost(usage, "claude-sonnet-4.5");
 
     // Extremely small values but should be calculated correctly
     expect(result.totalUsd).toBeGreaterThan(0);

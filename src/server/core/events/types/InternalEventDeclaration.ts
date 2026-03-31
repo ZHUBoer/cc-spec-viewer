@@ -33,4 +33,9 @@ export type InternalEventDeclaration = {
     projectId: string;
     sessionId: string;
   };
+
+  initializationProgress: {
+    message: string;
+    stage: "loading" | "success";
+  };
 };

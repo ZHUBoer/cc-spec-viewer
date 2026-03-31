@@ -1,7 +1,6 @@
 import { Trans } from "@lingui/react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useSetAtom } from "jotai";
 import {
   ArrowDownIcon,
   DownloadIcon,
@@ -16,6 +15,7 @@ import {
 import {
   type FC,
   type ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -34,29 +34,42 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  getTaskCompletionContentKey,
+  getTaskStreamContentKey,
+} from "@/hooks/taskNotificationState";
 import { usePermissionRequests } from "@/hooks/usePermissionRequests";
 import { useSchedulerJobs } from "@/hooks/useScheduler";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { honoClient } from "@/lib/api/client";
-import type { PublicSessionProcess } from "@/types/session-process";
-import { firstUserMessageToTitle } from "../../../services/firstCommandToTitle";
+import {
+  removeSessionProcessStateById,
+  type SessionProcessesState,
+  sessionProcessesStateQuery,
+} from "@/lib/session-process/sessionProcessesState";
 import { useExportSession } from "../hooks/useExportSession";
 import type { useGitCurrentRevisions } from "../hooks/useGit";
 import { useGitCurrentRevisions as useGitCurrentRevisionsHook } from "../hooks/useGit";
+import {
+  PendingAskUserQuestionContext,
+  type PendingAskUserQuestionContextValue,
+} from "../hooks/usePendingAskUserQuestion";
 import { useSession } from "../hooks/useSession";
 import { useSessionProcess } from "../hooks/useSessionProcess";
-import { sessionProcessesAtom } from "../store/sessionProcessesAtom";
 import { ConversationList } from "./conversationList/ConversationList";
 import { DiffModal } from "./diffModal";
 import { ChatActionMenu } from "./resumeChat/ChatActionMenu";
 import { ContinueChat } from "./resumeChat/ContinueChat";
 import { ResumeChat } from "./resumeChat/ResumeChat";
 import { StartNewChat } from "./resumeChat/StartNewChat";
+import { shouldShowPendingCost } from "./sessionMetaDisplay";
 import { DeleteSessionDialog } from "./sessionSidebar/DeleteSessionDialog";
 
 type SessionPageMainProps = {
   projectId: string;
   sessionId?: string;
+  focusMessageId?: string;
+  focusSource?: "search";
   setIsMobileSidebarOpen: (open: boolean) => void;
   projectPath?: string;
   currentBranch?: string;
@@ -95,6 +108,8 @@ const SessionPageMainContent: FC<
 > = ({
   projectId,
   sessionId,
+  focusMessageId,
+  focusSource,
   setIsMobileSidebarOpen,
   projectPath,
   currentBranch,
@@ -110,22 +125,72 @@ const SessionPageMainContent: FC<
   const getToolUseResult = sessionData?.getToolUseResult ?? emptyToolUseResult;
   const isExistingSession =
     Boolean(sessionId) && sessionData !== null && sessionData !== undefined;
-  const { currentPermissionRequest, isDialogOpen, onPermissionResponse } =
-    usePermissionRequests();
-  const { data: revisionsDataFallback } = useGitCurrentRevisionsHook(projectId);
-  const revisionsData = revisionsDataProp ?? revisionsDataFallback;
-  const exportSession = useExportSession();
-  const { data: allSchedulerJobs } = useSchedulerJobs();
-
   const sessionProcess = useSessionProcess();
   const relatedSessionProcess = useMemo(() => {
     if (!sessionId) return undefined;
     return sessionProcess.getSessionProcess(sessionId);
   }, [sessionProcess, sessionId]);
+  const { currentPermissionRequest, isDialogOpen, onPermissionResponse } =
+    usePermissionRequests({
+      sessionProcessId: relatedSessionProcess?.id,
+    });
 
-  const setSessionProcesses = useSetAtom(sessionProcessesAtom);
+  // AskUserQuestion 渲染为内嵌交互卡片，其他工具通过 PermissionDialog 处理
+  const isPendingAskUserQuestion =
+    isDialogOpen && currentPermissionRequest?.toolName === "AskUserQuestion";
+  const dialogPermissionRequest = isPendingAskUserQuestion
+    ? null
+    : currentPermissionRequest;
+  const dialogIsOpen = isDialogOpen && !isPendingAskUserQuestion;
 
-  useTaskNotifications(relatedSessionProcess?.status === "running");
+  const handleAskUserQuestionAnswers = useCallback(
+    async (answers: Record<string, string>) => {
+      if (!currentPermissionRequest) return;
+      await onPermissionResponse({
+        permissionRequestId: currentPermissionRequest.id,
+        decision: "allow",
+        updatedInput: {
+          ...currentPermissionRequest.toolInput,
+          answers,
+        },
+      });
+    },
+    [currentPermissionRequest, onPermissionResponse],
+  );
+
+  const pendingAskUserQuestionValue =
+    useMemo<PendingAskUserQuestionContextValue>(() => {
+      const pendingToolUseId =
+        isPendingAskUserQuestion &&
+        typeof currentPermissionRequest?.toolUseId === "string"
+          ? currentPermissionRequest.toolUseId
+          : null;
+
+      return {
+        pendingRequestId: isPendingAskUserQuestion
+          ? (currentPermissionRequest?.id ?? null)
+          : null,
+        pendingToolUseId,
+        onAnswersSubmit: isPendingAskUserQuestion
+          ? handleAskUserQuestionAnswers
+          : null,
+      };
+    }, [
+      isPendingAskUserQuestion,
+      currentPermissionRequest?.id,
+      currentPermissionRequest?.toolUseId,
+      handleAskUserQuestionAnswers,
+    ]);
+  const { data: revisionsDataFallback } = useGitCurrentRevisionsHook(projectId);
+  const revisionsData = revisionsDataProp ?? revisionsDataFallback;
+  const exportSession = useExportSession();
+  const { data: allSchedulerJobs } = useSchedulerJobs();
+  const queryClient = useQueryClient();
+
+  useTaskNotifications({
+    isRunningTask: relatedSessionProcess?.status === "running",
+    conversations,
+  });
 
   // Filter scheduler jobs related to this session
   const sessionScheduledJobs = useMemo(() => {
@@ -139,13 +204,22 @@ const SessionPageMainContent: FC<
     );
   }, [allSchedulerJobs, sessionId, projectId]);
 
-  const [previousConversationLength, setPreviousConversationLength] =
-    useState(0);
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const focusedKeyRef = useRef<string | null>(null);
+  const previousTaskStreamKeyRef = useRef<string>("stream:none");
+  const previousTaskCompletionKeyRef = useRef<string>("completion:none");
+  const taskStreamKey = useMemo(
+    () => getTaskStreamContentKey(conversations),
+    [conversations],
+  );
+  const taskCompletionKey = useMemo(
+    () => getTaskCompletionContentKey(conversations),
+    [conversations],
+  );
 
   const handleScroll = () => {
     const scrollContainer = scrollContainerRef.current;
@@ -174,37 +248,105 @@ const SessionPageMainContent: FC<
       return response.json();
     },
     onSuccess: (_, sessionProcessId) => {
-      // Optimistically update the process status to paused
-      setSessionProcesses((prev: PublicSessionProcess[]) =>
-        prev.map((p) =>
-          p.id === sessionProcessId ? { ...p, status: "paused" } : p,
-        ),
+      queryClient.setQueryData(
+        sessionProcessesStateQuery.queryKey,
+        (currentState: SessionProcessesState | undefined) =>
+          removeSessionProcessStateById(currentState, sessionProcessId),
       );
     },
   });
 
   useEffect(() => {
     if (!isExistingSession) return;
-    if (
-      relatedSessionProcess?.status === "running" &&
-      conversations.length !== previousConversationLength
-    ) {
-      setPreviousConversationLength(conversations.length);
+    const didStreamChange = taskStreamKey !== previousTaskStreamKeyRef.current;
+
+    previousTaskStreamKeyRef.current = taskStreamKey;
+    previousTaskCompletionKeyRef.current = taskCompletionKey;
+
+    if (!didStreamChange || isUserScrolledUp) {
+      return;
+    }
+
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [isExistingSession, taskStreamKey, taskCompletionKey, isUserScrolledUp]);
+
+  useEffect(() => {
+    previousTaskStreamKeyRef.current = taskStreamKey;
+    previousTaskCompletionKeyRef.current = taskCompletionKey;
+  }, [taskStreamKey, taskCompletionKey]);
+
+  useEffect(() => {
+    if (!sessionId || !focusMessageId || focusSource !== "search") {
+      return;
+    }
+
+    const focusKey = `${sessionId}:${focusMessageId}`;
+    if (focusedKeyRef.current === focusKey) {
+      return;
+    }
+
+    let canceled = false;
+    let attempt = 0;
+    const maxAttempts = 10;
+
+    const focusTarget = () => {
+      if (canceled) return;
+
       const scrollContainer = scrollContainerRef.current;
-      if (scrollContainer && !isUserScrolledUp) {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
+      if (!scrollContainer) return;
+
+      const target = scrollContainer.querySelector<HTMLElement>(
+        `#${focusMessageId}`,
+      );
+
+      if (target) {
+        focusedKeyRef.current = focusKey;
+        target.scrollIntoView({
+          block: "center",
           behavior: "smooth",
         });
+
+        target.classList.remove("search-hit-highlight");
+        // Force reflow so repeat highlights can restart animation.
+        void target.offsetWidth;
+        target.classList.add("search-hit-highlight");
+        setTimeout(() => {
+          target.classList.remove("search-hit-highlight");
+        }, 2000);
+
+        void navigate({
+          to: "/projects/$projectId/session",
+          params: { projectId },
+          search: (prev) => ({
+            ...prev,
+            focusMessageId: undefined,
+            focusSource: undefined,
+          }),
+          replace: true,
+        });
+        return;
       }
-    }
-  }, [
-    conversations,
-    isExistingSession,
-    relatedSessionProcess?.status,
-    previousConversationLength,
-    isUserScrolledUp,
-  ]);
+
+      if (attempt >= maxAttempts) {
+        return;
+      }
+
+      attempt += 1;
+      setTimeout(focusTarget, 50);
+    };
+
+    focusTarget();
+
+    return () => {
+      canceled = true;
+    };
+  }, [sessionId, focusMessageId, focusSource, navigate, projectId]);
 
   const handleScrollToTop = () => {
     const scrollContainer = scrollContainerRef.current;
@@ -227,9 +369,7 @@ const SessionPageMainContent: FC<
   };
 
   const sessionTitle =
-    sessionData?.session.meta.firstUserMessage != null
-      ? firstUserMessageToTitle(sessionData.session.meta.firstUserMessage)
-      : (sessionId ?? "");
+    sessionData?.session.displayMeta.title ?? sessionId ?? "";
   const projectPathDisplayName =
     projectPath
       ?.split(/[\\/]/)
@@ -242,6 +382,11 @@ const SessionPageMainContent: FC<
   } else if (sessionData && sessionId) {
     headerTitle = sessionTitle;
   }
+
+  const sessionMeta = sessionData?.session.meta;
+  const showPendingCost = sessionMeta
+    ? shouldShowPendingCost(sessionMeta)
+    : false;
 
   return (
     <>
@@ -419,7 +564,8 @@ const SessionPageMainContent: FC<
                             variant="secondary"
                             className="h-7 text-xs flex items-center w-fit font-mono"
                           >
-                            {sessionData.session.meta.modelName ?? "Unknown"}
+                            {sessionData.session.meta.modelName ??
+                              (showPendingCost ? "统计中" : "Unknown")}
                           </Badge>
                         </div>
                       )}
@@ -435,7 +581,9 @@ const SessionPageMainContent: FC<
                                   <Trans id="session.cost.input_tokens" />:
                                 </span>
                                 <span>
-                                  {sessionData.session.meta.cost.tokenUsage.inputTokens.toLocaleString()}
+                                  {showPendingCost
+                                    ? "统计中"
+                                    : sessionData.session.meta.cost.tokenUsage.inputTokens.toLocaleString()}
                                 </span>
                               </div>
                               <div className="flex justify-between gap-4">
@@ -443,7 +591,9 @@ const SessionPageMainContent: FC<
                                   <Trans id="session.cost.output_tokens" />:
                                 </span>
                                 <span>
-                                  {sessionData.session.meta.cost.tokenUsage.outputTokens.toLocaleString()}
+                                  {showPendingCost
+                                    ? "统计中"
+                                    : sessionData.session.meta.cost.tokenUsage.outputTokens.toLocaleString()}
                                 </span>
                               </div>
                               <div className="flex justify-between gap-4">
@@ -451,7 +601,9 @@ const SessionPageMainContent: FC<
                                   <Trans id="session.cost.cache_creation" />:
                                 </span>
                                 <span>
-                                  {sessionData.session.meta.cost.tokenUsage.cacheCreationTokens.toLocaleString()}
+                                  {showPendingCost
+                                    ? "统计中"
+                                    : sessionData.session.meta.cost.tokenUsage.cacheCreationTokens.toLocaleString()}
                                 </span>
                               </div>
                               <div className="flex justify-between gap-4">
@@ -459,10 +611,17 @@ const SessionPageMainContent: FC<
                                   <Trans id="session.cost.cache_read" />:
                                 </span>
                                 <span>
-                                  {sessionData.session.meta.cost.tokenUsage.cacheReadTokens.toLocaleString()}
+                                  {showPendingCost
+                                    ? "统计中"
+                                    : sessionData.session.meta.cost.tokenUsage.cacheReadTokens.toLocaleString()}
                                 </span>
                               </div>
                             </div>
+                            {showPendingCost && (
+                              <p className="text-xs text-muted-foreground pl-2">
+                                运行中会话的成本与令牌统计将在落盘后自动补齐。
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}
@@ -494,14 +653,18 @@ const SessionPageMainContent: FC<
           onScroll={handleScroll}
         >
           <main className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 relative min-w-0 pb-4">
-            <ConversationList
-              conversations={isExistingSession ? conversations : []}
-              getToolResult={getToolResult}
-              getToolUseResult={getToolUseResult}
-              projectId={projectId}
-              sessionId={sessionId ?? ""}
-              scheduledJobs={sessionScheduledJobs}
-            />
+            <PendingAskUserQuestionContext.Provider
+              value={pendingAskUserQuestionValue}
+            >
+              <ConversationList
+                conversations={isExistingSession ? conversations : []}
+                getToolResult={getToolResult}
+                getToolUseResult={getToolUseResult}
+                projectId={projectId}
+                sessionId={sessionId ?? ""}
+                scheduledJobs={sessionScheduledJobs}
+              />
+            </PendingAskUserQuestionContext.Provider>
             {!isExistingSession && (
               <div className="mt-[30vh] rounded-2xl border border-dashed border-muted-foreground/40 bg-muted/30 p-8 text-center space-y-3">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
@@ -601,8 +764,8 @@ const SessionPageMainContent: FC<
       )}
 
       <PermissionDialog
-        permissionRequest={currentPermissionRequest}
-        isOpen={isDialogOpen}
+        permissionRequest={dialogPermissionRequest}
+        isOpen={dialogIsOpen}
         onResponse={onPermissionResponse}
       />
     </>

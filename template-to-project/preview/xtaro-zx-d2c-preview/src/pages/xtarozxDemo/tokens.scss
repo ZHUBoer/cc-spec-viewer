@@ -1,0 +1,11 @@
+* {
+  box-sizing: border-box;
+}
+
+.xtaro-xview {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex-direction: column;
+}
